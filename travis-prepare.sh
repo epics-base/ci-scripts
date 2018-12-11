@@ -15,7 +15,7 @@ add_gh_flat() {
   REPOOWNER=$2
   REPONAME=$3
   BRANCH=$4
-  MODULE_UC=$(echo $MODULE | tr 'a-z' 'A-Z')
+  MODULE_UC=$5
   ( git clone --quiet --depth 5 --branch $BRANCH https://github.com/$REPOOWNER/$REPONAME.git $MODULE && \
   cd $MODULE && git log -n1 )
   cat < $CURDIR/configure/RELEASE.local > $MODULE/configure/RELEASE.local
@@ -27,7 +27,12 @@ EOF
 # not recursive
 git clone --quiet --depth 5 --branch "$BRBASE" https://github.com/${REPOBASE:-epics-base}/epics-base.git epics-base
 (cd epics-base && git log -n1 )
-add_gh_flat pvData ${REPOPVD:-epics-base} pvDataCPP ${BRPVD:-master}
+for modrepo in ${MODULES}
+do
+  module=${modrepo%CPP}
+  module_uc=$(echo $module | tr 'a-z' 'A-Z')
+  eval add_gh_flat $module \${REPO${module_uc}:-epics-base} $modrepo \${BR${module_uc}:-master} $module_uc
+done
 
 if [ -e $CURDIR/configure/RELEASE.local ]
 then
@@ -103,9 +108,8 @@ CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386-qemu
 EOF
 fi
 
-make -j2 -C epics-base $EXTRA
-
-if [ "$BRBASE" ]
-then
-  make -j2 -C pvData $EXTRA
-fi
+for modrepo in epics-base ${MODULES}
+do
+  module=${modrepo%CPP}
+  make -j2 -C $module $EXTRA
+done
