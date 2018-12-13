@@ -78,6 +78,24 @@ EOF
 
   clang --version
   ;;
+gcc-6)
+  echo "Host compiler is gcc-6"
+  cat << EOF >> epics-base/configure/os/CONFIG_SITE.Common.$EPICS_HOST_ARCH
+CC          = gcc-6
+CCC         = g++-6
+EOF
+
+  gcc-6 --version
+  ;;
+gcc-7)
+  echo "Host compiler is gcc-7"
+  cat << EOF >> epics-base/configure/os/CONFIG_SITE.Common.$EPICS_HOST_ARCH
+CC          = gcc-7
+CCC         = g++-7
+EOF
+
+  gcc-7 --version
+  ;;
 *)
   echo "Host compiler is default"
   gcc --version
