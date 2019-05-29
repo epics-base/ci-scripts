@@ -25,7 +25,7 @@ EOF
 }
 
 # not recursive
-git clone --quiet --depth 5 --branch "$BRBASE" https://github.com/${REPOBASE:-epics-base}/epics-base.git epics-base
+git clone --quiet --depth 5 --branch "$BASE_BRANCH" https://github.com/${REPOBASE:-epics-base}/epics-base.git epics-base
 (cd epics-base && git log -n1 )
 for modrepo in ${MODULES}
 do

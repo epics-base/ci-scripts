@@ -32,47 +32,47 @@ matrix:
 
 # Different configurations of default gcc and clang
 
-  - env: BRBASE=7.0
+  - env: BASE_BRANCH=7.0
 
-  - env: BRBASE=7.0 CMPLR=clang
+  - env: BASE_BRANCH=7.0 CMPLR=clang
     compiler: clang
 
-  - env: BRBASE=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
+  - env: BASE_BRANCH=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
 
-  - env: BRBASE=7.0 CMPLR=clang EXTRA="CMD_CXXFLAGS=-std=c++11"
+  - env: BASE_BRANCH=7.0 CMPLR=clang EXTRA="CMD_CXXFLAGS=-std=c++11"
     compiler: clang
 
 # Cross-compilation to Windows using MinGW and WINE
     
-  - env: BRBASE=7.0 WINE=32 TEST=NO STATIC=YES
+  - env: BASE_BRANCH=7.0 WINE=32 TEST=NO STATIC=YES
     compiler: mingw
 
-  - env: BRBASE=7.0 WINE=32 TEST=NO STATIC=NO
+  - env: BASE_BRANCH=7.0 WINE=32 TEST=NO STATIC=NO
     compiler: mingw
 
 # Cross-compilation to RTEMS
 
-  - env: BRBASE=7.0 RTEMS=4.10 TEST=NO
+  - env: BASE_BRANCH=7.0 RTEMS=4.10 TEST=NO
 
-  - env: BRBASE=7.0 RTEMS=4.9 TEST=NO
+  - env: BASE_BRANCH=7.0 RTEMS=4.9 TEST=NO
 
 # Other gcc versions (adding as an extra package)
 
-  - env: BRBASE=7.0 CMPLR=gcc-6
+  - env: BASE_BRANCH=7.0 CMPLR=gcc-6
     dist: xenial
 	compiler: gcc-6
 	addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
 
-  - env: BRBASE=7.0 CMPLR=gcc-7
+  - env: BASE_BRANCH=7.0 CMPLR=gcc-7
     dist: xenial
 	compiler: gcc-7
 	addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
 # MacOS build
 
-  - env: BRBASE=7.0
+  - env: BASE_BRANCH=7.0
     os: osx
     compiler: clang
 
 # All above jobs can be defined for other branches of EPICS Base
-# by setting BRBASE to the branch name, e.g. 3.15
+# by setting BASE_BRANCH to the branch name, e.g. 3.15
