@@ -63,38 +63,35 @@ STATIC_BUILD=YES
 EOF
 fi
 
-case "$CMPLR" in
+HOST_CCMPLR_NAME=`echo "$TRAVIS_COMPILER" | sed -E 's/^([[:alpha:]][^-]*(-[[:alpha:]][^-]*)*)+(-[0-9\.]+)?$/\1/g'`
+HOST_CMPLR_VER_SUFFIX=`echo "$TRAVIS_COMPILER" | sed -E 's/^([[:alpha:]][^-]*(-[[:alpha:]][^-]*)*)+(-[0-9\.]+)?$/\3/g'`
+HOST_CMPLR_VER=`echo "$HOST_CMPLR_VER_SUFFIX" | cut -c 2-`
+
+case "$HOST_CCMPLR_NAME" in
 clang)
   echo "Host compiler is clang"
+  HOST_CPPCMPLR_NAME=$(echo "$HOST_CCMPLR_NAME" | sed 's/clang/clang++/g')
   cat << EOF >> epics-base/configure/os/CONFIG_SITE.Common.$EPICS_HOST_ARCH
 GNU         = NO
 CMPLR_CLASS = clang
-CC          = clang
-CCC         = clang++
+CC          = ${HOST_CCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX
+CCC         = ${HOST_CPPCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX
 EOF
 
   # hack
   sed -i -e 's/CMPLR_CLASS = gcc/CMPLR_CLASS = clang/' epics-base/configure/CONFIG.gnuCommon
 
-  clang --version
+  ${HOST_CCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX --version
   ;;
-gcc-6)
-  echo "Host compiler is gcc-6"
+gcc)
+  echo "Host compiler is GCC"
+  HOST_CPPCMPLR_NAME=$(echo "$HOST_CCMPLR_NAME" | sed 's/gcc/g++/g')
   cat << EOF >> epics-base/configure/os/CONFIG_SITE.Common.$EPICS_HOST_ARCH
-CC          = gcc-6
-CCC         = g++-6
+CC          = ${HOST_CCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX
+CCC         = ${HOST_CPPCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX
 EOF
 
-  gcc-6 --version
-  ;;
-gcc-7)
-  echo "Host compiler is gcc-7"
-  cat << EOF >> epics-base/configure/os/CONFIG_SITE.Common.$EPICS_HOST_ARCH
-CC          = gcc-7
-CCC         = g++-7
-EOF
-
-  gcc-7 --version
+  ${HOST_CCMPLR_NAME}$HOST_CMPLR_VER_SUFFIX --version
   ;;
 *)
   echo "Host compiler is default"
