@@ -67,12 +67,12 @@ matrix:
 # Other gcc versions (adding as an extra package)
 
   - env: BASE_BRANCH=7.0
-	compiler: gcc-6
-	addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
+    compiler: gcc-6
+    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
 
   - env: BASE_BRANCH=7.0
-	compiler: gcc-7
-	addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
+    compiler: gcc-7
+    addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
 # MacOS build
 
