@@ -29,17 +29,34 @@ your setup.
 
  1. In your Support Module, add this respository as a Git Submodule
     (name suggestion: `.ci`).
-	```
-	$ git submodule add https://github.com/epics-base/ci-scripts .ci
+    ```
+    $ git submodule add https://github.com/epics-base/ci-scripts .ci
     ```
 	
  1. Create a Travis configuration by copying one of the examples.
     ```
     $ cp .ci/.travis.yml.example-full .travis.yml
-	```
+    ```
 	
  1. Edit the `.travis.yml` configuration to include the jobs you want
     Travis to run.
 	
  1. Push your changes and check 
     [travis-ci.org](https://travis-ci.org/) for your build results.
+
+## Releases and Numbering
+
+Major release numbers refer to the API, which is more or less defined
+by the `.travis.yml.example-full` configuration example.
+Changing this file for the existing configuration options or to add
+new configurations options will usually cause a new major release.
+
+Minor release numbers refer to bugfixes that should not require a user
+module (i.e., its `.travis.yml`) to be changed.
+
+Again: using git submodule to include these scripts means that user
+modules always work with a fixed, frozen version of these scripts.
+I.e., developments in the ci-scripts will never break an existing
+application.
+These release numbering considerations are just a hint to assess the
+risk when updating the submodule.
