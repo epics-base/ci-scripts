@@ -1,32 +1,47 @@
 #!/bin/sh
 set -e -x
 
-CURDIR="$PWD"
+SETUP_DIRS=$(echo $SETUP_PATH | tr ":" "\n")
 
-# determine if BASE is a release or a branch
-git ls-remote --quiet --exit-code --tags https://github.com/${REPOBASE:-epics-base}/epics-base.git "$BASE" && BASE_RELEASE=YES
-git ls-remote --quiet --exit-code --heads https://github.com/${REPOBASE:-epics-base}/epics-base.git "$BASE" && BASE_BRANCH=YES
+source_set() {
+  SETFILE=$1
+  for set_dir in ${SETUP_DIRS}
+  do
+    if [ -e $set_dir/$SETFILE.set ]
+    then
+      source $set_dir/$SETFILE.set
+    fi
+  done
+}
+
+source_set defaults
+
+CURDIR="$PWD"
+CACHEDIR="$HOME/.cache"
+SOURCEDIR="$HOME/.source"
+
+# determine if BASE points to a release or a branch
+git ls-remote --quiet --exit-code --tags "$BASE_REPO" "$BASE" && BASE_RELEASE=YES
+git ls-remote --quiet --exit-code --heads "$BASE_REPO" "$BASE" && BASE_BRANCH=YES
 
 if [ "$BASE_RELEASE" = "YES" ]
 then
-  # TODO: use a cached location
-  BASE_LOCATION=$HOME/.source/epics-base
+  BASE_LOCATION=$CACHEDIR/epics-base
+  BASE_RECURSIVE="--recursive"
 else
   if [ "$BASE_BRANCH" = "YES" ]
   then
-  BASE_LOCATION=$HOME/.source/epics-base
+    BASE_LOCATION=$SOURCEDIR/epics-base
+    BASE_RECURSIVE=
   else
-  echo $BASE is neither a tag nor a branch name for BASE
-  exit 1
+    echo $BASE is neither a tag nor a branch name for BASE
+    exit 1
   fi
 fi
 
 cat << EOF > $CURDIR/configure/RELEASE.local
 EPICS_BASE=$BASE_LOCATION
 EOF
-
-install -d "$HOME/.source"
-cd "$HOME/.source"
 
 add_gh_flat() {
   MODULE=$1
@@ -42,9 +57,23 @@ ${MODULE_UC}=$HOME/.source/$MODULE
 EOF
 }
 
-# not recursive
-git clone --quiet --depth 5 --branch "$BASE" https://github.com/${REPOBASE:-epics-base}/epics-base.git epics-base
+if [ "$BASE_RELEASE" = "YES" ]
+then
+  mkdir -s "$CACHEDIR"
+  cd "$CACHEDIR"
+  BASE_MODULE=
+else
+  mkdir -s "$SOURCEDIR"
+  cd "$SOURCEDIR"
+  BASE_MODULE=epics-base
+fi
+
+git clone --quiet --depth 5 $BASE_RECURSIVE --branch "$BASE" $BASE_REPO epics-base
 (cd epics-base && git log -n1 )
+
+mkdir -s "$SOURCEDIR"
+cd "$SOURCEDIR"
+
 for modrepo in ${MODULES}
 do
   module=${modrepo%CPP}
@@ -152,7 +181,7 @@ CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386-qemu
 EOF
 fi
 
-for modrepo in epics-base ${MODULES}
+for modrepo in ${BASE_MODULE} ${MODULES}
 do
   module=${modrepo%CPP}
   make -j2 -C $module $EXTRA
