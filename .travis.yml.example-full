@@ -27,58 +27,66 @@ script:
 
 # Define build jobs
 
+# Well-known variables to use
+# BASE     branch or release tag name of the EPICS Base to use
+# EXTRA    content will be added to make command line
+# STATIC   set to YES for static build (default: NO)
+# TEST     set to NO to skip running the tests (default: YES)
+
 matrix:
   include:
 
 # Different configurations of default gcc and clang
 
-  - env: BASE_BRANCH=7.0
+  - env: BASE=7.0
 
-  - env: BASE_BRANCH=7.0
+  - env: BASE=7.0
     compiler: clang
 
-  - env: BASE_BRANCH=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
+  - env: BASE=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
 
-  - env: BASE_BRANCH=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
+  - env: BASE=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
     compiler: clang
 
 # Trusty: compiler versions very close to RHEL 7
 
-  - env: BASE_BRANCH=7.0
+  - env: BASE=7.0
     dist: trusty
 
-  - env: BASE_BRANCH=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
+  - env: BASE=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
     dist: trusty
 
 # Cross-compilation to Windows using MinGW and WINE
     
-  - env: BASE_BRANCH=7.0 WINE=32 TEST=NO STATIC=YES
+  - env: BASE=7.0 WINE=32 TEST=NO STATIC=YES
     compiler: mingw
 
-  - env: BASE_BRANCH=7.0 WINE=32 TEST=NO STATIC=NO
+  - env: BASE=7.0 WINE=32 TEST=NO STATIC=NO
     compiler: mingw
 
 # Cross-compilation to RTEMS
 
-  - env: BASE_BRANCH=7.0 RTEMS=4.10 TEST=NO
+  - env: BASE=7.0 RTEMS=4.10 TEST=NO
 
-  - env: BASE_BRANCH=7.0 RTEMS=4.9 TEST=NO
+  - env: BASE=7.0 RTEMS=4.9 TEST=NO
 
 # Other gcc versions (adding as an extra package)
 
-  - env: BASE_BRANCH=7.0
+  - env: BASE=7.0
     compiler: gcc-6
     addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
 
-  - env: BASE_BRANCH=7.0
+  - env: BASE=7.0
     compiler: gcc-7
     addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
 # MacOS build
 
-  - env: BASE_BRANCH=7.0
+  - env: BASE=7.0
     os: osx
     compiler: clang
 
-# All above jobs can be defined for other branches of EPICS Base
-# by setting BASE_BRANCH to the branch name, e.g. 3.15
+# All above jobs can be defined for other branches or releases of EPICS Base
+# by setting BASE to the branch name or release tag name, e.g.
+# BASE=3.15      (to use the 3.15 branch of Base)
+# BASE=R7.0.3    (to use the 7.0.3 release of Base)

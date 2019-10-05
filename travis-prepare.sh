@@ -3,8 +3,26 @@ set -e -x
 
 CURDIR="$PWD"
 
+# determine if BASE is a release or a branch
+git ls-remote --quiet --exit-code --tags https://github.com/${REPOBASE:-epics-base}/epics-base.git "$BASE" && BASE_RELEASE=YES
+git ls-remote --quiet --exit-code --heads https://github.com/${REPOBASE:-epics-base}/epics-base.git "$BASE" && BASE_BRANCH=YES
+
+if [ "$BASE_RELEASE" = "YES" ]
+then
+  # TODO: use a cached location
+  BASE_LOCATION=$HOME/.source/epics-base
+else
+  if [ "$BASE_BRANCH" = "YES" ]
+  then
+  BASE_LOCATION=$HOME/.source/epics-base
+  else
+  echo $BASE is neither a tag nor a branch name for BASE
+  exit 1
+  fi
+fi
+
 cat << EOF > $CURDIR/configure/RELEASE.local
-EPICS_BASE=$HOME/.source/epics-base
+EPICS_BASE=$BASE_LOCATION
 EOF
 
 install -d "$HOME/.source"
@@ -25,7 +43,7 @@ EOF
 }
 
 # not recursive
-git clone --quiet --depth 5 --branch "$BASE_BRANCH" https://github.com/${REPOBASE:-epics-base}/epics-base.git epics-base
+git clone --quiet --depth 5 --branch "$BASE" https://github.com/${REPOBASE:-epics-base}/epics-base.git epics-base
 (cd epics-base && git log -n1 )
 for modrepo in ${MODULES}
 do

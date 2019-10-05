@@ -6,14 +6,14 @@ software modules, e.g. Device Support modules.
 
 By including this repository as a Git Submodule, your module will
 always use an explicit commit, i.e. a fixed version of the scripts.
-That way, further development of these scripts cannot break
+That ensures that further development of these scripts cannot break
 your setup.
 
 ## Travis-CI
 
 ### Features
 
- -  Compile against different version of EPICS Base
+ -  Compile against different branches or releases of EPICS Base
  -  Use different versions of compilers (gcc, clang)
  -  Cross-compile for Windows 32bit using MinGW and WINE
  -  Cross-compile for RTEMS 4.9 and 4.10
