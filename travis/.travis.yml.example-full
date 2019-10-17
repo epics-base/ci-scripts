@@ -24,14 +24,14 @@ addons:
     - qemu-system-x86
 
 install:
-  - ./.ci/travis-prepare.sh
+  - ./.ci/travis/prepare.sh
 
 script:
-  - ./.ci/travis-build.sh
+  - ./.ci/travis/build.sh
 
 # If you need to do more during install and build,
 # add a local directory to your module and do e.g.
-#  - ./.ci-local/travis-install-extras.sh
+#  - ./.ci-local/travis/install-extras.sh
 
 # Define build jobs
 

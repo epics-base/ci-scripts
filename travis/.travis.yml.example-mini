@@ -15,10 +15,10 @@ addons:
     - perl
 
 install:
-  - ./.ci/travis-prepare.sh
+  - ./.ci/travis/prepare.sh
 
 script:
-  - ./.ci/travis-build.sh
+  - ./.ci/travis/build.sh
 
 # Build using default gcc for Base branches 7.0 and 3.15
 
