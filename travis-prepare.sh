@@ -57,7 +57,7 @@ then
   cat $CURDIR/configure/RELEASE.local
 fi
 
-EPICS_HOST_ARCH=`sh epics-base/startup/EpicsHostArch`
+[ "$EPICS_HOST_ARCH" ] || EPICS_HOST_ARCH=`sh epics-base/startup/EpicsHostArch`
 
 # requires wine and g++-mingw-w64-i686
 if [ "$WINE" = "32" ]
