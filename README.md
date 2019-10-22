@@ -15,7 +15,7 @@ your setup.
 
  -  Compile against different branches or releases of EPICS Base
  -  Use different versions of compilers (gcc, clang)
- -  Cross-compile for Windows 32bit using MinGW and WINE
+ -  Cross-compile for Windows 32bit and 64bit using MinGW and WINE
  -  Cross-compile for RTEMS 4.9 and 4.10
  -  Compile on MacOS
  

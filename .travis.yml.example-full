@@ -61,7 +61,7 @@ matrix:
   - env: BASE=7.0 WINE=32 TEST=NO STATIC=YES
     compiler: mingw
 
-  - env: BASE=7.0 WINE=32 TEST=NO STATIC=NO
+  - env: BASE=7.0 WINE=64 TEST=NO STATIC=NO
     compiler: mingw
 
 # Cross-compilation to RTEMS
