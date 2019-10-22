@@ -57,7 +57,7 @@ then
   cat $CURDIR/configure/RELEASE.local
 fi
 
-EPICS_HOST_ARCH=`sh epics-base/startup/EpicsHostArch`
+[ "$EPICS_HOST_ARCH" ] || EPICS_HOST_ARCH=`sh epics-base/startup/EpicsHostArch`
 
 # requires wine and g++-mingw-w64-i686
 if [ "$WINE" = "32" ]
@@ -69,6 +69,17 @@ CMPLR_PREFIX=i686-w64-mingw32-
 EOF
   cat << EOF >> epics-base/configure/CONFIG_SITE
 CROSS_COMPILER_TARGET_ARCHS+=win32-x86-mingw
+EOF
+
+elif [ "$WINE" = "64" ]
+then
+  echo "Cross mingw64"
+  sed -i -e '/CMPLR_PREFIX/d' epics-base/configure/os/CONFIG_SITE.linux-x86.windows-x64-mingw
+  cat << EOF >> epics-base/configure/os/CONFIG_SITE.linux-x86.windows-x64-mingw
+CMPLR_PREFIX=x86_64-w64-mingw32-
+EOF
+  cat << EOF >> epics-base/configure/CONFIG_SITE
+CROSS_COMPILER_TARGET_ARCHS+=windows-x64-mingw
 EOF
 fi
 
