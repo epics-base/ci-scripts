@@ -16,11 +16,15 @@ env:
 addons:
   apt:
     packages:
+    # for all EPICS builds
     - libreadline6-dev
     - libncurses5-dev
     - perl
+    # for clang compiler
     - clang
+    # for mingw builds (32bit and 64bit)
     - g++-mingw-w64-i686
+    # for RTEMS cross builds
     - qemu-system-x86
 
 install:
