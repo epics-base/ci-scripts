@@ -1,1 +1,33 @@
-BASE_REPO=https://github.com/epics-base/epics-base.git
+# EPICS Base
+BASE_DIRNAME=base
+BASE_REPONAME=epics-base
+BASE_REPOOWNER=epics-base
+BASE_VARNAME=EPICS_BASE
+
+PVDATA_DIRNAME=pvData
+PVDATA_REPONAME=pvDataCPP
+PVDATA_REPOOWNER=epics-base
+
+PVACCESS_DIRNAME=pvAccess
+PVACCESS_REPONAME=pvAccessCPP
+PVACCESS_REPOOWNER=epics-base
+
+NTYPES_DIRNAME=normativeTypes
+NTYPES_REPONAME=normativeTypesCPP
+NTYPES_REPOOWNER=epics-base
+
+# Sequencer
+SNCSEQ_REPOURL=https://www-csr.bessy.de/control/SoftDist/sequencer/repo/branch-2-2.git
+SNCSEQ_DEPTH=0
+SNCSEQ_DIRNAME=seq
+
+# StreamDevice
+STREAM_REPONAME=StreamDevice
+STREAM_REPOOWNER=paulscherrerinstitute
+
+# Default settings work (and are tested) for:
+# asyn
+# std
+# calc
+# autosave
+# busy
