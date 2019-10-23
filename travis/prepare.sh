@@ -74,7 +74,11 @@ git clone --quiet --depth 5 $BASE_RECURSIVE --branch "$BASE" $BASE_REPO epics-ba
 mkdir -s "$SOURCEDIR"
 cd "$SOURCEDIR"
 
-for modrepo in ${MODULES}
+
+# Check out dependencies
+# ----------------------
+
+for mod in BASE $MODULES
 do
   module=${modrepo%CPP}
   module_uc=$(echo $module | tr 'a-z' 'A-Z')

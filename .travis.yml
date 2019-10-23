@@ -1,0 +1,55 @@
+# .travis.xml for testing EPICS Base ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# Note:
+# Paths to scripts are different in this test configuration
+# (your module has one more directory level: .ci)
+
+language: cpp
+compiler: gcc
+dist: xenial
+
+cache:
+  directories:
+  - $HOME/.cache
+
+env:
+  global:
+    - SETUP_PATH=.:.ci
+
+addons:
+  apt:
+    packages:
+    - libreadline6-dev
+    - libncurses5-dev
+    - perl
+    - clang
+    - g++-mingw-w64-i686
+    - qemu-system-x86
+
+install:
+  - ./travis/prepare.sh
+
+script:
+  - ./travis-test.sh
+
+# If you need to do more during install and build,
+# add a local directory to your module and do e.g.
+#  - ./.ci-local/travis/install-extras.sh
+
+# Define build jobs
+
+# Well-known variables to use
+# BASE     branch or release tag name of the EPICS Base to use
+# EXTRA    content will be added to make command line
+# STATIC   set to YES for static build (default: NO)
+# TEST     set to NO to skip running the tests (default: YES)
+
+matrix:
+  include:
+
+# Different configurations of default gcc and clang
+
+  - env: BASE=3.15
+
+  - env: SET=test01
