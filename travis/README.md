@@ -2,12 +2,13 @@
 
 ## Features
 
- -  Compile against different branches or releases of EPICS Base
- -  Use different versions of compilers (gcc, clang)
- -  Cross-compile for Windows 32bit using MinGW and WINE
- -  Cross-compile for RTEMS 4.9 and 4.10
- -  Compile on MacOS
- 
+ - Use different compilers (gcc, clang)
+ - Use different gcc versions
+ - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
+ - Cross-compile for RTEMS 4.9 and 4.10
+ - Compile on MacOS
+ - Released versions of dependencies are cached (for faster builds)
+
 ## How to Use these Scripts
 
  1. Get an account on [Travis-CI](https://travis-ci.org/), connect
@@ -16,20 +17,21 @@
     [Travis-CI Tutorial](https://docs.travis-ci.com/user/tutorial/).
     Make sure to use `travis-ci.org` and not their `.com` site.
 
- 2. In your Support Module, add this respository as a Git Submodule
-    (name suggestion: `.ci`).
-    ```
-    $ git submodule add https://github.com/epics-base/ci-scripts .ci
-    ```
-	
- 3. Create a Travis configuration by copying one of the examples into
+ 2. Add the ci-scripts respository as a Git Submodule
+    (see [README](../README.md) one level above).
+
+ 3. Add settings files defining which dependencies in which versions
+    you want to build against
+    (see [README](../README.md) one level above).
+
+ 4. Create a Travis configuration by copying one of the examples into
     the root directory of your module.
     ```
     $ cp .ci/travis/.travis.yml.example-full .travis.yml
     ```
 	
- 4. Edit the `.travis.yml` configuration to include the jobs you want
-    Travis to run.
+ 5. Edit the `.travis.yml` configuration to include the jobs you want
+    Travis to run. (The examples are commented.)
 	
- 5. Push your changes and check
+ 6. Push your changes and check
     [travis-ci.org](https://travis-ci.org/) for your build results.
