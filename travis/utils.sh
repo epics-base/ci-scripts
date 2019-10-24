@@ -123,9 +123,21 @@ add_dependency() {
       deptharg="--depth $depth"
       ;;
     esac
-    eval git clone --quiet $deptharg $recursive --branch "$TAG" $repourl $dirname-$TAG
+    git clone --quiet $deptharg $recursive --branch "$TAG" $repourl $dirname-$TAG
     ( cd $dirname-$TAG && git log -n1 )
     modules_to_compile="${modules_to_compile} $location/$dirname-$TAG"
+    # run hook
+    eval hook="\${${DEP}_HOOK}"
+    if [ ! -z "$hook" ]
+    then
+      if [ -x "$curdir/$hook" ]
+      then
+        ( cd $location/$dirname-$TAG; "$curdir/$hook" )
+      else
+        echo "Hook script $hook is not executable or does not exist."
+        exit 1
+      fi
+    fi
     cd "$curdir"
   fi
   update_release_local ${varname} $location/$dirname-$TAG
