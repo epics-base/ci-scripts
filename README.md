@@ -122,6 +122,9 @@ using `$FOO_REPONAME` else `foo` and the extension`.git`.
 `FOO_DEPTH=<number>` Set the depth of the git clone operation. Use 0 for a
 full clone. [default: 5]
 
+`FOO_RECURSIVE=YES/NO` Set to `NO` (or `0`) for a flat clone without
+recursing into submodules. [default is including submodules: `YES`]
+
 `FOO_DIRNAME=<name>` Set the local directory name for the checkout. This will
 be always be extended by the release or branch name as `<name>-<version>`.
 [default is the slug in lower case: `foo`]

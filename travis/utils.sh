@@ -77,6 +77,7 @@ update_release_local() {
 #   $dep_REPOURL = GitHub / $dep_REPOOWNER (or $REPOOWNER or epics-modules) / $dep_REPONAME .git
 #   $dep_VARNAME = $dep
 #   $dep_DEPTH = 5
+#   $dep_RECURSIVE = 1/YES (0/NO to for a flat clone)
 # - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
 # - Add full path to $modules_to_compile
 add_dependency() {
@@ -88,6 +89,9 @@ add_dependency() {
   eval reponame=\${${DEP}_REPONAME:=${dep_lc}}
   eval repourl=\${${DEP}_REPOURL:="https://github.com/\${${DEP}_REPOOWNER:=${REPOOWNER:-epics-modules}}/${reponame}.git"}
   eval varname=\${${DEP}_VARNAME:=${DEP}}
+  eval recursive=\${${DEP}_RECURSIVE:=1}
+  recursive=$(echo $recursive | tr 'A-Z' 'a-z')
+  [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
 
   # determine if BASE points to a release or a branch
   git ls-remote --quiet --exit-code --tags $repourl "$TAG" && tagtype=release
@@ -96,11 +100,9 @@ add_dependency() {
   case "${tagtype}" in
   "release" )
     location=${CACHEDIR}
-    recursive="--recursive"
     ;;
   "branch" )
     location=${SOURCEDIR}
-    recursive=""
     ;;
   * )
     echo "$TAG is neither a tag nor a branch name for $DEP ($repourl)"
@@ -123,7 +125,7 @@ add_dependency() {
       deptharg="--depth $depth"
       ;;
     esac
-    git clone --quiet $deptharg $recursive --branch "$TAG" $repourl $dirname-$TAG
+    git clone --quiet $deptharg $recurse --branch "$TAG" $repourl $dirname-$TAG
     ( cd $dirname-$TAG && git log -n1 )
     modules_to_compile="${modules_to_compile} $location/$dirname-$TAG"
     # run hook
