@@ -20,15 +20,22 @@ fold_end() {
 source_set() {
   local set_file=$1
   local set_dir
+  local found=0
   for set_dir in ${SETUP_DIRS}
   do
     if [ -e $set_dir/$set_file.set ]
     then
       echo "Loading setup file $set_dir/$set_file.set"
       . $set_dir/$set_file.set
+      found=1
       break
     fi
   done
+  if [ $found -eq 0 ]
+  then
+    echo "Setup file $set_file.set does not exist in SETUP_DIRS search path ($SETUP_DIRS)"
+    [ "$UTILS_UNITTEST" ] || exit 1
+  fi
 }
 
 # update_release_local(varname, place)
@@ -130,7 +137,7 @@ add_dependency() {
     modules_to_compile="${modules_to_compile} $location/$dirname-$TAG"
     # run hook
     eval hook="\${${DEP}_HOOK}"
-    if [ ! -z "$hook" ]
+    if [ "$hook" ]
     then
       if [ -x "$curdir/$hook" ]
       then
