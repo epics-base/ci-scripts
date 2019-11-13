@@ -30,7 +30,7 @@ fold_end load.settings
 # Check out dependencies
 # ----------------------
 
-fold_start check.out.dependencies "Checking out dependencies"
+fold_start check.out.dependencies "Checking/cloning dependencies"
 
 mkdir -p $SOURCEDIR
 

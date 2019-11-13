@@ -48,8 +48,9 @@ script:
 matrix:
   include:
 
-# Different configurations of default gcc and clang
+# Run on Linux and Mac
 
-  - env: BASE=3.15
+  - env: SET=test00
 
-  - env: SET=test01
+  - env: SET=test00
+    os: osx

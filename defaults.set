@@ -25,9 +25,11 @@ SNCSEQ_DIRNAME=seq
 STREAM_REPONAME=StreamDevice
 STREAM_REPOOWNER=paulscherrerinstitute
 
-# Default settings work (and are tested) for:
+# The default settings also work (and are tested) for:
 # asyn
 # std
 # calc
 # autosave
 # busy
+# sscan
+# iocStats
