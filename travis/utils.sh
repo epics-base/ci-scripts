@@ -62,6 +62,7 @@ update_release_local() {
     fi
   else
     echo "$var=$place" >> ${release_local}
+    ret=0
     grep -q "EPICS_BASE=" ${release_local} || ret=$?
     if [ $ret -eq 0 ]
     then
