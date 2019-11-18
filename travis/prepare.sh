@@ -9,7 +9,6 @@ SETUP_DIRS=$(echo $SETUP_PATH | tr ":" "\n")
 SCRIPTDIR=$(dirname $(readlinkf $0))
 CURDIR="$PWD"
 CACHEDIR="$HOME/.cache"
-SOURCEDIR="$HOME/.source"
 
 # source functions
 . $SCRIPTDIR/utils.sh
@@ -32,14 +31,11 @@ fold_end load.settings
 
 fold_start check.out.dependencies "Checking/cloning dependencies"
 
-mkdir -p $SOURCEDIR
-
 for mod in BASE $MODULES
 do
   mod_uc=$(echo $mod | tr 'a-z' 'A-Z')
   eval add_dependency $mod_uc \${${mod_uc}:-master}
 done
-cp ${CACHEDIR}/RELEASE.local ${SOURCEDIR}/RELEASE.local
 [ -e ./configure ] && cp ${CACHEDIR}/RELEASE.local ./configure/RELEASE.local
 
 fold_end check.out.dependencies

@@ -74,10 +74,9 @@ update_release_local() {
 
 # add_dependency(dep, tag)
 #
-# Add a dependency to the cache or source area:
-# - if $tag is a branch name, check out flat (no submodules) in the SOURCE area
-# - if $tag is a release name, check out recursive (w/ submodules) in the CACHE area
-#   unless it already exists
+# Add a dependency to the cache area:
+# - check out (recursive if configured) in the CACHE area unless it already exists and the
+#   required commit has been built
 # - Defaults:
 #   $dep_DIRNAME = lower case ($dep)
 #   $dep_REPONAME = lower case ($dep)
@@ -100,26 +99,23 @@ add_dependency() {
   recursive=$(echo $recursive | tr 'A-Z' 'a-z')
   [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
 
-  # determine if BASE points to a release or a branch
-  git ls-remote --quiet --exit-code --tags $repourl "$TAG" && tagtype=release
-  git ls-remote --quiet --exit-code --heads $repourl "$TAG" && tagtype=branch
-
-  case "${tagtype}" in
-  "release" )
-    location=${CACHEDIR}
-    ;;
-  "branch" )
-    location=${SOURCEDIR}
-    ;;
-  * )
-    echo "$TAG is neither a tag nor a branch name for $DEP ($repourl)"
-    exit 1
-    ;;
-  esac
-
-  if [ ! -e $location/$dirname-$TAG ]
+  # determine if BASE points to a valid release or branch
+  if ! git ls-remote --quiet --exit-code --refs $repourl "$TAG"
   then
-    cd $location
+    echo "$TAG is neither a tag nor a branch name for $DEP ($repourl)"
+    [ "$UTILS_UNITTEST" ] || exit 1
+  fi
+
+  if [ -e $CACHEDIR/$dirname-$TAG ]
+  then
+    [ -e $CACHEDIR/$dirname-$TAG/built ] && BUILT=$(cat $CACHEDIR/$dirname-$TAG/built) || BUILT="never"
+    HEAD=$(cd "$CACHEDIR/$dirname-$TAG" && git log -n1 --pretty=format:%H)
+    [ "$HEAD" != "$BUILT" ] && rm -fr $CACHEDIR/$dirname-$TAG
+  fi
+
+  if [ ! -e $CACHEDIR/$dirname-$TAG ]
+  then
+    cd $CACHEDIR
     eval depth=\${${DEP}_DEPTH:-"-1"}
     case ${depth} in
     -1 )
@@ -134,20 +130,23 @@ add_dependency() {
     esac
     git clone --quiet $deptharg $recurse --branch "$TAG" $repourl $dirname-$TAG
     ( cd $dirname-$TAG && git log -n1 )
-    modules_to_compile="${modules_to_compile} $location/$dirname-$TAG"
+    modules_to_compile="${modules_to_compile} $CACHEDIR/$dirname-$TAG"
     # run hook
     eval hook="\${${DEP}_HOOK}"
     if [ "$hook" ]
     then
       if [ -x "$curdir/$hook" ]
       then
-        ( cd $location/$dirname-$TAG; "$curdir/$hook" )
+        ( cd $CACHEDIR/$dirname-$TAG; "$curdir/$hook" )
       else
         echo "Hook script $hook is not executable or does not exist."
         exit 1
       fi
     fi
+    HEAD=$(cd "$CACHEDIR/$dirname-$TAG" && git log -n1 --pretty=format:%H)
+    echo "$HEAD" > "$CACHEDIR/$dirname-$TAG/built"
     cd "$curdir"
   fi
-  update_release_local ${varname} $location/$dirname-$TAG
+
+  update_release_local ${varname} $CACHEDIR/$dirname-$TAG
 }
