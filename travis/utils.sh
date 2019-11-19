@@ -2,6 +2,14 @@
 #
 # This file is sourced by the executable scripts
 
+# Portable version of 'sed -i'  (that MacOS doesn't provide)
+
+# sedi (cmd, file)
+# Do the equivalent of "sed -i cmd file"
+sedi () {
+  cat $2 | sed "$1" > $2.tmp$$; mv -f $2.tmp$$ $2
+}
+
 # Travis log fold control
 # from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
 
@@ -58,7 +66,7 @@ update_release_local() {
     existing_line=$(grep "${var}=" ${release_local})
     if [ "${existing_line}" != "${updated_line}" ]
     then
-      sed -i "s|${var}=.*|${var}=${place}|g" ${release_local}
+      sedi "s|${var}=.*|${var}=${place}|g" ${release_local}
     fi
   else
     echo "$var=$place" >> ${release_local}
@@ -67,7 +75,7 @@ update_release_local() {
     if [ $ret -eq 0 ]
     then
       base_line=$(grep "EPICS_BASE=" ${release_local})
-      sed -i 's|EPICS_BASE=||g' ${release_local}
+      sedi 's|EPICS_BASE=||g' ${release_local}
       echo ${base_line} >> ${release_local}
     fi
   fi
