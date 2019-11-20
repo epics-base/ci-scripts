@@ -14,11 +14,11 @@ sedi () {
 # from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
 
 fold_start() {
-  echo "travis_fold:start:$1\033[33;1m$2\033[0m"
+  echo -en "travis_fold:start:$1\\r\033[33;1m$2\033[0m"
 }
 
 fold_end() {
-  echo "\ntravis_fold:end:$1\r"
+  echo -en "travis_fold:end:$1\\r"
 }
 
 # source_set(settings)
