@@ -1,5 +1,13 @@
 #!/bin/sh
+
+# Module ci-scripts unit tests
+
+# SET=test00 in .travis.yml runs the tests in this script
+# all other jobs are started as compile jobs
+
 set -x
+
+[ "$SET" != "test00" ] && exec ./travis/build.sh
 
 UTILS_UNITTEST=1
 

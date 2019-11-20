@@ -48,9 +48,60 @@ script:
 matrix:
   include:
 
-# Run on Linux and Mac
+# Run unit tests on Linux and Mac
 
   - env: SET=test00
 
   - env: SET=test00
     os: osx
+
+# Compile the example application
+# using the build configurations from full example
+# (makeBaseApp example - no C++parts yet)
+
+  - env: SET=test01
+
+  - env: SET=test01
+    compiler: clang
+
+#  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
+
+#  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
+#    compiler: clang
+
+  - env: SET=test01
+    dist: trusty
+
+#  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
+#    dist: trusty
+
+# Cross-compilation to Windows using MinGW and WINE
+# (DLL builds only work for EPICS 7)
+
+  - env: SET=test01 WINE=32 TEST=NO STATIC=YES
+    compiler: mingw
+
+  - env: SET=test01 WINE=64 TEST=NO STATIC=YES
+    compiler: mingw
+
+# Cross-compilation to RTEMS
+
+  - env: SET=test01 RTEMS=4.10 TEST=NO
+
+  - env: SET=test01 RTEMS=4.9 TEST=NO
+
+# Other gcc versions (adding as an extra package)
+
+  - env: SET=test01
+    compiler: gcc-6
+    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
+
+  - env: SET=test01
+    compiler: gcc-7
+    addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
+
+# MacOS build
+
+  - env: SET=test01
+    os: osx
+    compiler: clang
