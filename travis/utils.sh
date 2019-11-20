@@ -75,7 +75,7 @@ update_release_local() {
     if [ $ret -eq 0 ]
     then
       base_line=$(grep "EPICS_BASE=" ${release_local})
-      sedi 's|EPICS_BASE=||g' ${release_local}
+      sedi '\|EPICS_BASE=|d' ${release_local}
       echo ${base_line} >> ${release_local}
     fi
   fi

@@ -113,6 +113,9 @@ existing_line=$(grep "MOD1=" $release_local)
 head -n 1 $release_local | grep -q "MOD1=" || die "Line for MOD1 not at the top of RELEASE.local"
 tail -n 1 $release_local | grep -q "EPICS_BASE=" || die "Line for EPICS_BASE not moved to the end of RELEASE.local"
 
+# Check that RELEASE.local only contains variable settings
+[ $(grep -v -c '[^ =]*=.*' $release_local) -ne 0 ] && die "RELEASE.local contains invalid lines"
+
 rm -f $release_local
 
 # test add_dependency()
