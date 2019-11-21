@@ -105,3 +105,4 @@ matrix:
   - env: SET=test01
     os: osx
     compiler: clang
+    addons: { homebrew: { packages: ["re2c"], update: true } }

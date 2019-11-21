@@ -97,6 +97,7 @@ matrix:
   - env: BASE=7.0
     os: osx
     compiler: clang
+    addons: { homebrew: { packages: ["re2c"], update: true } }
 
 # All above jobs can be defined for other branches or releases of EPICS Base
 # by setting BASE to the branch name or release tag name, e.g.
