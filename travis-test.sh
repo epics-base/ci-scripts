@@ -53,6 +53,9 @@ fn_exists add_dependency || die "function add_dependency missing from SCRIPTDIR/
 SETUP_DIRS= source_set test01 | grep -q "(SETUP_PATH) is empty" || die "empty search path not detected"
 source_set xxdoesnotexistxx | grep -q "does not exist" || die "missing setup file not detected"
 source_set test01 | grep -q "Loading setup file" || die "test01 setup file not found"
+BASE=foo
+source_set test01
+[ "$BASE" = "foo" ] || die "preset module (BASE) version does not override test01 setup file"
 
 # test default settings file
 ######################################################################
