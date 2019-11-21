@@ -5,7 +5,8 @@
 # SET=test00 in .travis.yml runs the tests in this script
 # all other jobs are started as compile jobs
 
-set -x
+# Set VV empty in .travis.yml to make scripts terse
+[ "${VV:-1}" ] && set -x
 
 [ "$SET" != "test00" ] && exec ./travis/build.sh
 

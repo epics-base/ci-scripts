@@ -1,5 +1,8 @@
 #!/bin/sh
-set -e -x
+set -e
+
+# Set VV in .travis.yml to make scripts verbose
+[ "$VV" ] && set -x
 
 # Perl version of "readlink -f" (which MacOS does not provide)
 readlinkf() { perl -MCwd -e 'print Cwd::abs_path shift' "$1"; }
@@ -156,11 +159,13 @@ fold_end set.up.compiler
 
 fold_start build.dependencies "Rebuild missing dependencies"
 
+[ "$VV" ] && silent="-s" || silent=
+
 for module in ${modules_to_compile}
 do
   name=$(basename $module)
   fold_start build.$name "Build $name"
-  make -j2 -C $module $EXTRA
+  make -j2 $silent -C $module $EXTRA
   fold_end build.$name
 done
 

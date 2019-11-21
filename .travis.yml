@@ -64,6 +64,8 @@ matrix:
   - env: SET=test01
     compiler: clang
 
+  - env: VV="" SET=test01
+
 #  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
 
 #  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"

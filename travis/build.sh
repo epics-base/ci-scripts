@@ -1,5 +1,8 @@
 #!/bin/sh
-set -e -x
+set -e
+
+# Set VV in .travis.yml to make scripts verbose
+[ "$VV" ] && set -x
 
 make -j2 $EXTRA
 
