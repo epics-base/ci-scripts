@@ -29,6 +29,11 @@ source_set() {
   local set_file=$1
   local set_dir
   local found=0
+  if [ -z "${SETUP_DIRS}" ]
+  then
+    echo "Search path for setup files (SETUP_PATH) is empty"
+    [ "$UTILS_UNITTEST" ] || exit 1
+  fi
   for set_dir in ${SETUP_DIRS}
   do
     if [ -e $set_dir/$set_file.set ]
