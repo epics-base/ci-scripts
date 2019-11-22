@@ -115,7 +115,7 @@ matrix:
 
 # MacOS build
 
-  - env: SET=test01
+  - env: SET=test01 SNCSEQ=master
     os: osx
     compiler: clang
     addons: { homebrew: { packages: ["re2c"], update: true } }
