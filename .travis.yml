@@ -25,6 +25,7 @@ addons:
     - perl
     - clang
     - g++-mingw-w64-i686
+    - g++-mingw-w64-x86-64
     - qemu-system-x86
 
 install:
@@ -86,11 +87,21 @@ matrix:
   - env: SET=test01 WINE=64 TEST=NO STATIC=YES
     compiler: mingw
 
+  - env: SET=test01 WINE=32 TEST=NO STATIC=NO
+    dist: trusty
+    compiler: mingw
+
+  - env: SET=test01 WINE=64 TEST=NO STATIC=NO
+    dist: trusty
+    compiler: mingw
+
 # Cross-compilation to RTEMS
 
   - env: SET=test01 RTEMS=4.10 TEST=NO
+    dist: trusty
 
   - env: SET=test01 RTEMS=4.9 TEST=NO
+    dist: trusty
 
 # Other gcc versions (adding as an extra package)
 
