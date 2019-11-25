@@ -96,11 +96,12 @@ matrix:
     compiler: mingw
 
 # Cross-compilation to RTEMS
+# (needs EPICS Base >= 3.16.2)
 
-  - env: SET=test01 RTEMS=4.10 TEST=NO
+  - env: BASE=R3.16.2 SET=test01 RTEMS=4.10 TEST=NO
     dist: trusty
 
-  - env: SET=test01 RTEMS=4.9 TEST=NO
+  - env: BASE=R3.16.2 SET=test01 RTEMS=4.9 TEST=NO
     dist: trusty
 
 # Other gcc versions (adding as an extra package)
