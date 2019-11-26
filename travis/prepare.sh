@@ -135,9 +135,6 @@ EOF
   if [ -n "$RTEMS" ]
   then
     echo "Cross RTEMS${RTEMS} for pc386"
-    curl -L "https://github.com/mdavidsaver/rsb/releases/download/20171203-${RTEMS}/i386-rtems${RTEMS}-trusty-20171203-${RTEMS}.tar.bz2" \
-    | tar -C / -xmj
-
     sed -i -e '/^RTEMS_VERSION/d' -e '/^RTEMS_BASE/d' $EPICS_BASE/configure/os/CONFIG_SITE.Common.RTEMS
     cat << EOF >> $EPICS_BASE/configure/os/CONFIG_SITE.Common.RTEMS
 RTEMS_VERSION=$RTEMS
@@ -150,6 +147,14 @@ EOF
 
 else
   echo "EPICS Base will not be recompiled - compiler setup already done"
+fi
+
+# Download RTEMS cross compiler
+if [ -n "$RTEMS" ]
+then
+  echo "Downloading RTEMS${RTEMS} cross compiler for pc386"
+  curl -L "https://github.com/mdavidsaver/rsb/releases/download/20171203-${RTEMS}/i386-rtems${RTEMS}-trusty-20171203-${RTEMS}.tar.bz2" \
+  | tar -C / -xmj
 fi
 
 fold_end set.up.compiler
