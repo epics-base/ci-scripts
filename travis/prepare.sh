@@ -146,7 +146,7 @@ EOF
   fi
 
 else
-  echo "EPICS Base will not be recompiled - compiler setup already done"
+echo "${ANSI_GREEN}EPICS build system already set up (Base was loaded from cache)${ANSI_RESET}"
 fi
 
 # Download RTEMS cross compiler

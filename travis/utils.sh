@@ -10,11 +10,19 @@ sedi () {
   cat $2 | sed "$1" > $2.tmp$$; mv -f $2.tmp$$ $2
 }
 
+# Setup ANSI Colors
+export ANSI_RED="\033[31;1m"
+export ANSI_GREEN="\033[32;1m"
+export ANSI_YELLOW="\033[33;1m"
+export ANSI_BLUE="\033[34;1m"
+export ANSI_RESET="\033[0m"
+export ANSI_CLEAR="\033[0K"
+
 # Travis log fold control
 # from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
 
 fold_start() {
-  echo -en "travis_fold:start:$1\\r\033[33;1m$2\033[0m"
+  echo -en "travis_fold:start:$1\\r${ANSI_YELLOW}$2${ANSI_RESET}"
 }
 
 fold_end() {
@@ -31,7 +39,7 @@ source_set() {
   local found=0
   if [ -z "${SETUP_DIRS}" ]
   then
-    echo "Search path for setup files (SETUP_PATH) is empty"
+    echo "${ANSI_RED}Search path for setup files (SETUP_PATH) is empty${ANSI_RESET}"
     [ "$UTILS_UNITTEST" ] || exit 1
   fi
   for set_dir in ${SETUP_DIRS}
@@ -46,7 +54,7 @@ source_set() {
   done
   if [ $found -eq 0 ]
   then
-    echo "Setup file $set_file.set does not exist in SETUP_DIRS search path ($SETUP_DIRS)"
+    echo "${ANSI_RED}Setup file $set_file.set does not exist in SETUP_DIRS search path ($SETUP_DIRS)${ANSI_RESET}"
     [ "$UTILS_UNITTEST" ] || exit 1
   fi
 }
@@ -116,7 +124,7 @@ add_dependency() {
   # determine if BASE points to a valid release or branch
   if ! git ls-remote --quiet --exit-code --refs $repourl "$TAG"
   then
-    echo "$TAG is neither a tag nor a branch name for $DEP ($repourl)"
+    echo "${ANSI_RED}$TAG is neither a tag nor a branch name for $DEP ($repourl)${ANSI_RESET}"
     [ "$UTILS_UNITTEST" ] || exit 1
   fi
 
@@ -153,7 +161,7 @@ add_dependency() {
       then
         ( cd $CACHEDIR/$dirname-$TAG; "$curdir/$hook" )
       else
-        echo "Hook script $hook is not executable or does not exist."
+        echo "${ANSI_RED}Hook script $hook is not executable or does not exist.${ANSI_RESET}"
         exit 1
       fi
     fi

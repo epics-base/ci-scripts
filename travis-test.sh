@@ -17,7 +17,7 @@ readlinkf() { perl -MCwd -e 'print Cwd::abs_path shift' "$1"; }
 
 # test utilities
 die() {
-  echo $1
+  echo "${ANSI_RED}$1${ANSI_RESET}"
   exit 1
 }
 
