@@ -51,8 +51,8 @@ fold_start set.up.epics_build "Setting up EPICS build system"
 eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
 echo "EPICS_BASE=$EPICS_BASE"
 
-
-[ "$EPICS_HOST_ARCH" ] || EPICS_HOST_ARCH=$(sh $EPICS_BASE/startup/EpicsHostArch)
+[ -z "$EPICS_HOST_ARCH" -a -f $EPICS_BASE/src/tools/EpicsHostArch.pl ] && EPICS_HOST_ARCH=$(perl $EPICS_BASE/src/tools/EpicsHostArch.pl)
+[ -z "$EPICS_HOST_ARCH" -a -f $EPICS_BASE/startup/EpicsHostArch.pl ] && EPICS_HOST_ARCH=$(perl $EPICS_BASE/startup/EpicsHostArch.pl)
 echo "EPICS_HOST_ARCH=$EPICS_HOST_ARCH"
 
 if echo ${modules_to_compile} | grep -q "$EPICS_BASE"
