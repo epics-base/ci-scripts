@@ -86,22 +86,21 @@ matrix:
   - env: SET=test01 WINE=64 TEST=NO STATIC=YES
     compiler: mingw
 
+# dynamic (DLL) builds are broken on xenial
   - env: SET=test01 WINE=32 TEST=NO STATIC=NO
-    dist: trusty
+    dist: bionic
     compiler: mingw
 
   - env: SET=test01 WINE=64 TEST=NO STATIC=NO
-    dist: trusty
+    dist: bionic
     compiler: mingw
 
 # Cross-compilation to RTEMS
 # (needs EPICS Base >= 3.16.2)
 
   - env: SET=test01 RTEMS=4.10 TEST=NO
-    dist: trusty
 
   - env: SET=test01 RTEMS=4.9 TEST=NO
-    dist: trusty
 
 # Other gcc versions (adding as an extra package)
 
@@ -126,9 +125,14 @@ matrix:
 
   - env: BASE=R3.15.7 SET=test01
 
-  - env: BASE=R3.15.7 SET=test01 WINE=64 TEST=NO STATIC=NO
-    dist: trusty
+  - env: BASE=R3.15.7 SET=test01 WINE=64 TEST=NO STATIC=YES
+    dist: bionic
     compiler: mingw
+
+# The DLL build for this Base version is known to fail
+#  - env: BASE=R3.15.7 SET=test01 WINE=64 TEST=NO STATIC=NO
+#    dist: bionic
+#    compiler: mingw
 
 # Cross-compilation to RTEMS
 # (needs EPICS Base >= 3.16.2)
@@ -150,9 +154,14 @@ matrix:
 
   - env: BASE=R3.14.12.8 SET=test01
 
-  - env: BASE=R3.14.12.8 SET=test01 WINE=64 TEST=NO STATIC=NO
-    dist: trusty
+  - env: BASE=R3.14.12.8 SET=test01 WINE=64 TEST=NO STATIC=YES
+    dist: bionic
     compiler: mingw
+
+# The DLL build for this Base version is known to fail
+#  - env: BASE=R3.14.12.8 SET=test01 WINE=64 TEST=NO STATIC=NO
+#    dist: bionic
+#    compiler: mingw
 
 # SNCSEQ 2.2.7 fails to build on MacOS; currently needs master
   - env: BASE=R3.14.12.8 SET=test01 SNCSEQ=master
