@@ -31,7 +31,15 @@
     ```
 	
  5. Edit the `.travis.yml` configuration to include the jobs you want
-    Travis to run. (The examples are commented.)
+    Travis to run.
+
+    Build jobs are declared in the list following the `jobs: include:`
+    declaration. Each element (starting with `-` in column 3) defines the
+    settings for one build job. `env:` controls the setting of environment
+    variables,`dist:` specifies the Linux distribution,
+    `os:` the operating system.
+    Also see the comments in the examples for more hints, and the Travis-CI
+    documentation for more options and more details.
 	
  6. Push your changes and check
     [travis-ci.org](https://travis-ci.org/) for your build results.

@@ -49,13 +49,16 @@ example.
  - Use different compilers (gcc, clang)
  - Use different gcc versions
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10
+ - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.16.2)
  - Compile on MacOS
- - Released versions of dependencies are cached (for faster builds)
+ - Built dependencies are cached (for faster builds)
  
 ### How to Use the CI-Scripts
 
  1. Get an account on a supported CI service provider platform.
+    (e.g. [Travis-CI](https://travis-ci.org/),
+    Appveyor, Azure Pipelines...)
+
     (More details in the specific README of the subdirectory.)
 
  2. In your Support Module, add this ci-scripts respository
@@ -63,35 +66,57 @@ example.
     ```
     $ git submodule add https://github.com/epics-base/ci-scripts .ci
     ```
- 3. Create settings files for different sets of dependencies you
-    want to compile against. E.g., a settings file `foo.set`
-    specifying
+ 3. Create setup files for different sets of dependencies you
+    want to compile against. (See below.)
+
+    E.g., a setup file `stable.set` specifying
     ```
     MODULES="sncseq asyn"
 
-    BASE=R3.15.6
-    ASYN=master
-    SNCSEQ=R2-2-7
+    BASE=${BASE:-R3.15.6}
+    ASYN=${ASYN:-R4-34}
+    SNCSEQ=${SNCSEQ:-R2-2-7}
     ```
     will compile against the EPICS Base release 3.15.6, the Sequencer
-    release 2.2.7 and the latest commit on the `master` branch of asyn.
+    release 2.2.7 and release 4.34 of asyn.
+    (The `${VAR:-default}` form allows overriding from `.travis.yml`.)
 
  4. Create a configuration for the CI service by copying one of
     the examples provided in the service specific subdirectory
     and editing it to include the jobs you want the service to run.
-    Use your dependency settings by defining e.g. `SET=foo` in your jobs.
-	
+    Use your setup by defining e.g. `SET=stable` in the environment of
+    a job.
+
  5. Push your changes and check the CI service for your build results.
 
-## Settings File Syntax
+## Setup Files
 
-Settings files are sourced by the bash scripts. They are found by searching
+Your module might depend on EPICS Base and a few other support modules.
+(E.g., a specific driver might need StreamDevice, ASYN and the Sequencer.)
+In that case, building against every possible combination of released
+versions of those dependencies is not possible:
+Base (37) x StreamDevice (50) x ASYN (40) x Sequencer (51) would produce
+more than 3.7 million different combinations, i.e. build jobs.
+
+A more reasonable approach is to create a few setups, each being a
+combination of dependency releases, that do a few scans of the available
+"version space". One for the oldest versions you want to support, one or two
+for stable versions that many of your users have in production, one for the
+latest released versions and one for the development branches.
+
+## Setup File Syntax
+
+Setup files are sourced by the bash scripts. They are found by searching
 the locations in `SETUP_PATH` (space or colon separated list of directories,
 relative to your module's root directory).
 
+Setup files can include other setup files by calling `source_set <setup>`
+(omitting the `.set` extension of the setup file). The configured
+`SETUP_PATH` is searched for the include.
+
 `MODULES="<list of names>"` should list the dependencies (software modules)
 by using their well-known slugs, separated by spaces.
-EPICS Base (`BASE`) will always be a dependency and will be added and
+EPICS Base (slug: `base`) will always be a dependency and will be added and
 compiled first. The other dependencies are added and compiled in the order
 they are defined in `MODULES`.
 
@@ -106,6 +131,8 @@ the following settings can be configured:
 be a *tag* name (in that case the module is checked out into Travis' cache
 system) or a *branch* name (in that case the module is always checked out
 and recompiled as part of the job). [default: `master`]
+
+(Use the `${VAR:-default}` form to allow overriding from `.travis.yml`.)
 
 `FOO_REPONAME=<name>` Set the name of the remote repository as `<name>.git`.
 [default is the slug in lower case: `foo`]
@@ -139,7 +166,14 @@ the `RELEASE.local` files. [default is the slug in upper case: `FOO`]
 
 The ci-scripts module contains default settings for widely used modules, so
 that usually it is sufficient to set `FOO=<version>`.
+You can find the list of supported (and tested) modules in `defaults.set`.
 Feel free to suggest more default settings using a Pull Request.
+
+## Debugging
+
+Setting `VV=1` in your `.travis.yml` configuration for a specific job
+will run the job with high verbosity, printing every command as it is being
+executed and switching the dependency builds to higher verbosity.
 
 ## Release Numbering of this Module
 

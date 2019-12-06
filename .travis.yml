@@ -1,4 +1,4 @@
-# .travis.xml for testing EPICS Base ci-scripts
+# .travis.yml for testing EPICS Base ci-scripts
 # (see: https://github.com/epics-base/ci-scripts)
 
 # Note:
@@ -41,12 +41,20 @@ script:
 # Define build jobs
 
 # Well-known variables to use
-# BASE     branch or release tag name of the EPICS Base to use
+# SET      source setup file
 # EXTRA    content will be added to make command line
 # STATIC   set to YES for static build (default: NO)
 # TEST     set to NO to skip running the tests (default: YES)
+# VV       set to make build scripts verbose (default: unset)
 
-matrix:
+# Usually from setup files, but may be specified or overridden
+#  on a job line
+# MODULES  list of dependency modules
+# BASE     branch or release tag name of the EPICS Base to use
+# <MODULE> branch or release tag for a specific module
+# ...      see README for setup file syntax description
+
+jobs:
   include:
 
 # Run unit tests on Linux and Mac
