@@ -49,10 +49,12 @@ fold_end check.out.dependencies
 fold_start set.up.epics_build "Setting up EPICS build system"
 
 eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
+export EPICS_BASE
 echo "EPICS_BASE=$EPICS_BASE"
 
 [ -z "$EPICS_HOST_ARCH" -a -f $EPICS_BASE/src/tools/EpicsHostArch.pl ] && EPICS_HOST_ARCH=$(perl $EPICS_BASE/src/tools/EpicsHostArch.pl)
 [ -z "$EPICS_HOST_ARCH" -a -f $EPICS_BASE/startup/EpicsHostArch.pl ] && EPICS_HOST_ARCH=$(perl $EPICS_BASE/startup/EpicsHostArch.pl)
+export EPICS_HOST_ARCH
 echo "EPICS_HOST_ARCH=$EPICS_HOST_ARCH"
 
 if echo ${modules_to_compile} | grep -q "$EPICS_BASE"
