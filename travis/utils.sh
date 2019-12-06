@@ -121,8 +121,8 @@ add_dependency() {
   recursive=$(echo $recursive | tr 'A-Z' 'a-z')
   [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
 
-  # determine if BASE points to a valid release or branch
-  if ! git ls-remote --quiet --exit-code --refs $repourl "$TAG"
+  # determine if $DEP points to a valid release or branch
+  if ! git ls-remote --quiet --exit-code --refs $repourl "$TAG" > /dev/null 2>&1
   then
     echo "${ANSI_RED}$TAG is neither a tag nor a branch name for $DEP ($repourl)${ANSI_RESET}"
     [ "$UTILS_UNITTEST" ] || exit 1
@@ -132,7 +132,12 @@ add_dependency() {
   then
     [ -e $CACHEDIR/$dirname-$TAG/built ] && BUILT=$(cat $CACHEDIR/$dirname-$TAG/built) || BUILT="never"
     HEAD=$(cd "$CACHEDIR/$dirname-$TAG" && git log -n1 --pretty=format:%H)
-    [ "$HEAD" != "$BUILT" ] && rm -fr $CACHEDIR/$dirname-$TAG
+    if [ "$HEAD" != "$BUILT" ]
+    then
+      rm -fr $CACHEDIR/$dirname-$TAG
+    else
+      echo "Found $TAG of dependency $DEP in $CACHEDIR/$dirname-$TAG"
+    fi
   fi
 
   if [ ! -e $CACHEDIR/$dirname-$TAG ]
@@ -150,6 +155,7 @@ add_dependency() {
       deptharg="--depth $depth"
       ;;
     esac
+    echo "Cloning $TAG of dependency $DEP into $CACHEDIR/$dirname-$TAG"
     git clone --quiet $deptharg $recurse --branch "$TAG" $repourl $dirname-$TAG
     ( cd $dirname-$TAG && git log -n1 )
     modules_to_compile="${modules_to_compile} $CACHEDIR/$dirname-$TAG"
@@ -159,6 +165,7 @@ add_dependency() {
     then
       if [ -x "$curdir/$hook" ]
       then
+        echo "Running hook $hook in $CACHEDIR/$dirname-$TAG"
         ( cd $CACHEDIR/$dirname-$TAG; "$curdir/$hook" )
       else
         echo "${ANSI_RED}Hook script $hook is not executable or does not exist.${ANSI_RESET}"

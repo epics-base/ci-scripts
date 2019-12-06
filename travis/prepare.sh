@@ -46,11 +46,14 @@ fold_end check.out.dependencies
 # Set up compiler
 # ---------------
 
-fold_start set.up.compiler "Setting up compiler"
+fold_start set.up.epics_build "Setting up EPICS build system"
 
 eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
+echo "EPICS_BASE=$EPICS_BASE"
+
 
 [ "$EPICS_HOST_ARCH" ] || EPICS_HOST_ARCH=$(sh $EPICS_BASE/startup/EpicsHostArch)
+echo "EPICS_HOST_ARCH=$EPICS_HOST_ARCH"
 
 if echo ${modules_to_compile} | grep -q "$EPICS_BASE"
 then
@@ -146,7 +149,7 @@ EOF
   fi
 
 else
-echo "${ANSI_GREEN}EPICS build system already set up (Base was loaded from cache)${ANSI_RESET}"
+  echo "${ANSI_GREEN}EPICS build system already set up (Base was loaded from cache)${ANSI_RESET}"
 fi
 
 # Download RTEMS cross compiler
@@ -159,19 +162,41 @@ fi
 
 fold_end set.up.compiler
 
+echo "\$ make --version"
+make --version
+
 # Build required dependencies
 # ---------------------------
 
-fold_start build.dependencies "Rebuild missing dependencies"
+fold_start build.dependencies "Build missing/outdated dependencies"
 
 [ "$VV" ] && silent="-s" || silent=
 
+[ -z "$modules_to_compile" ] && echo "${ANSI_GREEN}All dependency modules are up-to-date (nothing to do)${ANSI_RESET}"
+
 for module in ${modules_to_compile}
 do
-  name=$(basename $module)
+  eval name=\${module#${CACHEDIR}/}
   fold_start build.$name "Build $name"
   make -j2 $silent -C $module $EXTRA
   fold_end build.$name
 done
 
 fold_end build.dependencies
+
+echo "${ANSI_BLUE}Dependency module information${ANSI_RESET}"
+
+echo "Module     Tag          Binaries    Commit"
+echo "-----------------------------------------------------------------------------------"
+for mod in base $MODULES
+do
+  mod_uc=$(echo $mod | tr 'a-z' 'A-Z')
+  eval tag=\${${mod_uc}}
+  eval dir=${CACHEDIR}/\${${mod_uc}_DIRNAME}-$tag
+  echo "$modules_to_compile" | grep -q "$dir" && stat="rebuilt" || stat="from cache"
+  commit=$(git -C $dir log -n1 --oneline)
+  printf "%-10s %-12s %-11s %s\n" "$mod" "$tag" "$stat" "$commit"
+done
+
+echo "${ANSI_BLUE}Contents of RELEASE.local${ANSI_RESET}"
+cat ${CACHEDIR}/RELEASE.local
