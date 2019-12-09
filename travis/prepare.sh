@@ -37,7 +37,7 @@ fold_start check.out.dependencies "Checking/cloning dependencies"
 for mod in BASE $MODULES
 do
   mod_uc=$(echo $mod | tr 'a-z' 'A-Z')
-  eval add_dependency $mod_uc \${${mod_uc}:-master}
+  eval add_dependency $mod_uc \${${mod_uc}:=master}
 done
 [ -e ./configure ] && cp ${CACHEDIR}/RELEASE.local ./configure/RELEASE.local
 
