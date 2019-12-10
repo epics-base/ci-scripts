@@ -71,15 +71,15 @@ example.
 
     E.g., a setup file `stable.set` specifying
     ```
-    MODULES="sncseq asyn"
+    MODULES=sncseq asyn
 
-    BASE=${BASE:-R3.15.6}
-    ASYN=${ASYN:-R4-34}
-    SNCSEQ=${SNCSEQ:-R2-2-7}
+    BASE=R3.15.6
+    ASYN=R4-34
+    SNCSEQ=R2-2-7
     ```
     will compile against the EPICS Base release 3.15.6, the Sequencer
     release 2.2.7 and release 4.34 of asyn.
-    (The `${VAR:-default}` form allows overriding from `.travis.yml`.)
+    (Any settings can be overridden from `.travis.yml`.)
 
  4. Create a configuration for the CI service by copying one of
     the examples provided in the service specific subdirectory
@@ -106,13 +106,18 @@ latest released versions and one for the development branches.
 
 ## Setup File Syntax
 
-Setup files are sourced by the bash scripts. They are found by searching
+Setup files are loaded by the bash scripts. They are found by searching
 the locations in `SETUP_PATH` (space or colon separated list of directories,
 relative to your module's root directory).
 
-Setup files can include other setup files by calling `source_set <setup>`
+Setup files can include other setup files by calling `include <setup>`
 (omitting the `.set` extension of the setup file). The configured
 `SETUP_PATH` is searched for the include.
+
+Any `VAR=value` setting of a variable is only executed if `VAR` is unset or
+empty. That way any settings can be overridden by settings in `.travis.yml`.
+
+Empty lines or lines starting with `#` are ignored.
 
 `MODULES="<list of names>"` should list the dependencies (software modules)
 by using their well-known slugs, separated by spaces.
@@ -131,8 +136,6 @@ the following settings can be configured:
 be a *tag* name (in that case the module is checked out into Travis' cache
 system) or a *branch* name (in that case the module is always checked out
 and recompiled as part of the job). [default: `master`]
-
-(Use the `${VAR:-default}` form to allow overriding from `.travis.yml`.)
 
 `FOO_REPONAME=<name>` Set the name of the remote repository as `<name>.git`.
 [default is the slug in lower case: `foo`]

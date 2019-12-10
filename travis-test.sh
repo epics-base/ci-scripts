@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Module ci-scripts unit tests
 
@@ -62,9 +62,20 @@ fn_exists add_dependency || die "function add_dependency missing from SCRIPTDIR/
 SETUP_DIRS= source_set test01 | grep -q "(SETUP_PATH) is empty" || die "empty search path not detected"
 source_set xxdoesnotexistxx | grep -q "does not exist" || die "missing setup file not detected"
 source_set test01 | grep -q "Loading setup file" || die "test01 setup file not found"
-BASE=foo
+unset SEEN_SETUPS
+export BASE=foo
 source_set test01
-[ "$BASE" = "foo" ] || die "preset module (BASE) version does not override test01 setup file"
+[ "$BASE" = "foo" ] || die "preset module BASE version does not override test01 setup file (expected foo got $BASE)"
+unset SEEN_SETUPS
+BASE=
+source_set test02
+[ "$BASE" = "foo" ] || die "BASE set in test02 does not override included test01 setup file (expected foo got $BASE)"
+[ "$FOO" = "bar" ] || die "Setting of single word does not work"
+[ "$FOO2" = "bar bar2" ] || die "Setting of multiple words does not work"
+[ "$FOO3" = "bar bar2" ] || die "Indented setting of multiple words does not work"
+[ "$SNCSEQ" = "R2-2-7" ] || die "Setup test01 was not included"
+unset SEEN_SETUPS
+source_set test03 | grep -q "Ignoring already included setup file" || die "test01 setup file included twice"
 
 # test default settings file
 ######################################################################

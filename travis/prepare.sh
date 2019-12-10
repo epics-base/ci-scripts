@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 # Set VV in .travis.yml to make scripts verbose

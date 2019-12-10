@@ -33,8 +33,9 @@ fold_end() {
 #
 # Source a settings file (extension .set) found in the SETUP_DIRS path
 # May be called recursively (from within a settings file)
+declare -a SEEN_SETUPS
 source_set() {
-  local set_file=$1
+  local set_file=${1//[$'\r']}
   local set_dir
   local found=0
   if [ -z "${SETUP_DIRS}" ]
@@ -46,8 +47,30 @@ source_set() {
   do
     if [ -e $set_dir/$set_file.set ]
     then
+      if [[ " ${SEEN_SETUPS[@]} " =~ " $set_dir/$set_file.set " ]]
+      then
+        echo "Ignoring already included setup file $set_dir/$set_file.set"
+        return
+      fi
+      SEEN_SETUPS+=($set_dir/$set_file.set)
       echo "Loading setup file $set_dir/$set_file.set"
-      . $set_dir/$set_file.set
+      local line
+      while read -r line
+      do
+        [ -z "$line" ] && continue
+        echo $line | grep -q "^#" && continue
+        if echo $line | grep -q "^include\W"
+        then
+          source_set $(echo $line | awk '{ print $2 }')
+          continue
+        fi
+        if echo "$line" | grep -q "^\w\+="
+        then
+          IFS== read var value <<< "${line//[$'\r']}"
+          value=$(sed "s/^\(\"\)\(.*\)\1\$/\2/g" <<< "$value") # remove surrounding quotes
+          eval [ "\${$var}" ] || eval "$var=\$value"
+        fi
+      done < $set_dir/$set_file.set
       found=1
       break
     fi

@@ -1,4 +1,4 @@
 MODULES="sncseq"
 
-BASE=${BASE:-7.0}
-SNCSEQ=${SNCSEQ:-R2-2-7}
+BASE=7.0
+SNCSEQ=R2-2-7
