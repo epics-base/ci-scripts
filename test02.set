@@ -1,0 +1,10 @@
+# a comment, then an empty line
+
+  # a comment that is indented
+BASE=foo
+# include an existing file
+include test01
+
+FOO=bar
+FOO2=bar bar2
+  FOO3=bar bar2

@@ -1,0 +1,4 @@
+# Check for avoiding multiple includions
+
+include test01
+include test01
