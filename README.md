@@ -1,3 +1,5 @@
+<a target="_blank" href="http://semver.org">![Version][badge.version]</a>
+
 # Continuous Integration Scripts for EPICS Modules
 
 The scripts inside this repository are intended to provide a common,
@@ -119,7 +121,7 @@ empty. That way any settings can be overridden by settings in `.travis.yml`.
 
 Empty lines or lines starting with `#` are ignored.
 
-`MODULES="<list of names>"` should list the dependencies (software modules)
+`MODULES=<list of names>` should list the dependencies (software modules)
 by using their well-known slugs, separated by spaces.
 EPICS Base (slug: `base`) will always be a dependency and will be added and
 compiled first. The other dependencies are added and compiled in the order
@@ -133,9 +135,7 @@ For any module mentioned as `foo` in the `MODULES` setting (and for `BASE`),
 the following settings can be configured:
 
 `FOO=<version>` Set version of the module that should be used. Must either
-be a *tag* name (in that case the module is checked out into Travis' cache
-system) or a *branch* name (in that case the module is always checked out
-and recompiled as part of the job). [default: `master`]
+be a *tag* name or a *branch* name. [default: `master`]
 
 `FOO_REPONAME=<name>` Set the name of the remote repository as `<name>.git`.
 [default is the slug in lower case: `foo`]
@@ -143,7 +143,8 @@ and recompiled as part of the job). [default: `master`]
 `FOO_REPOOWNER=<name>` Set the name of the GitHub owner (or organization)
 that the module repository can be found under.
 
-`FOO_REPOURL="<url>"` Set the complete URL of the remote repository.
+`FOO_REPOURL="<url>"` Set the complete URL of the remote repository. Useful
+for dependencies that are not hosted on GitHub.
 
 The default URL for the repository is pointing to GitHub, under
 `$FOO_REPOOWNER` else `$REPOOWNER` else `epics-modules`,
@@ -180,6 +181,8 @@ executed and switching the dependency builds to higher verbosity.
 
 ## Release Numbering of this Module
 
+The module uses [Semantic Versioning](https://semver.org/).
+
 Major release numbers refer to the API, which is more or less defined
 by the full configuration examples in the service specific
 subdirectories.
@@ -187,8 +190,8 @@ If one of these files has to be changed for the existing configuration
 options or important new options are being added, a new major release
 is created.
 
-Minor release numbers refer to bugfixes that should not require the
-configuration inside a user module to be changed.
+Minor release numbers refer to additions and enhancements that do not
+require the configuration inside an existing user module to be changed.
 
 Again: using the git submodule mechanism to include these scripts means
 that user modules always work with a fixed, frozen version.
@@ -196,3 +199,11 @@ I.e., developments in the ci-scripts repository will never break an\
 existing application.
 These release numbering considerations are just a hint to assess the
 risks when updating the submodule.
+
+## License
+
+This module is distributed subject to a Software License Agreement found
+in file LICENSE that is included with this distribution.
+
+<!-- Links -->
+[badge.version]: https://badge.fury.io/gh/epics-base%2Fci-scripts.png
