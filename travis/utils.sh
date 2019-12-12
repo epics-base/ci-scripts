@@ -22,7 +22,7 @@ export ANSI_CLEAR="\033[0K"
 # from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
 
 fold_start() {
-  echo -en "travis_fold:start:$1\\r${ANSI_YELLOW}$2${ANSI_RESET}"
+  echo -e "travis_fold:start:$1\\r${ANSI_YELLOW}$2${ANSI_RESET}"
 }
 
 fold_end() {
