@@ -151,7 +151,7 @@ EOF
   fi
 
 else
-  echo "${ANSI_GREEN}EPICS build system already set up (Base was loaded from cache)${ANSI_RESET}"
+  echo -e "${ANSI_GREEN}EPICS build system already set up (Base was loaded from cache)${ANSI_RESET}"
 fi
 
 # Download RTEMS cross compiler
@@ -174,7 +174,7 @@ fold_start build.dependencies "Build missing/outdated dependencies"
 
 [ "$VV" ] && silent="-s" || silent=
 
-[ -z "$modules_to_compile" ] && echo "${ANSI_GREEN}All dependency modules are up-to-date (nothing to do)${ANSI_RESET}"
+[ -z "$modules_to_compile" ] && echo -e "${ANSI_GREEN}All dependency modules are up-to-date (nothing to do)${ANSI_RESET}"
 
 for module in ${modules_to_compile}
 do
@@ -186,7 +186,7 @@ done
 
 fold_end build.dependencies
 
-echo "${ANSI_BLUE}Dependency module information${ANSI_RESET}"
+echo -e "${ANSI_BLUE}Dependency module information${ANSI_RESET}"
 
 echo "Module     Tag          Binaries    Commit"
 echo "-----------------------------------------------------------------------------------"
@@ -200,5 +200,5 @@ do
   printf "%-10s %-12s %-11s %s\n" "$mod" "$tag" "$stat" "$commit"
 done
 
-echo "${ANSI_BLUE}Contents of RELEASE.local${ANSI_RESET}"
+echo -e "${ANSI_BLUE}Contents of RELEASE.local${ANSI_RESET}"
 cat ${CACHEDIR}/RELEASE.local
