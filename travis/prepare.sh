@@ -7,8 +7,6 @@ set -e
 # Perl version of "readlink -f" (which MacOS does not provide)
 readlinkf() { perl -MCwd -e 'print Cwd::abs_path shift' "$1"; }
 
-SETUP_DIRS=$(echo $SETUP_PATH | tr ":" "\n")
-
 SCRIPTDIR=$(dirname $(readlinkf $0))
 CURDIR="$PWD"
 CACHEDIR="$HOME/.cache"

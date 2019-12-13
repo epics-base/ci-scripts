@@ -36,15 +36,15 @@ die() {
 
 # source_set(settings)
 #
-# Source a settings file (extension .set) found in the SETUP_DIRS path
+# Source a settings file (extension .set) found in SETUP_PATH
 # May be called recursively (from within a settings file)
 declare -a SEEN_SETUPS
 source_set() {
   local set_file=${1//[$'\r']}
   local set_dir
   local found=0
-  [ "${SETUP_DIRS}" ] || die "Search path for setup files (SETUP_PATH) is empty"
-  for set_dir in ${SETUP_DIRS}
+  [ "${SETUP_PATH}" ] || die "Search path for setup files (SETUP_PATH) is empty"
+  for set_dir in $(echo $SETUP_PATH | tr ":" "\n")
   do
     if [ -e $set_dir/$set_file.set ]
     then
@@ -76,7 +76,7 @@ source_set() {
       break
     fi
   done
-  [ $found -ne 0 ] || die "Setup file $set_file.set does not exist in SETUP_DIRS search path ($SETUP_DIRS)"
+  [ $found -ne 0 ] || die "Setup file $set_file.set does not exist in SETUP_PATH search path ($SETUP_PATH)"
 }
 
 # update_release_local(varname, place)
