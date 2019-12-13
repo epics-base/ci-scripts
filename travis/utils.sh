@@ -40,7 +40,7 @@ source_set() {
   local found=0
   if [ -z "${SETUP_DIRS}" ]
   then
-    echo "${ANSI_RED}Search path for setup files (SETUP_PATH) is empty${ANSI_RESET}"
+    echo -e "${ANSI_RED}Search path for setup files (SETUP_PATH) is empty${ANSI_RESET}"
     [ "$UTILS_UNITTEST" ] || exit 1
   fi
   for set_dir in ${SETUP_DIRS}
@@ -77,7 +77,7 @@ source_set() {
   done
   if [ $found -eq 0 ]
   then
-    echo "${ANSI_RED}Setup file $set_file.set does not exist in SETUP_DIRS search path ($SETUP_DIRS)${ANSI_RESET}"
+    echo -e "${ANSI_RED}Setup file $set_file.set does not exist in SETUP_DIRS search path ($SETUP_DIRS)${ANSI_RESET}"
     [ "$UTILS_UNITTEST" ] || exit 1
   fi
 }
@@ -147,7 +147,7 @@ add_dependency() {
   # determine if $DEP points to a valid release or branch
   if ! git ls-remote --quiet --exit-code --refs $repourl "$TAG" > /dev/null 2>&1
   then
-    echo "${ANSI_RED}$TAG is neither a tag nor a branch name for $DEP ($repourl)${ANSI_RESET}"
+    echo -e "${ANSI_RED}$TAG is neither a tag nor a branch name for $DEP ($repourl)${ANSI_RESET}"
     [ "$UTILS_UNITTEST" ] || exit 1
   fi
 
@@ -191,7 +191,7 @@ add_dependency() {
         echo "Running hook $hook in $CACHEDIR/$dirname-$TAG"
         ( cd $CACHEDIR/$dirname-$TAG; "$curdir/$hook" )
       else
-        echo "${ANSI_RED}Hook script $hook is not executable or does not exist.${ANSI_RESET}"
+        echo -e "${ANSI_RED}Hook script $hook is not executable or does not exist.${ANSI_RESET}"
         exit 1
       fi
     fi
