@@ -29,6 +29,11 @@ fold_end() {
   echo -en "travis_fold:end:$1\\r"
 }
 
+die() {
+  echo -e "${ANSI_RED}$1${ANSI_RESET}"
+  [ "$UTILS_UNITTEST" ] || exit 1
+}
+
 # source_set(settings)
 #
 # Source a settings file (extension .set) found in the SETUP_DIRS path
@@ -38,11 +43,7 @@ source_set() {
   local set_file=${1//[$'\r']}
   local set_dir
   local found=0
-  if [ -z "${SETUP_DIRS}" ]
-  then
-    echo -e "${ANSI_RED}Search path for setup files (SETUP_PATH) is empty${ANSI_RESET}"
-    [ "$UTILS_UNITTEST" ] || exit 1
-  fi
+  [ "${SETUP_DIRS}" ] || die "Search path for setup files (SETUP_PATH) is empty"
   for set_dir in ${SETUP_DIRS}
   do
     if [ -e $set_dir/$set_file.set ]
@@ -75,11 +76,7 @@ source_set() {
       break
     fi
   done
-  if [ $found -eq 0 ]
-  then
-    echo -e "${ANSI_RED}Setup file $set_file.set does not exist in SETUP_DIRS search path ($SETUP_DIRS)${ANSI_RESET}"
-    [ "$UTILS_UNITTEST" ] || exit 1
-  fi
+  [ $found -ne 0 ] || die "Setup file $set_file.set does not exist in SETUP_DIRS search path ($SETUP_DIRS)"
 }
 
 # update_release_local(varname, place)
@@ -145,11 +142,8 @@ add_dependency() {
   [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
 
   # determine if $DEP points to a valid release or branch
-  if ! git ls-remote --quiet --exit-code --refs $repourl "$TAG" > /dev/null 2>&1
-  then
-    echo -e "${ANSI_RED}$TAG is neither a tag nor a branch name for $DEP ($repourl)${ANSI_RESET}"
-    [ "$UTILS_UNITTEST" ] || exit 1
-  fi
+  git ls-remote --quiet --exit-code --refs $repourl "$TAG" > /dev/null 2>&1 ||
+    die "$TAG is neither a tag nor a branch name for $DEP ($repourl)"
 
   if [ -e $CACHEDIR/$dirname-$TAG ]
   then
@@ -191,8 +185,7 @@ add_dependency() {
         echo "Running hook $hook in $CACHEDIR/$dirname-$TAG"
         ( cd $CACHEDIR/$dirname-$TAG; "$curdir/$hook" )
       else
-        echo -e "${ANSI_RED}Hook script $hook is not executable or does not exist.${ANSI_RESET}"
-        exit 1
+        die "Hook script $hook is not executable or does not exist."
       fi
     fi
     HEAD=$(cd "$CACHEDIR/$dirname-$TAG" && git log -n1 --pretty=format:%H)
