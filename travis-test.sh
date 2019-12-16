@@ -27,7 +27,7 @@ fn_exists() {
 
 repo_exists() {
   DEP=$1
-  dep_lc=$(echo $DEP | tr 'A-Z' 'a-z')
+  dep_lc=${DEP,,}
   eval dirname=\${${DEP}_DIRNAME:=${dep_lc}}
   eval reponame=\${${DEP}_REPONAME:=${dep_lc}}
   eval repourl=\${${DEP}_REPOURL:="https://github.com/\${${DEP}_REPOOWNER:=${REPOOWNER:-epics-modules}}/${reponame}.git"}
@@ -35,7 +35,7 @@ repo_exists() {
   git ls-remote --quiet --heads --exit-code $repourl > /dev/null 2>&1
 }
 
-SETUP_DIRS=$(echo $SETUP_PATH | tr ":" "\n")
+SETUP_DIRS=${SETUP_PATH//:/ }
 
 SCRIPTDIR=$(dirname $(readlinkf $0))/travis
 CURDIR="$PWD"

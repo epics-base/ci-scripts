@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+if [ "$TRAVIS_OS_NAME" == "osx" -a "$BASH_VERSINFO" -lt 4 ]
+then
+    brew install bash
+    if [ $(/usr/local/bin/bash -c 'echo $BASH_VERSINFO') -lt 4 ]
+    then
+        echo "Failed to install a recent bash" >&2
+        exit 1
+    fi
+    exec /usr/local/bin/bash $0 "$@"
+fi
+
 # Set VV in .travis.yml to make scripts verbose
 [ "$VV" ] && set -x
 
@@ -13,6 +24,8 @@ CACHEDIR="$HOME/.cache"
 
 # source functions
 . $SCRIPTDIR/utils.sh
+
+echo -e "${ANSI_YELLOW}Using bash version $BASH_VERSION${ANSI_RESET}"
 
 # Load settings
 # -------------
@@ -34,7 +47,7 @@ fold_start check.out.dependencies "Checking/cloning dependencies"
 
 for mod in BASE $MODULES
 do
-  mod_uc=$(echo $mod | tr 'a-z' 'A-Z')
+  mod_uc=${mod^^}
   eval add_dependency $mod_uc \${${mod_uc}:=master}
 done
 [ -e ./configure ] && cp ${CACHEDIR}/RELEASE.local ./configure/RELEASE.local
@@ -190,7 +203,7 @@ echo "Module     Tag          Binaries    Commit"
 echo "-----------------------------------------------------------------------------------"
 for mod in base $MODULES
 do
-  mod_uc=$(echo $mod | tr 'a-z' 'A-Z')
+  mod_uc=${mod^^}
   eval tag=\${${mod_uc}}
   eval dir=${CACHEDIR}/\${${mod_uc}_DIRNAME}-$tag
   echo "$modules_to_compile" | grep -q "$dir" && stat="rebuilt" || stat="from cache"
