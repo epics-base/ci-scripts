@@ -27,6 +27,11 @@ addons:
     - g++-mingw-w64-i686
     - g++-mingw-w64-x86-64
     - qemu-system-x86
+  homebrew:
+    packages:
+    - re2c
+    - bash
+    update: true
 
 install:
   - ./travis/prepare.sh
@@ -126,7 +131,6 @@ jobs:
   - env: SET=test01 SNCSEQ=master
     os: osx
     compiler: clang
-    addons: { homebrew: { packages: ["re2c"], update: true } }
 
 # Base 3.15 builds
 # ================
@@ -155,7 +159,6 @@ jobs:
   - env: BASE=R3.15.7 SET=test01 SNCSEQ=master
     os: osx
     compiler: clang
-    addons: { homebrew: { packages: ["re2c"], update: true } }
 
 # Base 3.14 builds
 # ================
@@ -175,4 +178,3 @@ jobs:
   - env: BASE=R3.14.12.8 SET=test01 SNCSEQ=master
     os: osx
     compiler: clang
-    addons: { homebrew: { packages: ["re2c"], update: true } }

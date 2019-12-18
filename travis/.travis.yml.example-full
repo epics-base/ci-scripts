@@ -29,6 +29,13 @@ addons:
     - g++-mingw-w64-x86-64
     # for RTEMS cross builds
     - qemu-system-x86
+  homebrew:
+    packages:
+    # for all EPICS builds
+    - bash
+    # for the sequencer
+    - re2c
+    update: true
 
 install:
   - ./.ci/travis/prepare.sh
@@ -108,4 +115,3 @@ jobs:
   - env: BASE=7.0
     os: osx
     compiler: clang
-    addons: { homebrew: { packages: ["re2c"], update: true } }
