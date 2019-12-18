@@ -44,7 +44,7 @@ source_set() {
   local set_dir
   local found=0
   [ "${SETUP_PATH}" ] || die "Search path for setup files (SETUP_PATH) is empty"
-  for set_dir in $(echo $SETUP_PATH | tr ":" "\n")
+  for set_dir in ${SETUP_PATH//:/ }
   do
     if [ -e $set_dir/$set_file.set ]
     then
@@ -132,13 +132,13 @@ add_dependency() {
   curdir="$PWD"
   DEP=$1
   TAG=$2
-  dep_lc=$(echo $DEP | tr 'A-Z' 'a-z')
+  dep_lc=${DEP,,}
   eval dirname=\${${DEP}_DIRNAME:=${dep_lc}}
   eval reponame=\${${DEP}_REPONAME:=${dep_lc}}
   eval repourl=\${${DEP}_REPOURL:="https://github.com/\${${DEP}_REPOOWNER:=${REPOOWNER:-epics-modules}}/${reponame}.git"}
   eval varname=\${${DEP}_VARNAME:=${DEP}}
   eval recursive=\${${DEP}_RECURSIVE:=1}
-  recursive=$(echo $recursive | tr 'A-Z' 'a-z')
+  recursive=${recursive,,}
   [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
 
   # determine if $DEP points to a valid release or branch
