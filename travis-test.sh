@@ -158,6 +158,7 @@ add_dependency BASE R3.15.6
 [ -e $location/LICENSE ] || die "Missing dependency was not checked out"
 BUILT=$(cat "$location/built")
 [ "$BUILT" != "$hash_3_15_6" ] && die "Wrong commit of dependency checked out (expected=\"$hash_3_15_6\" found=\"$BUILT\")"
+grep -q "include \$(TOP)/../RELEASE.local" $location/configure/RELEASE && die "RELEASE in Base includes RELEASE.local"
 
 # up-to-date dependency does exist in the cache
 ( cd $CACHEDIR; git clone --quiet --depth 5 --recursive --branch R3.15.6 https://github.com/epics-base/epics-base.git base-R3.15.6 )
@@ -172,4 +173,10 @@ add_dependency BASE R3.15.6
 BUILT=$(cat "$location/built")
 [ "$BUILT" != "$hash_3_15_6" ] && die "Wrong commit of dependency checked out (expected=\"$hash_3_15_6\" found=\"$BUILT\")"
 
+rm -fr $location
+
+# missing inclusion of RELEASE.local in configure/RELEASE
+location=$CACHEDIR/std-R3-4
+add_dependency STD R3-4
+grep -q "include \$(TOP)/../RELEASE.local" $location/configure/RELEASE || die "Inclusion of RELEASE.local not added to configure/RELEASE"
 rm -fr $location

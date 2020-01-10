@@ -176,6 +176,15 @@ add_dependency() {
     git clone --quiet $deptharg $recurse --branch "$TAG" $repourl $dirname-$TAG
     ( cd $dirname-$TAG && git log -n1 )
     modules_to_compile="${modules_to_compile} $CACHEDIR/$dirname-$TAG"
+    # fix non-base modules that do not include the .local files in configure/RELEASE
+    if [ $DEP != "BASE" ]
+    then
+      release=$CACHEDIR/$dirname-$TAG/configure/RELEASE
+      if [ -e $release ]
+      then
+        grep -q "include \$(TOP)/../RELEASE.local" $release || echo "-include \$(TOP)/../RELEASE.local" >> $release
+      fi
+    fi
     # run hook
     eval hook="\${${DEP}_HOOK}"
     if [ "$hook" ]
