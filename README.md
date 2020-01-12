@@ -55,7 +55,7 @@ example.
  - Compile on MacOS
  - Built dependencies are cached (for faster builds)
  
-### How to Use the CI-Scripts
+## How to Use the CI-Scripts
 
  1. Get an account on a supported CI service provider platform.
     (e.g. [Travis-CI](https://travis-ci.org/),
@@ -181,7 +181,7 @@ executed and switching the dependency builds to higher verbosity.
 
 ## Release Numbering of this Module
 
-The module uses [Semantic Versioning](https://semver.org/).
+The module tries to apply [Semantic Versioning](https://semver.org/).
 
 Major release numbers refer to the API, which is more or less defined
 by the full configuration examples in the service specific
