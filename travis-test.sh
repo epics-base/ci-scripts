@@ -98,6 +98,7 @@ repo_exists AUTOSAVE || die "Defaults for AUTOSAVE do not point to a valid git r
 repo_exists BUSY || die "Defaults for BUSY do not point to a valid git repository at $repourl"
 repo_exists SSCAN || die "Defaults for SSCAN do not point to a valid git repository at $repourl"
 repo_exists IOCSTATS || die "Defaults for IOCSTATS do not point to a valid git repository at $repourl"
+repo_exists MOTOR || die "Defaults for MOTOR do not point to a valid git repository at $repourl"
 
 # test update_release_local()
 ######################################################################
