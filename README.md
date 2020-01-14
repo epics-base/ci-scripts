@@ -1,4 +1,5 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
+<a target="_blank" href="https://travis-ci.org/epics-base/ci-scripts">![Travis status][badge.travis]</a>
 
 # Continuous Integration Scripts for EPICS Modules
 
@@ -54,7 +55,7 @@ example.
  - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.16.2)
  - Compile on MacOS
  - Built dependencies are cached (for faster builds)
- 
+
 ## How to Use the CI-Scripts
 
  1. Get an account on a supported CI service provider platform.
@@ -179,6 +180,25 @@ Setting `VV=1` in your `.travis.yml` configuration for a specific job
 will run the job with high verbosity, printing every command as it is being
 executed and switching the dependency builds to higher verbosity.
 
+## References: User Modules
+
+EPICS: [PCAS module](https://github.com/epics-modules/pcas)
+
+EPICS Base: [pvData](https://github.com/epics-base/pvDataCPP),
+[pvAccess](https://github.com/epics-base/pvAccessCPP),
+[pva2pva](https://github.com/epics-base/pva2pva)
+
+ESS: [Motor driver (model 3) for EtherCAT Motion Controller](https://github.com/EuropeanSpallationSource/m-epics-ethercatmc)
+
+ITER: [OPC UA Device Support](https://github.com/ralphlange/opcua)
+
+## Frequently Asked Questions
+
+**How can I see what the dependency jobs are actually doing?**
+
+Set `VV=1` in the configuration line of the job you are interested in.
+This will make all builds (not just for your module) verbose.
+
 ## Release Numbering of this Module
 
 The module tries to apply [Semantic Versioning](https://semver.org/).
@@ -195,7 +215,7 @@ require the configuration inside an existing user module to be changed.
 
 Again: using the git submodule mechanism to include these scripts means
 that user modules always work with a fixed, frozen version.
-I.e., developments in the ci-scripts repository will never break an\
+I.e., developments in the ci-scripts repository will never break an
 existing application.
 These release numbering considerations are just a hint to assess the
 risks when updating the submodule.
@@ -206,4 +226,5 @@ This module is distributed subject to a Software License Agreement found
 in file LICENSE that is included with this distribution.
 
 <!-- Links -->
-[badge.version]: https://badge.fury.io/gh/epics-base%2Fci-scripts.png
+[badge.version]: https://badge.fury.io/gh/epics-base%2Fci-scripts.svg
+[badge.travis]: https://travis-ci.org/epics-base/ci-scripts.svg?branch=master
