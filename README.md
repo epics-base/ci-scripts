@@ -9,10 +9,10 @@ software modules, e.g. Device or Driver Support modules.
 
 By including this repository as a Git Submodule, you will be able to
 use the same flexible, powerful CI setup that EPICS Bases uses,
-including a mechanism to specify sets of dependent modules
+including a way to specify sets of dependent modules
 (with versions) that you want to compile your module against.
 
-By using the submodule mechnism, your module will always use an
+By using the submodule mechanism, your module will always use an
 explicit commit, i.e. a fixed version of the scripts.
 This ensures that any further development of the ci-scripts will
 never break existing use.
@@ -60,15 +60,16 @@ example.
 
  1. Get an account on a supported CI service provider platform.
     (e.g. [Travis-CI](https://travis-ci.org/),
-    Appveyor, Azure Pipelines...)
+    AppVeyor, Azure Pipelines...)
 
     (More details in the specific README of the subdirectory.)
 
- 2. In your Support Module, add this ci-scripts respository
+ 2. In your Support Module, add this ci-scripts repository
     as a Git Submodule (name suggestion: `.ci`).
+    ```bash
+    git submodule add https://github.com/epics-base/ci-scripts .ci
     ```
-    $ git submodule add https://github.com/epics-base/ci-scripts .ci
-    ```
+
  3. Create setup files for different sets of dependencies you
     want to compile against. (See below.)
 
@@ -194,10 +195,30 @@ ITER: [OPC UA Device Support](https://github.com/ralphlange/opcua)
 
 ## Frequently Asked Questions
 
-**How can I see what the dependency jobs are actually doing?**
+**How can I see what the dependency building jobs are actually doing?**
 
 Set `VV=1` in the configuration line of the job you are interested in.
 This will make all builds (not just for your module) verbose.
+
+**How do I update my module to use a newer release of ci-scripts?**
+
+Update the submodule in `.ci` first, then change your CI configuration
+(if needed) and commit both to your module. E.g., to update your Travis
+setup to release 2.1.0 of ci-scripts:
+```bash
+cd .ci
+git pull origin v2.1.0
+cd -
+git add .ci
+  # if needed:
+  edit .travis.yml
+  git add .travis.yml
+git commit -m "Update ci-scripts submodule to v2.1.0"
+```
+
+Check the example configuration files inside ci-scripts (and their
+changes) to see what might be needed and/or interesting to change
+in your configuration.
 
 ## Release Numbering of this Module
 
