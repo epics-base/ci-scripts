@@ -128,6 +128,9 @@ by using their well-known slugs, separated by spaces.
 EPICS Base (slug: `base`) will always be a dependency and will be added and
 compiled first. The other dependencies are added and compiled in the order
 they are defined in `MODULES`.
+Modules needed only for specific jobs (e.g., on specific architectures)
+can be added in the main configuration file by setting `ADD_MODULES`
+for the specific job(s).
 
 `REPOOWNER=<name>` sets the default GitHub owner (or organization) for all
 dependency modules. Useful if you want to compile against a complete set

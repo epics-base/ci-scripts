@@ -46,7 +46,7 @@ fold_end load.settings
 
 fold_start check.out.dependencies "Checking/cloning dependencies"
 
-for mod in BASE $MODULES
+for mod in BASE $MODULES $ADD_MODULES
 do
   mod_uc=${mod^^}
   eval add_dependency $mod_uc \${${mod_uc}:=master}
@@ -202,7 +202,7 @@ echo -e "${ANSI_BLUE}Dependency module information${ANSI_RESET}"
 
 echo "Module     Tag          Binaries    Commit"
 echo "-----------------------------------------------------------------------------------"
-for mod in base $MODULES
+for mod in base $MODULES $ADD_MODULES
 do
   mod_uc=${mod^^}
   eval tag=\${${mod_uc}}

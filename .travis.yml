@@ -74,7 +74,8 @@ jobs:
 
   - env: SET=test01
 
-  - env: SET=test01
+# On the side: test ADD_MODULES
+  - env: SET=test01 ADD_MODULES=ipac
     compiler: clang
 
   - env: VV="" SET=test01
