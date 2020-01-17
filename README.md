@@ -77,13 +77,14 @@ example.
     ```
     MODULES=sncseq asyn
 
-    BASE=R3.15.6
+    BASE=3.15
     ASYN=R4-34
     SNCSEQ=R2-2-7
     ```
-    will compile against the EPICS Base release 3.15.6, the Sequencer
+    will compile against the EPICS Base 3.15 branch, the Sequencer
     release 2.2.7 and release 4.34 of asyn.
-    (Any settings can be overridden from `.travis.yml`.)
+    (Any settings can be overridden from the specific job configuration
+    in e.g. `.travis.yml`.)
 
  4. Create a configuration for the CI service by copying one of
     the examples provided in the service specific subdirectory
@@ -110,7 +111,7 @@ latest released versions and one for the development branches.
 
 ## Setup File Syntax
 
-Setup files are loaded by the bash scripts. They are found by searching
+Setup files are loaded by the build scripts. They are found by searching
 the locations in `SETUP_PATH` (space or colon separated list of directories,
 relative to your module's root directory).
 
@@ -119,7 +120,8 @@ Setup files can include other setup files by calling `include <setup>`
 `SETUP_PATH` is searched for the include.
 
 Any `VAR=value` setting of a variable is only executed if `VAR` is unset or
-empty. That way any settings can be overridden by settings in `.travis.yml`.
+empty. That way any settings can be overridden by settings in the main
+configuration (e.g., `.travis.yml`).
 
 Empty lines or lines starting with `#` are ignored.
 
@@ -184,13 +186,13 @@ Setting `VV=1` in your `.travis.yml` configuration for a specific job
 will run the job with high verbosity, printing every command as it is being
 executed and switching the dependency builds to higher verbosity.
 
-## References: User Modules
-
-EPICS: [PCAS module](https://github.com/epics-modules/pcas)
+## References: EPICS Modules Using ci-scripts
 
 EPICS Base: [pvData](https://github.com/epics-base/pvDataCPP),
 [pvAccess](https://github.com/epics-base/pvAccessCPP),
 [pva2pva](https://github.com/epics-base/pva2pva)
+
+EPICS Modules: [PCAS](https://github.com/epics-modules/pcas)
 
 ESS: [Motor driver (model 3) for EtherCAT Motion Controller](https://github.com/EuropeanSpallationSource/m-epics-ethercatmc)
 
