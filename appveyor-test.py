@@ -5,7 +5,7 @@
 # SET=test00 in .appveyor.yml runs the tests in this script
 # all other jobs are started as compile jobs
 
-import sys, os
+import sys, os, fileinput
 import unittest
 
 sys.path.append('appveyor')
@@ -56,11 +56,63 @@ class TestSourceSet(unittest.TestCase):
         self.assertEqual(do.setup['SNCSEQ'], 'R2-2-7', 'Setup test01 was not included')
 
 
+class TestUpdateReleaseLocal(unittest.TestCase):
 
+    release_local = os.path.join(do.cachedir, 'RELEASE.local')
+
+    def setUp(self):
+        if os.path.exists(self.release_local):
+            os.remove(self.release_local)
+
+    def test_SetModule(self):
+        do.update_release_local('MOD1', '/foo/bar')
+        found = 0
+        for line in fileinput.input(self.release_local, inplace=1):
+            if 'MOD1=' in line:
+                self.assertEqual(line.strip(), 'MOD1=/foo/bar', 'MOD1 not set correctly')
+                found += 1
+        fileinput.close()
+        self.assertEqual(found, 1, 'MOD1 not written once to RELEASE.local (found {0})'.format(found))
+
+    def test_SetBaseAndMultipleModules(self):
+        do.update_release_local('EPICS_BASE', '/bar/foo')
+        do.update_release_local('MOD1', '/foo/bar')
+        do.update_release_local('MOD2', '/foo/bar2')
+        do.update_release_local('MOD1', '/foo/bar1')
+        foundmod1 = 0
+        foundmod2 = 0
+        foundbase = 0
+        for line in fileinput.input(self.release_local, inplace=1):
+            if 'MOD1=' in line:
+                self.assertEqual(line.strip(), 'MOD1=/foo/bar1',
+                                 'MOD1 not set correctly (expected \'MOD1=/foo/bar1\' found \'{0}\')'
+                                 .format(line))
+                foundmod1 += 1
+                foundmod1at = fileinput.filelineno()
+            if 'MOD2=' in line:
+                self.assertEqual(line.strip(), 'MOD2=/foo/bar2',
+                                 'MOD2 not set correctly (expected \'MOD2=/foo/bar2\' found \'{0}\')'
+                                 .format(line))
+                foundmod2 += 1
+                foundmod2at = fileinput.filelineno()
+            if 'EPICS_BASE=' in line:
+                self.assertEqual(line.strip(), 'EPICS_BASE=/bar/foo',
+                                 'EPICS_BASE not set correctly (expected \'EPICS_BASE=/bar/foo\' found \'{0}\')'
+                                 .format(line))
+                foundbase += 1
+                foundbaseat = fileinput.filelineno()
+        fileinput.close()
+        self.assertEqual(foundmod1, 1, 'MOD1 does not appear once in RELEASE.local (found {0})'.format(foundmod1))
+        self.assertEqual(foundmod2, 1, 'MOD2 does not appear once in RELEASE.local (found {0})'.format(foundmod2))
+        self.assertEqual(foundbase, 1, 'EPICS_BASE does not appear once in RELEASE.local (found {0})'.format(foundbase))
+        self.assertGreater(foundbaseat, foundmod2at,
+                           'EPICS_BASE (line {0}) appears before MOD2 (line {1})'.format(foundbaseat, foundmod2at))
+        self.assertGreater(foundmod2at, foundmod1at,
+                           'MOD2 (line {0}) appears before MOD1 (line {1})'.format(foundmod2at, foundmod1at))
 
 
 
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestSourceSet)
-    unittest.TextTestRunner(verbosity=2).run(suite)
-#    unittest.main()
+#    suite = unittest.TestLoader().loadTestsFromTestCase(TestUpdateReleaseLocal)
+#    unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.main()

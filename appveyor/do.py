@@ -2,11 +2,12 @@
 """Windows (AppVeyor) ci build script
 """
 
-import sys, os
+from __future__ import print_function
+
+import sys, os, fileinput
 import logging
 import subprocess as SP
 import distutils.util
-from glob import glob
 
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -20,6 +21,12 @@ ANSI_CLEAR = "\033[0K"
 
 seen_setups = []
 setup = {}
+if 'HomeDrive' in os.environ:
+    cachedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.cache')
+elif 'HOME' in os.environ:
+    cachedir = os.path.join(os.getenv('HOME'), '.cache')
+else:
+    cachedir = os.path.join('.', '.cache')
 
 # Used from unittests
 def clear_lists():
@@ -30,7 +37,7 @@ def clear_lists():
 #
 # Source a settings file (extension .set) found in the setup_dirs path
 # May be called recursively (from within a setup file)
-def source_set(args):
+def source_set(set):
     found = False
 
     setup_dirs = os.getenv('SETUP_PATH', "").replace(':', ' ').split()
@@ -38,7 +45,7 @@ def source_set(args):
         raise NameError("{0}Search path for setup files (SETUP_PATH) is empty{1}".format(ANSI_RED,ANSI_RESET))
 
     for set_dir in setup_dirs:
-        set_file = os.path.join(set_dir, args) + ".set"
+        set_file = os.path.join(set_dir, set) + ".set"
 
         if set_file in seen_setups:
             print("Ignoring already included setup file {0}".format(set_file))
@@ -69,6 +76,66 @@ def source_set(args):
     if not found:
         raise NameError("{0}Setup file {1} does not exist in SETUP_PATH search path ({2}){3}"
                         .format(ANSI_RED,set_file,setup_dirs,ANSI_RESET))
+
+# update_release_local(var, place)
+#   var    name of the variable to set in RELEASE.local
+#   place  place (absolute path) of where variable should point to
+#
+# Manipulate RELEASE.local in the cache location:
+# - replace "$var=$place" line if it exists and has changed
+# - otherwise add "$var=$place" line and possibly move EPICS_BASE=... line to the end
+def update_release_local(var, place):
+    release_local = os.path.join(cachedir, 'RELEASE.local')
+    updated_line = '{0}={1}'.format(var, place)
+
+    if not os.path.exists(release_local):
+        logging.debug('RELEASE.local does not exist, creating it')
+        try:
+            os.makedirs(cachedir)
+        except:
+            pass
+        fout = open(release_local, 'w')
+        fout.close()
+    base_line = ''
+    found = False
+    logging.debug('Opening RELEASE.local for adding {0}={1}'.format(var, place))
+    for line in fileinput.input(release_local, inplace=1):
+        if 'EPICS_BASE=' in line:
+            logging.debug('Found EPICS_BASE line \'{0}\', not writing it'.format(line.strip()))
+            base_line = line.strip()
+            continue
+        elif '{0}='.format(var) in line:
+            logging.debug('Found \'{0}=\' line, replacing'.format(var))
+            found = True
+            line = updated_line
+        logging.debug('Writing line to RELEASE.local: \'{0}\''.format(line))
+        print(line)
+    fileinput.close()
+    fout = open(release_local,"a")
+    if not found:
+        logging.debug('Adding new definition: \'{0}\''.format(updated_line))
+        print(updated_line, file=fout)
+    if base_line:
+        logging.debug('Writing EPICS_BASE line: \'{0}\''.format(base_line))
+        print(base_line, file=fout)
+    fout.close()
+
+# add_dependency(dep, tag)
+#
+# Add a dependency to the cache area:
+# - check out (recursive if configured) in the CACHE area unless it already exists and the
+#   required commit has been built
+# - Defaults:
+#   $dep_DIRNAME = lower case ($dep)
+#   $dep_REPONAME = lower case ($dep)
+#   $dep_REPOURL = GitHub / $dep_REPOOWNER (or $REPOOWNER or epics-modules) / $dep_REPONAME .git
+#   $dep_VARNAME = $dep
+#   $dep_DEPTH = 5
+#   $dep_RECURSIVE = 1/YES (0/NO to for a flat clone)
+# - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
+# - Add full path to $modules_to_compile
+def add_dependency(dep, tag):
+    pass
 
 def prepare(args):
     print(sys.version)
