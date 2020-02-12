@@ -182,7 +182,7 @@ add_dependency() {
       release=$CACHEDIR/$dirname-$TAG/configure/RELEASE
       if [ -e $release ]
       then
-        grep -q "include \$(TOP)/../RELEASE.local" $release || echo "-include \$(TOP)/../RELEASE.local" >> $release
+        echo "-include \$(TOP)/../RELEASE.local" > $release
       fi
     fi
     # run hook
