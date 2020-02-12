@@ -46,7 +46,7 @@ fold_end load.settings
 
 fold_start check.out.dependencies "Checking/cloning dependencies"
 
-for mod in BASE $MODULES $ADD_MODULES
+for mod in BASE $ADD_MODULES $MODULES
 do
   mod_uc=${mod^^}
   eval add_dependency $mod_uc \${${mod_uc}:=master}
