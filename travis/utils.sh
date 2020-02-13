@@ -114,7 +114,7 @@ update_release_local() {
   fi
 }
 
-# add_dependency(dep, tag)
+# add_dependency(dep, tag, sha_previous)
 #
 # Add a dependency to the cache area:
 # - check out (recursive if configured) in the CACHE area unless it already exists and the
@@ -132,6 +132,7 @@ add_dependency() {
   curdir="$PWD"
   DEP=$1
   TAG=$2
+  SHA_PREV_MODS="$3"
   dep_lc=${DEP,,}
   eval dirname=\${${DEP}_DIRNAME:=${dep_lc}}
   eval reponame=\${${DEP}_REPONAME:=${dep_lc}}
@@ -142,14 +143,17 @@ add_dependency() {
   [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
 
   # determine if $DEP points to a valid release or branch
-  git ls-remote --quiet --exit-code --refs $repourl "$TAG" > /dev/null 2>&1 ||
+  git ls-remote --quiet --exit-code --refs $repourl "$TAG" > remoteref ||
     die "$TAG is neither a tag nor a branch name for $DEP ($repourl)"
 
   if [ -e $CACHEDIR/$dirname-$TAG ]
   then
     [ -e $CACHEDIR/$dirname-$TAG/built ] && BUILT=$(cat $CACHEDIR/$dirname-$TAG/built) || BUILT="never"
     HEAD=$(cd "$CACHEDIR/$dirname-$TAG" && git log -n1 --pretty=format:%H)
-    if [ "$HEAD" != "$BUILT" ]
+    REMOTE_HEAD=$(sed -e "s/[	 ].*//"  remoteref)
+    rm -f remoteref
+    SHA_NEW=$(echo $SHA_PREV_MODS $REMOTE_HEAD | shasum | tr -d ' -')
+    if [ "$SHA_NEW" != "$BUILT" ]
     then
       rm -fr $CACHEDIR/$dirname-$TAG
     else
@@ -198,9 +202,16 @@ add_dependency() {
       fi
     fi
     HEAD=$(cd "$CACHEDIR/$dirname-$TAG" && git log -n1 --pretty=format:%H)
-    echo "$HEAD" > "$CACHEDIR/$dirname-$TAG/built"
-    cd "$curdir"
+    SHA_NEW=$(echo $SHA_PREV_MODS $HEAD | shasum | tr -d ' -')
+    echo $SHA_NEW > "$CACHEDIR/$dirname-$TAG/built"
+  else
+    cd $CACHEDIR/$dirname-$TAG
+    # This is the return value if the function
+    HEAD=$(cd "$CACHEDIR/$dirname-$TAG" && git log -n1 --pretty=format:%H)
+    SHA_NEW=$(echo $SHA_PREV_MODS $HEAD | shasum | tr -d ' -')
   fi
+  cd "$curdir"
 
   update_release_local ${varname} $CACHEDIR/$dirname-$TAG
+  sha_accumulated=$SHA_NEW
 }

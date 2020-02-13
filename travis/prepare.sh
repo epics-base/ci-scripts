@@ -47,10 +47,11 @@ fold_end load.settings
 
 fold_start check.out.dependencies "Checking/cloning dependencies"
 
+sha_accumulated=""
 for mod in BASE $ADD_MODULES $MODULES
 do
   mod_uc=${mod^^}
-  eval add_dependency $mod_uc \${${mod_uc}:=master}
+  eval add_dependency $mod_uc \${${mod_uc}:=master} $sha_accumulated
 done
 [ -e ./configure ] && cp ${CACHEDIR}/RELEASE.local ./configure/RELEASE.local
 
