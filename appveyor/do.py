@@ -4,9 +4,9 @@
 
 from __future__ import print_function
 
-import sys, os, fileinput
+import sys, os, shutil, fileinput
 import logging
-import subprocess as SP
+import subprocess as sp
 import distutils.util
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,9 @@ ANSI_RESET = "\033[0m"
 ANSI_CLEAR = "\033[0K"
 
 seen_setups = []
+modules_to_compile = []
 setup = {}
+
 if 'HomeDrive' in os.environ:
     cachedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.cache')
 elif 'HOME' in os.environ:
@@ -32,21 +34,23 @@ else:
 # Used from unittests
 def clear_lists():
     del seen_setups[:]
+    del modules_to_compile[:]
     setup.clear()
 
 # source_set(setup)
 #
 # Source a settings file (extension .set) found in the setup_dirs path
 # May be called recursively (from within a setup file)
-def source_set(set):
+def source_set(name):
     found = False
 
+    # allowed separators: colon or whitespace
     setup_dirs = os.getenv('SETUP_PATH', "").replace(':', ' ').split()
     if len(setup_dirs) == 0:
         raise NameError("{0}Search path for setup files (SETUP_PATH) is empty{1}".format(ANSI_RED,ANSI_RESET))
 
     for set_dir in setup_dirs:
-        set_file = os.path.join(set_dir, set) + ".set"
+        set_file = os.path.join(set_dir, name) + ".set"
 
         if set_file in seen_setups:
             print("Ignoring already included setup file {0}".format(set_file))
@@ -100,16 +104,17 @@ def update_release_local(var, place):
     found = False
     logger.debug("Opening RELEASE.local for adding '%s'", updated_line)
     for line in fileinput.input(release_local, inplace=1):
+        outputline = line.strip()
         if 'EPICS_BASE=' in line:
-            logger.debug("Found EPICS_BASE line '%s', not writing it", base_line)
             base_line = line.strip()
+            logger.debug("Found EPICS_BASE line '%s', not writing it", base_line)
             continue
         elif '{0}='.format(var) in line:
             logger.debug("Found '%s=' line, replacing", var)
             found = True
-            line = updated_line
+            outputline = updated_line
         logger.debug("Writing line to RELEASE.local: '%s'", outputline)
-        print(line)
+        print(outputline)
     fileinput.close()
     fout = open(release_local,"a")
     if not found:
@@ -119,6 +124,19 @@ def update_release_local(var, place):
         logger.debug("Writing EPICS_BASE line: '%s'", base_line)
         print(base_line, file=fout)
     fout.close()
+
+def set_setup_from_env(dep):
+    for postf in ['_DIRNAME', '_REPONAME', '_REPOOWNER', '_REPOURL',
+                  '_VARNAME', '_RECURSIVE', '_DEPTH', '_HOOK']:
+        if dep+postf in os.environ:
+            setup[dep+postf] = os.getenv(dep+postf)
+
+def call_git(args, **kws):
+    logger.debug("EXEC '%s' in %s", ' '.join(['git'] + args), os.getcwd())
+    sys.stdout.flush()
+    exitcode = sp.call(['git'] + args, **kws)
+    logger.debug('EXEC DONE')
+    return exitcode
 
 # add_dependency(dep, tag)
 #
@@ -135,7 +153,87 @@ def update_release_local(var, place):
 # - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
 # - Add full path to $modules_to_compile
 def add_dependency(dep, tag):
-    pass
+    curdir = os.getcwd()
+    set_setup_from_env(dep)
+    setup.setdefault(dep+"_DIRNAME", dep.lower())
+    setup.setdefault(dep+"_REPONAME", dep.lower())
+    setup.setdefault('REPOOWNER', 'epics-modules')
+    setup.setdefault(dep+"_REPOOWNER", setup['REPOOWNER'])
+    setup.setdefault(dep+"_REPOURL", 'https://github.com/{0}/{1}.git'
+                     .format(setup[dep+'_REPOOWNER'], setup[dep+'_REPONAME']))
+    setup.setdefault(dep+"_VARNAME", dep)
+    setup.setdefault(dep+"_RECURSIVE", 1)
+    setup.setdefault(dep+"_DEPTH", -1)
+    if setup[dep+'_RECURSIVE'] not in [0, 'no']:
+        recursearg = "--recursive"
+    else:
+        recursearg = ''
+
+    # determine if dep points to a valid release or branch
+    if call_git(['ls-remote', '--quiet', '--exit-code', '--refs', setup[dep+'_REPOURL'], tag]):
+        raise RuntimeError("{0}{1} is neither a tag nor a branch name for {2} ({3}){4}"
+                           .format(ANSI_RED, tag, dep, setup[dep+'_REPOURL'], ANSI_RESET))
+
+    dirname = setup[dep+'_DIRNAME']+'-{0}'.format(tag)
+    place = os.path.join(cachedir, dirname)
+    checked_file = os.path.join(place, "checked_out")
+    if os.path.isdir(place):
+        logger.debug('Dependency %s: directory %s exists, comparing checked-out commit', dep, place)
+        # check HEAD commit against the hash in marker file
+        if os.path.exists(checked_file):
+            with open(checked_file, 'r') as bfile:
+                checked_out = bfile.read().strip()
+            bfile.close()
+        else:
+            checked_out = 'never'
+        head = sp.check_output(['cd {0}; git log -n1 --pretty=format:%H'.format(place)], shell=True)
+        logger.debug('Found checked_out commit %s, git head is %s', checked_out, head)
+        if head != checked_out:
+            logger.debug('Dependency %s out of date - removing', dep)
+            shutil.rmtree(place)
+        else:
+            print('Found {0} of dependency {1} up-to-date in {2}'.format(tag, dep, place))
+
+    if not os.path.isdir(place):
+        if not os.path.isdir(cachedir):
+            os.makedirs(cachedir)
+        # clone dependency
+        os.chdir(cachedir)
+        deptharg = {
+            -1:['--depth', '5'],
+            0:[],
+        }.get(setup[dep+'_DEPTH'], ['--depth', setup[dep+'_DEPTH']])
+        print('Cloning {0} of dependency {1} into {2}'
+              .format(tag, dep, place))
+        call_git(['clone', '--quiet'] + deptharg + [recursearg, '--branch', tag, setup[dep+'_REPOURL'], dirname])
+        sp.check_call(['cd {0}; git log -n1'.format(place)], shell=True)
+        modules_to_compile.append(place)
+
+        # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE
+        if dep != 'BASE':
+            release = os.path.join(place, "configure", "RELEASE")
+            if os.path.exists(release):
+                fout = open(release, 'w')
+                print('-include $(TOP)/../RELEASE.local', file=fout)
+                fout.close()
+
+        # run hook if defined
+        if dep+'_HOOK' in setup:
+            hook = os.path.join(place, setup[dep+'_HOOK'])
+            if os.path.exists(hook):
+                print('Running hook {0} in {1}'.format(setup[dep+'_HOOK'], place))
+                os.chdir(place)
+                sp.check_call(hook, shell=True)
+
+        # write checked out commit hash to marker file
+        head = sp.check_output(['cd {0}; git log -n1 --pretty=format:%H'.format(place)], shell=True)
+        logger.debug('Writing hash of checked-out dependency (%s) to marker file', head)
+        with open(checked_file, "w") as fout:
+            print(head, file=fout)
+        fout.close()
+
+    update_release_local(setup[dep+"_VARNAME"], place)
+    os.chdir(curdir)
 
 def prepare(args):
     print(sys.version)
@@ -145,9 +243,12 @@ def prepare(args):
     print('platform = ', distutils.util.get_platform())
 
     print('{0}Loading setup files{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    source_set(default)
+    source_set('default')
     if 'SET' in os.environ:
         source_set(os.environ['SET'])
+
+    # we're working with tags (detached heads) a lot: suppress advice
+    call_git(['config', '--global', 'advice.detachedHead', 'false'])
 
     print('Installing dependencies')
 

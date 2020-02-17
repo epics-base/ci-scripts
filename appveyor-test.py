@@ -5,8 +5,18 @@
 # SET=test00 in .appveyor.yml runs the tests in this script
 # all other jobs are started as compile jobs
 
-import sys, os, fileinput
+from __future__ import print_function
+
+import sys, os, shutil, fileinput
+import re
 import unittest
+
+def find_in_file(regex, filename):
+    file = open (filename, "r")
+    for line in file:
+        if re.search(regex, line):
+            return True
+    return False
 
 def getStringIO():
     if (sys.version_info > (3, 0)):
@@ -18,6 +28,9 @@ def getStringIO():
 
 sys.path.append('appveyor')
 import do
+
+# we're working with tags (detached heads) a lot: suppress advice
+do.call_git(['config', '--global', 'advice.detachedHead', 'false'])
 
 class TestSourceSet(unittest.TestCase):
 
@@ -101,34 +114,94 @@ class TestUpdateReleaseLocal(unittest.TestCase):
                 self.assertEqual(line.strip(), 'MOD1=/foo/bar1',
                                  'MOD1 not set correctly (expected \'MOD1=/foo/bar1\' found \'{0}\')'
                                  .format(line))
-                found['mod1'] += 1
+                if 'mod1' in found:
+                    found['mod1'] += 1
+                else:
+                    found['mod1'] = 1
                 foundat['mod1'] = fileinput.filelineno()
             if 'MOD2=' in line:
                 self.assertEqual(line.strip(), 'MOD2=/foo/bar2',
                                  'MOD2 not set correctly (expected \'MOD2=/foo/bar2\' found \'{0}\')'
                                  .format(line))
-                found['mod2'] += 1
+                if 'mod2' in found:
+                    found['mod2'] += 1
+                else:
+                    found['mod2'] = 1
                 foundat['mod2'] = fileinput.filelineno()
             if 'EPICS_BASE=' in line:
                 self.assertEqual(line.strip(), 'EPICS_BASE=/bar/foo',
                                  'EPICS_BASE not set correctly (expected \'EPICS_BASE=/bar/foo\' found \'{0}\')'
                                  .format(line))
-                found['base'] += 1
+                if 'base' in found:
+                    found['base'] += 1
+                else:
+                    found['base'] = 1
                 foundat['base'] = fileinput.filelineno()
         fileinput.close()
-        self.assertEqual(found['mod1'], 1, 'MOD1 does not appear once in RELEASE.local (found {0})'.format(found['mod1']))
-        self.assertEqual(found['mod2'], 1, 'MOD2 does not appear once in RELEASE.local (found {0})'.format(found['mod2']))
-        self.assertEqual(found['base'], 1, 'EPICS_BASE does not appear once in RELEASE.local (found {0})'.format(found['base']))
+        self.assertEqual(found['mod1'], 1,
+                         'MOD1 does not appear once in RELEASE.local (found {0})'.format(found['mod1']))
+        self.assertEqual(found['mod2'], 1,
+                         'MOD2 does not appear once in RELEASE.local (found {0})'.format(found['mod2']))
+        self.assertEqual(found['base'], 1,
+                         'EPICS_BASE does not appear once in RELEASE.local (found {0})'.format(found['base']))
         self.assertGreater(foundat['base'], foundat['mod2'],
-                           'EPICS_BASE (line {0}) appears before MOD2 (line {1})'.format(foundat['base'], foundat['mod2']))
+                           'EPICS_BASE (line {0}) appears before MOD2 (line {1})'
+                           .format(foundat['base'], foundat['mod2']))
         self.assertGreater(foundat['mod2'], foundat['mod1'],
                            'MOD2 (line {0}) appears before MOD1 (line {1})'.format(foundat['mod2'], foundat['mod1']))
 
+class TestAddDependency(unittest.TestCase):
 
+    hash_3_15_6 = "ce7943fb44beb22b453ddcc0bda5398fadf72096"
+    location = os.path.join(do.cachedir, 'base-R3.15.6')
+    licensefile = os.path.join(location, 'LICENSE')
+    checked_file = os.path.join(location, 'checked_out')
+    release_file = os.path.join(location, 'configure', 'RELEASE')
 
+    def setUp(self):
+        os.environ['SETUP_PATH'] = '.:appveyor'
+        if os.path.exists(self.location):
+            shutil.rmtree(self.location)
+        do.clear_lists()
+        do.source_set('defaults')
+
+    def test_MissingDependency(self):
+        do.add_dependency('BASE', 'R3.15.6')
+        self.assertTrue(os.path.exists(self.licensefile), 'Missing dependency was not checked out')
+        self.assertTrue(os.path.exists(self.checked_file), 'Checked-out commit marker was not written')
+        with open(self.checked_file, 'r') as bfile:
+            checked_out = bfile.read().strip()
+        bfile.close()
+        self.assertEqual(checked_out, self.hash_3_15_6,
+                         'Wrong commit of dependency checked out (expected=\"{0}\" found=\"{1}\")'
+                         .format(self.hash_3_15_6, checked_out))
+        self.assertFalse(find_in_file('include \$\(TOP\)/../RELEASE.local', self.release_file),
+                         'RELEASE in Base includes TOP/../RELEASE.local')
+
+    def test_UpToDateDependency(self):
+        do.add_dependency('BASE', 'R3.15.6')
+        os.remove(self.licensefile)
+        do.add_dependency('BASE', 'R3.15.6')
+        self.assertFalse(os.path.exists(self.licensefile), 'Check out on top of existing up-to-date dependency')
+
+    def test_OutdatedDependency(self):
+        do.add_dependency('BASE', 'R3.15.6')
+        os.remove(self.licensefile)
+        with open(self.checked_file, "w") as fout:
+            print('XXX not the right hash XXX', file=fout)
+        fout.close()
+        do.add_dependency('BASE', 'R3.15.6')
+        self.assertTrue(os.path.exists(self.licensefile), 'No check-out on top of out-of-date dependency')
+        with open(self.checked_file, 'r') as bfile:
+            checked_out = bfile.read().strip()
+        bfile.close()
+        self.assertEqual(checked_out, self.hash_3_15_6,
+                         "Wrong commit of dependency checked out (expected='{0}' found='{1}')"
+                         .format(self.hash_3_15_6, checked_out))
 
 if __name__ == "__main__":
 #    suite = unittest.TestLoader().loadTestsFromTestCase(TestSourceSet)
 #    suite = unittest.TestLoader().loadTestsFromTestCase(TestUpdateReleaseLocal)
+#    suite = unittest.TestLoader().loadTestsFromTestCase(TestAddDependency)
 #    unittest.TextTestRunner(verbosity=2).run(suite)
     unittest.main()
