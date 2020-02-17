@@ -1,5 +1,10 @@
 /QtC-*
+
 *.orig
 *.log
 .*.swp
 *.autosave
+
+/.idea/
+*.py[cod]
+__pycache__/
