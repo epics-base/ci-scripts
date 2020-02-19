@@ -186,7 +186,7 @@ def add_dependency(dep, tag):
             bfile.close()
         else:
             checked_out = 'never'
-        head = sp.check_output(['cd {0}; git log -n1 --pretty=format:%H'.format(place)], shell=True)
+        head = sp.check_output(['cd {0}; git log -n1 --pretty=format:%H'.format(place)], shell=True).decode()
         logger.debug('Found checked_out commit %s, git head is %s', checked_out, head)
         if head != checked_out:
             logger.debug('Dependency %s out of date - removing', dep)
@@ -226,7 +226,7 @@ def add_dependency(dep, tag):
                 sp.check_call(hook, shell=True)
 
         # write checked out commit hash to marker file
-        head = sp.check_output(['cd {0}; git log -n1 --pretty=format:%H'.format(place)], shell=True)
+        head = sp.check_output(['cd {0}; git log -n1 --pretty=format:%H'.format(place)], shell=True).decode()
         logger.debug('Writing hash of checked-out dependency (%s) to marker file', head)
         with open(checked_file, "w") as fout:
             print(head, file=fout)
