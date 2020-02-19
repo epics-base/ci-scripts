@@ -11,6 +11,8 @@ import sys, os, shutil, fileinput
 import re
 import unittest
 
+builddir = os.getcwd()
+
 def find_in_file(regex, filename):
     file = open (filename, "r")
     for line in file:
@@ -39,6 +41,7 @@ class TestSourceSet(unittest.TestCase):
         if 'BASE' in os.environ:
             del os.environ['BASE']
         do.clear_lists()
+        os.chdir(builddir)
 
     def test_EmptySetupDirsPath(self):
         del os.environ['SETUP_PATH']
@@ -91,6 +94,7 @@ class TestUpdateReleaseLocal(unittest.TestCase):
     def setUp(self):
         if os.path.exists(self.release_local):
             os.remove(self.release_local)
+        os.chdir(builddir)
 
     def test_SetModule(self):
         do.update_release_local('MOD1', '/foo/bar')
@@ -163,6 +167,7 @@ class TestAddDependency(unittest.TestCase):
         if os.path.exists(self.location):
             shutil.rmtree(self.location)
         do.clear_lists()
+        os.chdir(builddir)
         do.source_set('defaults')
 
     def test_MissingDependency(self):
