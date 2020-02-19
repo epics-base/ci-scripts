@@ -9,6 +9,7 @@ import logging
 import subprocess as SP
 import distutils.util
 
+logger = logging.getLogger(__name__)
 #logging.basicConfig(level=logging.DEBUG)
 
 # Setup ANSI Colors
@@ -56,19 +57,18 @@ def source_set(set):
             print("Loading setup file {0}".format(set_file))
             with open(set_file) as fp:
                 for line in fp:
-                    logging.debug('Next line: {0}'.format(line.strip()))
+                    logger.debug('Next line: %s', line.strip())
                     if not line.strip() or line.strip()[0] == '#':
                         continue
                     if line.startswith("include"):
-                        logging.debug('Found an include, reading {0}'.format(line.split()[1]))
+                        logger.debug('Found an include, reading %s', line.split()[1])
                         source_set(line.split()[1])
                         continue
                     assign = line.replace('"', '').strip().split("=", 1)
-                    logging.debug('Interpreting as assignment')
-                    if assign[0] not in setup:
-                        setup[assign[0]] = os.getenv(assign[0], "")
+                    logger.debug('Interpreting as assignment')
+                    setup.setdefault(assign[0], os.getenv(assign[0], ""))
                     if not setup[assign[0]].strip():
-                        logging.debug('Doing assignment: {0} = {1}'.format(assign[0], assign[1]))
+                        logger.debug('Doing assignment: %s = %s', assign[0], assign[1])
                         setup[assign[0]] = assign[1]
             found = True
             break
@@ -89,7 +89,7 @@ def update_release_local(var, place):
     updated_line = '{0}={1}'.format(var, place)
 
     if not os.path.exists(release_local):
-        logging.debug('RELEASE.local does not exist, creating it')
+        logger.debug('RELEASE.local does not exist, creating it')
         try:
             os.makedirs(cachedir)
         except:
@@ -98,25 +98,25 @@ def update_release_local(var, place):
         fout.close()
     base_line = ''
     found = False
-    logging.debug('Opening RELEASE.local for adding {0}={1}'.format(var, place))
+    logger.debug("Opening RELEASE.local for adding '%s'", updated_line)
     for line in fileinput.input(release_local, inplace=1):
         if 'EPICS_BASE=' in line:
-            logging.debug('Found EPICS_BASE line \'{0}\', not writing it'.format(line.strip()))
+            logger.debug("Found EPICS_BASE line '%s', not writing it", base_line)
             base_line = line.strip()
             continue
         elif '{0}='.format(var) in line:
-            logging.debug('Found \'{0}=\' line, replacing'.format(var))
+            logger.debug("Found '%s=' line, replacing", var)
             found = True
             line = updated_line
-        logging.debug('Writing line to RELEASE.local: \'{0}\''.format(line))
+        logger.debug("Writing line to RELEASE.local: '%s'", outputline)
         print(line)
     fileinput.close()
     fout = open(release_local,"a")
     if not found:
-        logging.debug('Adding new definition: \'{0}\''.format(updated_line))
+        logger.debug("Adding new definition: '%s'", updated_line)
         print(updated_line, file=fout)
     if base_line:
-        logging.debug('Writing EPICS_BASE line: \'{0}\''.format(base_line))
+        logger.debug("Writing EPICS_BASE line: '%s'", base_line)
         print(base_line, file=fout)
     fout.close()
 
