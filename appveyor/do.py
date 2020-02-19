@@ -10,7 +10,7 @@ import subprocess as sp
 import distutils.util
 
 logger = logging.getLogger(__name__)
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 # Setup ANSI Colors
 ANSI_RED = "\033[31;1m"
@@ -79,7 +79,7 @@ def source_set(name):
 
     if not found:
         raise NameError("{0}Setup file {1} does not exist in SETUP_PATH search path ({2}){3}"
-                        .format(ANSI_RED,set_file,setup_dirs,ANSI_RESET))
+                        .format(ANSI_RED, name, setup_dirs, ANSI_RESET))
 
 # update_release_local(var, place)
 #   var    name of the variable to set in RELEASE.local
