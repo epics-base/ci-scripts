@@ -4,7 +4,8 @@
 
 from __future__ import print_function
 
-import sys, os, shutil, fileinput
+import sys, os, stat, shutil
+import fileinput
 import logging
 import subprocess as sp
 import distutils.util
@@ -36,6 +37,11 @@ def clear_lists():
     del seen_setups[:]
     del modules_to_compile[:]
     setup.clear()
+
+# Error-handler to make shutil.rmtree delete read-only files on Windows
+def remove_readonly(func, path, excinfo):
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
 
 # source_set(setup)
 #
@@ -190,7 +196,7 @@ def add_dependency(dep, tag):
         logger.debug('Found checked_out commit %s, git head is %s', checked_out, head)
         if head != checked_out:
             logger.debug('Dependency %s out of date - removing', dep)
-            shutil.rmtree(place)
+            shutil.rmtree(place, onerror=remove_readonly)
         else:
             print('Found {0} of dependency {1} up-to-date in {2}'.format(tag, dep, place))
 

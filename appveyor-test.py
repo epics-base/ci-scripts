@@ -165,7 +165,7 @@ class TestAddDependency(unittest.TestCase):
     def setUp(self):
         os.environ['SETUP_PATH'] = '.:appveyor'
         if os.path.exists(self.location):
-            shutil.rmtree(self.location)
+            shutil.rmtree(self.location, onerror=do.remove_readonly)
         do.clear_lists()
         os.chdir(builddir)
         do.source_set('defaults')
