@@ -4,7 +4,7 @@ set -e
 # Set VV in .travis.yml to make scripts verbose
 [ "$VV" ] && set -x
 
-CACHEDIR="$HOME/.cache"
+CACHEDIR=${CACHEDIR:-${HOME}/.cache}
 
 eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
 export EPICS_BASE

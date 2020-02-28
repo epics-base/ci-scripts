@@ -1,6 +1,7 @@
 # Utility functions for Travis scripts in ci-scripts
 #
 # This file is sourced by the executable scripts
+# CACHEDIR must be defined and existing before calling these functions
 
 # Portable version of 'sed -i'  (that MacOS doesn't provide)
 

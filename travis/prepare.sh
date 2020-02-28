@@ -21,7 +21,8 @@ readlinkf() { perl -MCwd -e 'print Cwd::abs_path shift' "$1"; }
 
 SCRIPTDIR=$(dirname $(readlinkf $0))
 CURDIR="$PWD"
-CACHEDIR="$HOME/.cache"
+CACHEDIR=${CACHEDIR:-${HOME}/.cache}
+[ -e ${CACHEDIR} ] || mkdir -p ${CACHEDIR}
 
 # source functions
 . $SCRIPTDIR/utils.sh

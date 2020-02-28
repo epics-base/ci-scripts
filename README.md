@@ -186,6 +186,9 @@ Setting `VV=1` in your `.travis.yml` configuration for a specific job
 will run the job with high verbosity, printing every command as it is being
 executed and switching the dependency builds to higher verbosity.
 
+For local debugging, you may set `CACHEDIR` to change the location for the
+dependency builds. [default is `$HOME/.cache`]
+
 ## References: EPICS Modules Using ci-scripts
 
 EPICS Base: [pvData](https://github.com/epics-base/pvDataCPP),

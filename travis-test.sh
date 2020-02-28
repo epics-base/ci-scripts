@@ -39,7 +39,8 @@ SETUP_DIRS=${SETUP_PATH//:/ }
 
 SCRIPTDIR=$(dirname $(readlinkf $0))/travis
 CURDIR="$PWD"
-CACHEDIR="$HOME/.cache"
+CACHEDIR=${CACHEDIR:-${HOME}/.cache}
+[ -e ${CACHEDIR} ] || mkdir -p ${CACHEDIR}
 
 echo "Testing contents of utils.sh"
 
