@@ -140,7 +140,12 @@ add_dependency() {
   eval varname=\${${DEP}_VARNAME:=${DEP}}
   eval recursive=\${${DEP}_RECURSIVE:=1}
   recursive=${recursive,,}
-  [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
+  if [ "$recursive" != "0" -a "$recursive" != "no" ]
+  then
+    recurse="--recursive"
+  else
+    recurse=""
+  fi
 
   # determine if $DEP points to a valid release or branch
   git ls-remote --quiet --exit-code --refs $repourl "$TAG" > /dev/null 2>&1 ||
