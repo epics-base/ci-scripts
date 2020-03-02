@@ -162,19 +162,31 @@ add_dependency BASE R3.15.6
 BUILT=$(cat "$location/built")
 [ "$BUILT" != "$hash_3_15_6" ] && die "Wrong commit of dependency checked out (expected=\"$hash_3_15_6\" found=\"$BUILT\")"
 grep -q "include \$(TOP)/../RELEASE.local" $location/configure/RELEASE && die "RELEASE in Base includes RELEASE.local"
+[ "$do_recompile" ] || die "do_recompile flag was not set for missing dependency"
+echo "$modules_to_compile" | grep -q "$location" || die "Missing dependency was not set to compile"
 
 # up-to-date dependency does exist in the cache
 ( cd $CACHEDIR; git clone --quiet --depth 5 --recursive --branch R3.15.6 https://github.com/epics-base/epics-base.git base-R3.15.6 )
 rm -f $location/LICENSE
+unset do_recompile; modules_to_compile=
 add_dependency BASE R3.15.6
 [ -e $location/LICENSE ] && die "Existing correct dependency was checked out on top"
+[ "$do_recompile" ] && die "do_recompile flag was set for up-to-date dependency"
+echo "$modules_to_compile" | grep -q "$location" && die "Up-to-date dependency was set to compile"
+
+do_recompile=yes
+add_dependency BASE R3.15.6
+echo "$modules_to_compile" | grep -q "$location" || die "Up-to-date module was not set to compile wile do_recompile=yes"
 
 # dependency in the cache is outdated
 echo "nottherighthash" > "$location/built"
+unset do_recompile
 add_dependency BASE R3.15.6
 [ -e $location/LICENSE ] || die "Outdated dependency was not checked out"
 BUILT=$(cat "$location/built")
 [ "$BUILT" != "$hash_3_15_6" ] && die "Wrong commit of dependency checked out (expected=\"$hash_3_15_6\" found=\"$BUILT\")"
+[ "$do_recompile" ] || die "do_recompile flag was not set for outdated dependency"
+echo "$modules_to_compile" | grep -q "$location" || die "Outdated dependency was not set to compile"
 
 rm -fr $CACHEDIR/*; modules_to_compile=
 

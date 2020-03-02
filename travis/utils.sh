@@ -177,7 +177,7 @@ add_dependency() {
     echo "Cloning $TAG of dependency $DEP into $CACHEDIR/$dirname-$TAG"
     git clone --quiet $deptharg $recurse --branch "$TAG" $repourl $dirname-$TAG
     ( cd $dirname-$TAG && git log -n1 )
-    modules_to_compile="${modules_to_compile} $CACHEDIR/$dirname-$TAG"
+    do_recompile=yes
     # fix non-base modules that do not include the .local files in configure/RELEASE
     if [ $DEP != "BASE" ]
     then
@@ -203,6 +203,8 @@ add_dependency() {
     echo "$HEAD" > "$CACHEDIR/$dirname-$TAG/built"
     cd "$curdir"
   fi
+
+  [ "${do_recompile}" ] && modules_to_compile="${modules_to_compile} $CACHEDIR/$dirname-$TAG"
 
   update_release_local ${varname} $CACHEDIR/$dirname-$TAG
 }
