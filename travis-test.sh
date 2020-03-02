@@ -156,7 +156,7 @@ location=$CACHEDIR/base-R3.15.6
 # CAREFUL: order of the following check matters (speeds up the test)
 
 # dependency does not exist in the cache
-rm -fr $location
+rm -fr $location; modules_to_compile=
 add_dependency BASE R3.15.6
 [ -e $location/LICENSE ] || die "Missing dependency was not checked out"
 BUILT=$(cat "$location/built")
@@ -176,10 +176,26 @@ add_dependency BASE R3.15.6
 BUILT=$(cat "$location/built")
 [ "$BUILT" != "$hash_3_15_6" ] && die "Wrong commit of dependency checked out (expected=\"$hash_3_15_6\" found=\"$BUILT\")"
 
-rm -fr $location
+rm -fr $CACHEDIR/*; modules_to_compile=
 
 # missing inclusion of RELEASE.local in configure/RELEASE
 location=$CACHEDIR/std-R3-4
 add_dependency STD R3-4
 grep -q "include \$(TOP)/../RELEASE.local" $location/configure/RELEASE || die "Inclusion of RELEASE.local not added to configure/RELEASE"
-rm -fr $location
+rm -fr $location; modules_to_compile=
+
+# correct handling of FOO_RECURSIVE setting (https://github.com/epics-base/ci-scripts/issues/25 regression)
+export SSCAN_RECURSIVE=NO
+add_dependency SSCAN master
+add_dependency ASYN master
+[ -e $CACHEDIR/sscan-master/.ci/README.md ] && die "Sscan was checked out recursively despite SSCAN_RECURSIVE=NO"
+[ -e $CACHEDIR/asyn-master/.ci/README.md ] || die "Asyn was not checked out recursively"
+rm -fr $CACHEDIR/*; modules_to_compile=
+
+unset SSCAN_RECURSIVE
+export ASYN_RECURSIVE=NO
+add_dependency SSCAN master
+add_dependency ASYN master
+[ -e $CACHEDIR/sscan-master/.ci/README.md ] || die "Sscan was not checked out recursively"
+[ -e $CACHEDIR/asyn-master/.ci/README.md ] && die "Asyn was checked out recursively despite ASYN_RECURSIVE=NO"
+rm -fr $CACHEDIR/*
