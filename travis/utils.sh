@@ -140,6 +140,7 @@ add_dependency() {
   eval varname=\${${DEP}_VARNAME:=${DEP}}
   eval recursive=\${${DEP}_RECURSIVE:=1}
   recursive=${recursive,,}
+  local recurse=""
   [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
 
   # determine if $DEP points to a valid release or branch
