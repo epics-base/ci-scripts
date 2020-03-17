@@ -253,7 +253,7 @@ def add_dependency(dep, tag):
     update_release_local(setup[dep+"_VARNAME"], place)
     os.chdir(curdir)
 
-def prepare(args):
+def prepare():
     print(sys.version)
     print('PYTHONPATH')
     for dname in sys.path:
@@ -261,19 +261,36 @@ def prepare(args):
     print('platform = ', distutils.util.get_platform())
 
     print('{0}Loading setup files{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    source_set('default')
+    source_set('defaults')
     if 'SET' in os.environ:
         source_set(os.environ['SET'])
 
     # we're working with tags (detached heads) a lot: suppress advice
     call_git(['config', '--global', 'advice.detachedHead', 'false'])
 
-    print('Installing dependencies')
+    print('{0}Checking/cloning dependencies{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
-def build(args):
+    add_modules = ''
+    if 'ADD_MODULES' in os.environ:
+        add_modules = os.environ['ADD_MODULES']
+    modules = ''
+    if 'MODULES' in os.environ:
+        modules = os.environ['MODULES']
+    modlist = 'BASE {0} {1}'.format(add_modules, modules).upper().split()
+    for mod in modlist:
+        if not setup[mod].strip():
+            setup[mod] = 'master'
+        logger.debug('Adding dependency %s with tag %s', mod, setup[mod])
+        add_dependency(mod, setup[mod])
+
+    if os.path.isdir('configure'):
+        release_local = os.path.join(cachedir, 'RELEASE.local')
+        shutil.copy(release_local, 'configure')
+
+def build():
     print('Building the module')
 
-def test(args):
+def test():
     print('Running the tests')
 
 actions = {
@@ -287,4 +304,4 @@ if __name__=='__main__':
     while len(args)>0:
         name = args.pop(0)
         print('IN', name, 'with', args)
-        actions[name](args)
+        actions[name]()

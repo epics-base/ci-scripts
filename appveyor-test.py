@@ -2,7 +2,7 @@
 """Module ci-scripts AppVeyor unit tests
 """
 
-# SET=test00 in .appveyor.yml runs the tests in this script
+# SET=test00 in the environment (.appveyor.yml) runs the tests in this script
 # all other jobs are started as compile jobs
 
 from __future__ import print_function
@@ -235,9 +235,9 @@ class TestDefaultModuleURLs(unittest.TestCase):
                              .format(mod, do.setup[mod + '_REPOURL']))
 
 if __name__ == "__main__":
-#    suite = unittest.TestLoader().loadTestsFromTestCase(TestSourceSet)
-#    suite = unittest.TestLoader().loadTestsFromTestCase(TestUpdateReleaseLocal)
-#    suite = unittest.TestLoader().loadTestsFromTestCase(TestAddDependency)
-#    suite = unittest.TestLoader().loadTestsFromTestCase(TestDefaultModuleURLs)
-#    unittest.TextTestRunner(verbosity=2).run(suite)
-    unittest.main()
+    if 'SET' in os.environ and os.environ['SET'] == "test00":
+        unittest.main()
+    else:
+        do.actions['prepare']()
+        do.actions['build']()
+        do.actions['test']()

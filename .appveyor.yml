@@ -29,6 +29,7 @@ skip_commits:
     - '**/*.html'
     - '**/*.md'
 
+
 #---------------------------------#
 #   build matrix configuration    #
 #---------------------------------#
@@ -42,7 +43,14 @@ configuration:
 
 # Environment variables: compiler toolchain
 environment:
+  # common variables
+  SETUP_PATH: .:.ci
+  SET: test01
+
   matrix:
+  - CC: vs2019
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    SET: test00
   - CC: mingw
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
   - CC: vs2019
