@@ -144,6 +144,16 @@ def call_git(args, **kws):
     logger.debug('EXEC DONE')
     return exitcode
 
+def get_git_hash(place):
+    dir = os.getcwd()
+    os.chdir(place)
+    logger.debug("EXEC 'git log -n1 --pretty=format:%%H' in %s", place)
+    sys.stdout.flush()
+    head = sp.check_output(['git', 'log', '-n1', '--pretty=format:%H']).decode()
+    logger.debug('EXEC DONE')
+    os.chdir(dir)
+    return head
+
 # add_dependency(dep, tag)
 #
 # Add a dependency to the cache area:
@@ -183,6 +193,7 @@ def add_dependency(dep, tag):
     dirname = setup[dep+'_DIRNAME']+'-{0}'.format(tag)
     place = os.path.join(cachedir, dirname)
     checked_file = os.path.join(place, "checked_out")
+
     if os.path.isdir(place):
         logger.debug('Dependency %s: directory %s exists, comparing checked-out commit', dep, place)
         # check HEAD commit against the hash in marker file
@@ -192,7 +203,7 @@ def add_dependency(dep, tag):
             bfile.close()
         else:
             checked_out = 'never'
-        head = sp.check_output(['cd {0}; git log -n1 --pretty=format:%H'.format(place)], shell=True).decode()
+        head = get_git_hash(place)
         logger.debug('Found checked_out commit %s, git head is %s', checked_out, head)
         if head != checked_out:
             logger.debug('Dependency %s out of date - removing', dep)
@@ -212,7 +223,8 @@ def add_dependency(dep, tag):
         print('Cloning {0} of dependency {1} into {2}'
               .format(tag, dep, place))
         call_git(['clone', '--quiet'] + deptharg + [recursearg, '--branch', tag, setup[dep+'_REPOURL'], dirname])
-        sp.check_call(['cd {0}; git log -n1'.format(place)], shell=True)
+        os.chdir(place)
+        sp.check_call(['git', 'log', '-n1'])
         modules_to_compile.append(place)
 
         # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE
@@ -232,7 +244,7 @@ def add_dependency(dep, tag):
                 sp.check_call(hook, shell=True)
 
         # write checked out commit hash to marker file
-        head = sp.check_output(['cd {0}; git log -n1 --pretty=format:%H'.format(place)], shell=True).decode()
+        head = get_git_hash(place)
         logger.debug('Writing hash of checked-out dependency (%s) to marker file', head)
         with open(checked_file, "w") as fout:
             print(head, file=fout)
