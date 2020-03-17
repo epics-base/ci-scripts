@@ -92,7 +92,7 @@ repo_exists PVACCESS || die "Defaults for PVACCESS do not point to a valid git r
 repo_exists NTYPES || die "Defaults for NTYPES do not point to a valid git repository at $repourl"
 repo_exists SNCSEQ || die "Defaults for SNCSEQ do not point to a valid git repository at $repourl"
 repo_exists STREAM || die "Defaults for STREAM do not point to a valid git repository at $repourl"
-repo_exists ASYN || die "Defaults for STREAM do not point to a valid git repository at $repourl"
+repo_exists ASYN || die "Defaults for ASYN do not point to a valid git repository at $repourl"
 repo_exists STD || die "Defaults for STD do not point to a valid git repository at $repourl"
 repo_exists CALC || die "Defaults for CALC do not point to a valid git repository at $repourl"
 repo_exists AUTOSAVE || die "Defaults for AUTOSAVE do not point to a valid git repository at $repourl"
