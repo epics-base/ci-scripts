@@ -204,9 +204,40 @@ class TestAddDependency(unittest.TestCase):
                          "Wrong commit of dependency checked out (expected='{0}' found='{1}')"
                          .format(self.hash_3_15_6, checked_out))
 
+def repo_access(dep):
+    do.set_setup_from_env(dep)
+    do.setup.setdefault(dep + "_DIRNAME", dep.lower())
+    do.setup.setdefault(dep + "_REPONAME", dep.lower())
+    do.setup.setdefault('REPOOWNER', 'epics-modules')
+    do.setup.setdefault(dep + "_REPOOWNER", do.setup['REPOOWNER'])
+    do.setup.setdefault(dep + "_REPOURL", 'https://github.com/{0}/{1}.git'
+                     .format(do.setup[dep + '_REPOOWNER'], do.setup[dep + '_REPONAME']))
+    with open(os.devnull, 'w') as devnull:
+        return do.call_git(['ls-remote', '--quiet', '--heads', do.setup[dep + '_REPOURL']],
+                       stdout=devnull, stderr=devnull)
+
+class TestDefaultModuleURLs(unittest.TestCase):
+
+    modules = ['BASE', 'PVDATA', 'PVACCESS', 'NTYPES',
+               'SNCSEQ', 'STREAM', 'ASYN', 'STD',
+               'CALC', 'AUTOSAVE', 'BUSY', 'SSCAN',
+               'IOCSTATS', 'MOTOR', 'IPAC', ]
+
+    def setUp(self):
+        os.environ['SETUP_PATH'] = '.:appveyor'
+        do.clear_lists()
+        os.chdir(builddir)
+        do.source_set('defaults')
+
+    def test_Repos(self):
+        for mod in self.modules:
+            self.assertEqual(repo_access(mod), 0, 'Defaults for {0} do not point to a valid git repository at {1}'
+                             .format(mod, do.setup[mod + '_REPOURL']))
+
 if __name__ == "__main__":
 #    suite = unittest.TestLoader().loadTestsFromTestCase(TestSourceSet)
 #    suite = unittest.TestLoader().loadTestsFromTestCase(TestUpdateReleaseLocal)
 #    suite = unittest.TestLoader().loadTestsFromTestCase(TestAddDependency)
+#    suite = unittest.TestLoader().loadTestsFromTestCase(TestDefaultModuleURLs)
 #    unittest.TextTestRunner(verbosity=2).run(suite)
     unittest.main()
