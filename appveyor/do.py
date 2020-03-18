@@ -7,6 +7,7 @@ from __future__ import print_function
 import sys, os, stat, shutil
 import fileinput
 import logging
+import re
 import subprocess as sp
 import distutils.util
 
@@ -24,19 +25,26 @@ ANSI_CLEAR = "\033[0K"
 seen_setups = []
 modules_to_compile = []
 setup = {}
+place = {}
 
 if 'HomeDrive' in os.environ:
     cachedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.cache')
+    toolsdir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.tools')
 elif 'HOME' in os.environ:
     cachedir = os.path.join(os.getenv('HOME'), '.cache')
+    toolsdir = os.path.join(os.getenv('HOME'), '.tools')
 else:
     cachedir = os.path.join('.', '.cache')
+    toolsdir = os.path.join('.', '.tools')
+
+zip7 = 'C:\\Program Files\\7-Zip\\7z'
 
 # Used from unittests
 def clear_lists():
     del seen_setups[:]
     del modules_to_compile[:]
     setup.clear()
+    place.clear()
 
 # Error-handler to make shutil.rmtree delete read-only files on Windows
 def remove_readonly(func, path, excinfo):
@@ -87,16 +95,18 @@ def source_set(name):
         raise NameError("{0}Setup file {1} does not exist in SETUP_PATH search path ({2}){3}"
                         .format(ANSI_RED, name, setup_dirs, ANSI_RESET))
 
-# update_release_local(var, place)
-#   var    name of the variable to set in RELEASE.local
-#   place  place (absolute path) of where variable should point to
+# update_release_local(var, location)
+#   var       name of the variable to set in RELEASE.local
+#   location  location (absolute path) of where variable should point to
 #
 # Manipulate RELEASE.local in the cache location:
-# - replace "$var=$place" line if it exists and has changed
-# - otherwise add "$var=$place" line and possibly move EPICS_BASE=... line to the end
-def update_release_local(var, place):
+# - replace "$var=$location" line if it exists and has changed
+# - otherwise add "$var=$location" line and possibly move EPICS_BASE=... line to the end
+# Set place[var] = location
+def update_release_local(var, location):
     release_local = os.path.join(cachedir, 'RELEASE.local')
-    updated_line = '{0}={1}'.format(var, place)
+    updated_line = '{0}={1}'.format(var, location)
+    place[var] = location
 
     if not os.path.exists(release_local):
         logger.debug('RELEASE.local does not exist, creating it')
@@ -287,8 +297,46 @@ def prepare():
         release_local = os.path.join(cachedir, 'RELEASE.local')
         shutil.copy(release_local, 'configure')
 
+    print('{0}Setting up EPICS build system{1}'.format(ANSI_YELLOW, ANSI_RESET))
+
+    with open(os.path.join(place['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
+        if re.search('static', os.environ['CONFIGURATION']):
+            config_site.write('SHARED_LIBRARIES=NO')
+            config_site.write('STATIC_BUILD=YES')
+            linktype = 'static'
+        else:
+            linktype = 'dynamic (DLL)'
+        if re.search('debug', os.environ['CONFIGURATION']):
+            config_site.write('HOST_OPT=NO')
+            optitype = 'debug'
+        else:
+            optitype = 'optimized'
+
+    print('EPICS Base set up for {0} build with {1} linking'.format(optitype, linktype))
+
+    if not os.path.isdir(toolsdir):
+        os.makedirs(toolsdir)
+
+    print('Installing Make 4.2.1 from ANL web site')
+    sys.stdout.flush()
+    os.chdir(toolsdir)
+    sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'make-4.2.1.zip',
+                   'https://epics.anl.gov/download/tools/make-4.2.1-win64.zip'])
+    sp.check_call([zip7, 'e', 'make-4.2.1.zip'])
+
+    perlver = '5.30.0.1'
+    if os.environ['CC'] == 'vs2019':
+        print('Installing Strawberry Perl {0}'.format(perlver))
+        sys.stdout.flush()
+        os.chdir(toolsdir)
+        sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'perl-{0}.zip'.format(perlver),
+                       'http://strawberryperl.com/download/{0}/strawberry-perl-{0}-64bit.zip'.format(perlver)])
+        sp.check_call([zip7, 'x', 'perl-{0}.zip'.format(perlver), '-ostrawberry'])
+        os.chdir('strawberry')
+        sp.check_call('relocation.pl.bat', shell=True)
+
 def build():
-    print('Building the module')
+    print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
 def test():
     print('Running the tests')
