@@ -133,13 +133,13 @@ add_dependency() {
   curdir="$PWD"
   DEP=$1
   TAG=$2
-  dep_lc=${DEP,,}
+  dep_lc=$(echo "$DEP" | tr "A-Z" "a-z")
   eval dirname=\${${DEP}_DIRNAME:=${dep_lc}}
   eval reponame=\${${DEP}_REPONAME:=${dep_lc}}
   eval repourl=\${${DEP}_REPOURL:="https://github.com/\${${DEP}_REPOOWNER:=${REPOOWNER:-epics-modules}}/${reponame}.git"}
   eval varname=\${${DEP}_VARNAME:=${DEP}}
   eval recursive=\${${DEP}_RECURSIVE:=1}
-  recursive=${recursive,,}
+  recursive=$(echo $recursive | tr "A-Z" "a-z")
   local recurse=""
   [ "$recursive" != "0" -a "$recursive" != "no" ] && recurse="--recursive"
 
