@@ -182,9 +182,10 @@ Feel free to suggest more default settings using a Pull Request.
 
 ## Debugging
 
-Setting `VV=1` in your `.travis.yml` configuration for a specific job
-will run the job with high verbosity, printing every command as it is being
-executed and switching the dependency builds to higher verbosity.
+Setting `VV=1` in your service configuration (e.g., `.travis.yml`) for a
+specific job will run the job with high verbosity,
+printing every command as it is being executed and switching the dependency
+builds to higher verbosity.
 
 For local debugging, you may set `CACHEDIR` to change the location for the
 dependency builds. [default is `$HOME/.cache`]
@@ -195,9 +196,10 @@ EPICS Base: [pvData](https://github.com/epics-base/pvDataCPP),
 [pvAccess](https://github.com/epics-base/pvAccessCPP),
 [pva2pva](https://github.com/epics-base/pva2pva)
 
-EPICS Modules: [PCAS](https://github.com/epics-modules/pcas)
+EPICS Modules: [PCAS](https://github.com/epics-modules/pcas),
+[ASYN](https://github.com/epics-modules/asyn)
 
-ESS: [Motor driver (model 3) for EtherCAT Motion Controller](https://github.com/EuropeanSpallationSource/m-epics-ethercatmc)
+ESS: [Motor driver (model 3) for EtherCAT Motion Controller][ref.ethercatmc]
 
 ITER: [OPC UA Device Support](https://github.com/ralphlange/opcua)
 
@@ -228,6 +230,13 @@ Check the example configuration files inside ci-scripts (and their
 changes) to see what might be needed and/or interesting to change
 in your configuration.
 
+**Why does running the scripts locally on my MacOS machine fail?**
+
+The ci-scripts for Travis-CI require Bash version 4.
+As Apple ships an older Bash for [political reasons][reddit.bash],
+you need to install a more recent Bash, e.g. using MacPorts
+or Homebrew.
+
 ## Release Numbering of this Module
 
 The module tries to apply [Semantic Versioning](https://semver.org/).
@@ -257,3 +266,7 @@ in file LICENSE that is included with this distribution.
 <!-- Links -->
 [badge.version]: https://badge.fury.io/gh/epics-base%2Fci-scripts.svg
 [badge.travis]: https://travis-ci.org/epics-base/ci-scripts.svg?branch=master
+
+[reddit.bash]: https://www.reddit.com/r/bash/comments/393oqv/why_is_the_version_of_bash_included_in_os_x_so_old/
+
+[ref.ethercatmc]: https://github.com/EuropeanSpallationSource/m-epics-ethercatmc
