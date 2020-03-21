@@ -235,6 +235,7 @@ class TestDefaultModuleURLs(unittest.TestCase):
                              .format(mod, do.setup[mod + '_REPOURL']))
 
 if __name__ == "__main__":
+    do.host_info()
     if 'SET' in os.environ and os.environ['SET'] == "test00":
         unittest.main()
     else:

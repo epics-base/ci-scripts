@@ -39,6 +39,21 @@ else:
 
 zip7 = 'C:\\Program Files\\7-Zip\\7z'
 
+def host_info():
+    print(sys.version)
+    print('PYTHONPATH')
+    for dname in sys.path:
+        print(' ', dname)
+    print('platform = ', distutils.util.get_platform())
+
+    print('Listing available VS versions')
+    from fnmatch import fnmatch
+    for base in (r'C:\Program Files (x86)', r'C:\Program Files'):
+        for root, dirs, files in os.walk(base):
+            for fname in files:
+                if fnmatch(fname, 'vcvars*.bat'):
+                    print('Found', os.path.join(root, fname))
+
 # Used from unittests
 def clear_lists():
     del seen_setups[:]
@@ -258,11 +273,7 @@ def add_dependency(dep, tag):
     update_release_local(setup[dep+"_VARNAME"], place)
 
 def prepare():
-    print(sys.version)
-    print('PYTHONPATH')
-    for dname in sys.path:
-        print(' ', dname)
-    print('platform = ', distutils.util.get_platform())
+    host_info()
 
     print('{0}Loading setup files{1}'.format(ANSI_YELLOW, ANSI_RESET))
     source_set('defaults')
