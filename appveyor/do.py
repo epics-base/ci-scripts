@@ -155,13 +155,10 @@ def call_git(args, **kws):
     return exitcode
 
 def get_git_hash(place):
-    dir = os.getcwd()
-    os.chdir(place)
     logger.debug("EXEC 'git log -n1 --pretty=format:%%H' in %s", place)
     sys.stdout.flush()
-    head = sp.check_output(['git', 'log', '-n1', '--pretty=format:%H']).decode()
+    head = sp.check_output(['git', 'log', '-n1', '--pretty=format:%H'], cwd=place).decode()
     logger.debug('EXEC DONE')
-    os.chdir(dir)
     return head
 
 # add_dependency(dep, tag)
@@ -179,7 +176,6 @@ def get_git_hash(place):
 # - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
 # - Add full path to $modules_to_compile
 def add_dependency(dep, tag):
-    curdir = os.getcwd()
     set_setup_from_env(dep)
     setup.setdefault(dep+"_DIRNAME", dep.lower())
     setup.setdefault(dep+"_REPONAME", dep.lower())
@@ -225,15 +221,14 @@ def add_dependency(dep, tag):
         if not os.path.isdir(cachedir):
             os.makedirs(cachedir)
         # clone dependency
-        os.chdir(cachedir)
         deptharg = {
             -1:['--depth', '5'],
             0:[],
         }.get(setup[dep+'_DEPTH'], ['--depth', setup[dep+'_DEPTH']])
         print('Cloning {0} of dependency {1} into {2}'
               .format(tag, dep, place))
-        call_git(['clone', '--quiet'] + deptharg + [recursearg, '--branch', tag, setup[dep+'_REPOURL'], dirname])
-        os.chdir(place)
+        call_git(['clone', '--quiet'] + deptharg + [recursearg, '--branch', tag, setup[dep+'_REPOURL'], dirname], cwd=cachedir)
+
         sp.check_call(['git', 'log', '-n1'])
         modules_to_compile.append(place)
 
@@ -250,8 +245,8 @@ def add_dependency(dep, tag):
             hook = os.path.join(place, setup[dep+'_HOOK'])
             if os.path.exists(hook):
                 print('Running hook {0} in {1}'.format(setup[dep+'_HOOK'], place))
-                os.chdir(place)
-                sp.check_call(hook, shell=True)
+
+                sp.check_call(hook, shell=True, cwd=place)
 
         # write checked out commit hash to marker file
         head = get_git_hash(place)
@@ -261,7 +256,6 @@ def add_dependency(dep, tag):
         fout.close()
 
     update_release_local(setup[dep+"_VARNAME"], place)
-    os.chdir(curdir)
 
 def prepare():
     print(sys.version)
@@ -319,24 +313,29 @@ def prepare():
 
     print('Installing Make 4.2.1 from ANL web site')
     sys.stdout.flush()
-    os.chdir(toolsdir)
+
     sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'make-4.2.1.zip',
-                   'https://epics.anl.gov/download/tools/make-4.2.1-win64.zip'])
-    sp.check_call([zip7, 'e', 'make-4.2.1.zip'])
+                   'https://epics.anl.gov/download/tools/make-4.2.1-win64.zip'],
+                  cwd=toolsdir)
+    sp.check_call([zip7, 'e', 'make-4.2.1.zip'], cwd=toolsdir)
 
     perlver = '5.30.0.1'
     if os.environ['CC'] == 'vs2019':
         print('Installing Strawberry Perl {0}'.format(perlver))
         sys.stdout.flush()
-        os.chdir(toolsdir)
+
         sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'perl-{0}.zip'.format(perlver),
-                       'http://strawberryperl.com/download/{0}/strawberry-perl-{0}-64bit.zip'.format(perlver)])
-        sp.check_call([zip7, 'x', 'perl-{0}.zip'.format(perlver), '-ostrawberry'])
-        os.chdir('strawberry')
-        sp.check_call('relocation.pl.bat', shell=True)
+                       'http://strawberryperl.com/download/{0}/strawberry-perl-{0}-64bit.zip'.format(perlver)],
+                      cwd=toolsdir)
+        sp.check_call([zip7, 'x', 'perl-{0}.zip'.format(perlver), '-ostrawberry'], cwd=toolsdir)
+
+        sp.check_call('relocation.pl.bat', shell=True,
+                      cwd=os.path.join(toolsdir, 'strawberry'))
 
 def build():
     print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
+
+
 
 def test():
     print('Running the tests')
