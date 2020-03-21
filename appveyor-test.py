@@ -234,10 +234,21 @@ class TestDefaultModuleURLs(unittest.TestCase):
             self.assertEqual(repo_access(mod), 0, 'Defaults for {0} do not point to a valid git repository at {1}'
                              .format(mod, do.setup[mod + '_REPOURL']))
 
+class TestVCVars(unittest.TestCase):
+    def test_vcvars(self):
+        if os.environ['CC'] in ('mingw',):
+            raise unittest.SkipTest()
+
+        do.with_vcvars('env')
+
 if __name__ == "__main__":
     do.host_info()
     if 'SET' in os.environ and os.environ['SET'] == "test00":
-        unittest.main()
+        if sys.argv[1:]==['env']:
+            # testing with_vcvars
+            [print(K,'=',V) for K, V in os.environ.items()]
+        else:
+            unittest.main()
     else:
         do.actions['prepare']()
         do.actions['build']()

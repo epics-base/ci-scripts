@@ -347,19 +347,68 @@ def build():
     print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
 
-
 def test():
     print('Running the tests')
+
+def with_vcvars(cmd):
+    '''re-exec main script with a (hopefully different) command
+    '''
+    CC = os.environ['CC']
+
+    # cf. https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
+
+    info = {
+        'python':sys.executable,
+        'self':sys.argv[0],
+        'cmd':cmd,
+    }
+
+    info['arch'] = {
+        'x86':'x86',   # 'amd64_x86' ??
+        'x64':'amd64',
+    }[os.environ['PLATFORM']] # 'x86' or 'x64'
+
+    info['vcvars'] = {
+        # https://en.wikipedia.org/wiki/Microsoft_Visual_Studio#History
+        'vs2019':r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat',
+        'vs2017':r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat',
+        'vs2015':r'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat',
+        'vs2013':r'C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat',
+        'vs2012':r'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat',
+        'vs2010':r'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat',
+        'vs2008':r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcvarsall.bat',
+    }[CC]
+
+    script='''
+call "{vcvars}" {arch}
+
+"{python}" "{self}" {cmd}
+'''.format(**info)
+
+    print('vcvars-trampoline.bat')
+    print(script)
+
+    with open('vcvars-trampoline.bat', 'w') as F:
+        F.write(script)
+
+    sys.stdout.flush()
+    sp.check_call('vcvars-trampoline.bat', shell=True)
 
 actions = {
     'prepare': prepare,
     'build': build,
     'test': test,
+    '_vcvars':lambda:None,
 }
 
 if __name__=='__main__':
     args = sys.argv[1:]
-    while len(args)>0:
-        name = args.pop(0)
-        print('IN', name, 'with', args)
-        actions[name]()
+    if args[0]!='_vcvars' and os.environ['CC']!='mingw':
+        # re-exec with MSVC in PATH
+        with_vcvars(' '.join(['_vcvars']+args))
+
+    else:
+        while len(args)>0:
+            name = args.pop(0)
+            print('IN', name, 'with', args)
+            actions[name]()
