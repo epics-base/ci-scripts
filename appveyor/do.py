@@ -25,7 +25,7 @@ ANSI_CLEAR = "\033[0K"
 seen_setups = []
 modules_to_compile = []
 setup = {}
-place = {}
+places = {}
 
 if 'HomeDrive' in os.environ:
     cachedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.cache')
@@ -59,7 +59,7 @@ def clear_lists():
     del seen_setups[:]
     del modules_to_compile[:]
     setup.clear()
-    place.clear()
+    places.clear()
 
 # Error-handler to make shutil.rmtree delete read-only files on Windows
 def remove_readonly(func, path, excinfo):
@@ -117,11 +117,11 @@ def source_set(name):
 # Manipulate RELEASE.local in the cache location:
 # - replace "$var=$location" line if it exists and has changed
 # - otherwise add "$var=$location" line and possibly move EPICS_BASE=... line to the end
-# Set place[var] = location
+# Set places[var] = location
 def update_release_local(var, location):
     release_local = os.path.join(cachedir, 'RELEASE.local')
     updated_line = '{0}={1}'.format(var, location)
-    place[var] = location
+    places[var] = location
 
     if not os.path.exists(release_local):
         logger.debug('RELEASE.local does not exist, creating it')
@@ -251,9 +251,8 @@ def add_dependency(dep, tag):
         if dep != 'BASE':
             release = os.path.join(place, "configure", "RELEASE")
             if os.path.exists(release):
-                fout = open(release, 'w')
-                print('-include $(TOP)/../RELEASE.local', file=fout)
-                fout.close()
+                with open(release, 'w') as fout:
+                    print('-include $(TOP)/../RELEASE.local', file=fout)
 
         # run hook if defined
         if dep+'_HOOK' in setup:
@@ -304,7 +303,7 @@ def prepare():
 
     print('{0}Setting up EPICS build system{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
-    with open(os.path.join(place['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
+    with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
         if re.search('static', os.environ['CONFIGURATION']):
             config_site.write('SHARED_LIBRARIES=NO')
             config_site.write('STATIC_BUILD=YES')
