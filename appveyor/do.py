@@ -37,6 +37,9 @@ else:
     cachedir = os.path.join('.', '.cache')
     toolsdir = os.path.join('.', '.tools')
 
+# ensure our 'make' found first
+os.environ['PATH'] = os.pathsep.join([toolsdir, os.environ['PATH']])
+
 zip7 = 'C:\\Program Files\\7-Zip\\7z'
 
 def host_info():
@@ -190,8 +193,9 @@ def get_git_hash(place):
 #   $dep_RECURSIVE = 1/YES (0/NO to for a flat clone)
 # - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
 # - Add full path to $modules_to_compile
-def add_dependency(dep, tag):
+def add_dependency(dep):
     set_setup_from_env(dep)
+    setup.setdefault(dep, 'master')
     setup.setdefault(dep+"_DIRNAME", dep.lower())
     setup.setdefault(dep+"_REPONAME", dep.lower())
     setup.setdefault('REPOOWNER', 'epics-modules')
@@ -205,6 +209,10 @@ def add_dependency(dep, tag):
         recursearg = "--recursive"
     else:
         recursearg = ''
+
+    tag = setup[dep]
+
+    logger.debug('Adding dependency %s with tag %s', dep, setup[dep])
 
     # determine if dep points to a valid release or branch
     if call_git(['ls-remote', '--quiet', '--exit-code', '--refs', setup[dep+'_REPOURL'], tag]):
@@ -271,7 +279,7 @@ def add_dependency(dep, tag):
 
     update_release_local(setup[dep+"_VARNAME"], place)
 
-def prepare():
+def prepare(*args):
     host_info()
 
     print('{0}Loading setup files{1}'.format(ANSI_YELLOW, ANSI_RESET))
@@ -291,11 +299,7 @@ def prepare():
     if 'MODULES' in os.environ:
         modules = os.environ['MODULES']
     modlist = 'BASE {0} {1}'.format(add_modules, modules).upper().split()
-    for mod in modlist:
-        if not setup[mod].strip():
-            setup[mod] = 'master'
-        logger.debug('Adding dependency %s with tag %s', mod, setup[mod])
-        add_dependency(mod, setup[mod])
+    [add_dependency(mod) for mod in modlist]
 
     if os.path.isdir('configure'):
         release_local = os.path.join(cachedir, 'RELEASE.local')
@@ -342,12 +346,23 @@ def prepare():
         sp.check_call('relocation.pl.bat', shell=True,
                       cwd=os.path.join(toolsdir, 'strawberry'))
 
-def build():
+    for mod in modlist:
+        place = places[setup[mod+"_VARNAME"]]
+        print('Building '+place)
+        sp.check_call('make', shell=True, cwd=place)
+
+def build(*args):
     print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
 
-def test():
+def test(*args):
     print('Running the tests')
+
+def doExec(*args):
+    'exec user command with vcvars'
+    print('Execute command {}'.format(args))
+
+    sp.check_call(' '.join(args), shell=True)
 
 def with_vcvars(cmd):
     '''re-exec main script with a (hopefully different) command
@@ -397,6 +412,7 @@ actions = {
     'prepare': prepare,
     'build': build,
     'test': test,
+    'exec': doExec,
     '_vcvars':lambda:None,
 }
 
@@ -407,7 +423,6 @@ if __name__=='__main__':
         with_vcvars(' '.join(['_vcvars']+args))
 
     else:
-        while len(args)>0:
-            name = args.pop(0)
-            print('IN', name, 'with', args)
-            actions[name]()
+        name = args.pop(0)
+        print('IN', name, 'with', args)
+        actions[name](*args)

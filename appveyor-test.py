@@ -171,7 +171,8 @@ class TestAddDependency(unittest.TestCase):
         do.source_set('defaults')
 
     def test_MissingDependency(self):
-        do.add_dependency('BASE', 'R3.15.6')
+        do.setup['BASE'] = 'R3.15.6'
+        do.add_dependency('BASE')
         self.assertTrue(os.path.exists(self.licensefile), 'Missing dependency was not checked out')
         self.assertTrue(os.path.exists(self.checked_file), 'Checked-out commit marker was not written')
         with open(self.checked_file, 'r') as bfile:
@@ -184,18 +185,20 @@ class TestAddDependency(unittest.TestCase):
                          'RELEASE in Base includes TOP/../RELEASE.local')
 
     def test_UpToDateDependency(self):
-        do.add_dependency('BASE', 'R3.15.6')
+        do.setup['BASE'] = 'R3.15.6'
+        do.add_dependency('BASE')
         os.remove(self.licensefile)
-        do.add_dependency('BASE', 'R3.15.6')
+        do.add_dependency('BASE')
         self.assertFalse(os.path.exists(self.licensefile), 'Check out on top of existing up-to-date dependency')
 
     def test_OutdatedDependency(self):
-        do.add_dependency('BASE', 'R3.15.6')
+        do.setup['BASE'] = 'R3.15.6'
+        do.add_dependency('BASE')
         os.remove(self.licensefile)
         with open(self.checked_file, "w") as fout:
             print('XXX not the right hash XXX', file=fout)
         fout.close()
-        do.add_dependency('BASE', 'R3.15.6')
+        do.add_dependency('BASE')
         self.assertTrue(os.path.exists(self.licensefile), 'No check-out on top of out-of-date dependency')
         with open(self.checked_file, 'r') as bfile:
             checked_out = bfile.read().strip()
