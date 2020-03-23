@@ -8,6 +8,7 @@
 from __future__ import print_function
 
 import sys, os, shutil, fileinput
+import distutils.util
 import re
 import unittest
 
@@ -240,7 +241,8 @@ class TestDefaultModuleURLs(unittest.TestCase):
 
 class TestVCVars(unittest.TestCase):
     def test_vcvars(self):
-        if os.environ['CC'] in ('mingw',):
+        if ('CC' in os.environ and os.environ['CC'] in ('mingw',)) \
+                or distutils.util.get_platform() != "win32":
             raise unittest.SkipTest()
 
         do.with_vcvars('env')
