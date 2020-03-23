@@ -59,7 +59,7 @@ def host_info():
     for base in (r'C:\Program Files (x86)', r'C:\Program Files'):
         for root, dirs, files in os.walk(base):
             for fname in files:
-                if fnmatch(fname, 'vcvars*.bat'):
+                if fnmatch(fname, 'vcvarsall.bat'):
                     print('Found', os.path.join(root, fname))
 
 # Used from unittests
