@@ -329,7 +329,7 @@ def prepare(*args):
     elif os.environ['PLATFORM'] == 'x64':
         os.environ['EPICS_HOST_ARCH'] = 'windows-x64'
 
-    print('EPICS Base set up on {0} for {1} build with {2} linking'
+    print('EPICS Base build system set up on {0} for {1} build with {2} linking'
           .format(os.environ['EPICS_HOST_ARCH'], optitype, linktype))
 
     if not os.path.isdir(toolsdir):
@@ -343,8 +343,7 @@ def prepare(*args):
                   cwd=toolsdir)
     sp.check_call([zip7, 'e', 'make-4.2.1.zip'], cwd=toolsdir)
 
-    # put our 'make' in the PATH
-    os.environ['PATH'] = os.pathsep.join([toolsdir, os.environ['PATH']])
+    make = os.path.join(toolsdir, 'make')
 
     perlver = '5.30.0.1'
     if os.environ['CC'] == 'vs2019':
@@ -363,11 +362,26 @@ def prepare(*args):
         os.environ['PATH'] = os.pathsep.join([os.path.join(toolsdir, 'strawberry', 'perl', 'site', 'bin'),
                                               os.path.join(toolsdir, 'strawberry', 'perl', 'bin'),
                                               os.environ['PATH']])
+    if os.environ['CC'] == 'mingw':
+        if 'INCLUDE' not in os.environ:
+            os.environ['INCLUDE'] = ''
+        if os.environ['PLATFORM'] == 'x86':
+            os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
+            os.environ['INCLUDE'] = os.pathsep.join(['C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+                                                     os.environ['INCLUDE']])
+            os.environ['PATH'] = os.pathsep.join(['C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+                                                  os.environ['PATH']])
+        elif os.environ['PLATFORM'] == 'x64':
+            os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
+            os.environ['INCLUDE'] = os.pathsep.join(['C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+                                                     os.environ['INCLUDE']])
+            os.environ['PATH'] = os.pathsep.join(['C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
+                                                  os.environ['PATH']])
 
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
         print('Building '+place)
-        sp.check_call('make', shell=True, cwd=place)
+        sp.check_call(make, shell=True, cwd=place)
 
 def build(*args):
     print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
