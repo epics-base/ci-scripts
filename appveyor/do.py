@@ -363,8 +363,9 @@ def prepare(*args):
                       cwd=toolsdir)
         sp.check_call([zip7, 'x', 'perl-{0}.zip'.format(perlver), '-ostrawberry'], cwd=toolsdir)
 
-        sp.check_call('relocation.pl.bat', shell=True,
-                      cwd=os.path.join(toolsdir, 'strawberry'))
+        with open(os.devnull, 'w') as devnull:
+            sp.check_call('relocation.pl.bat', shell=True, stdout=devnull,
+                          cwd=os.path.join(toolsdir, 'strawberry'))
 
         # put our strawberry 'perl' in the PATH
         os.environ['PATH'] = os.pathsep.join([os.path.join(toolsdir, 'strawberry', 'perl', 'site', 'bin'),
