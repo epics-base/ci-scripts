@@ -295,7 +295,7 @@ def prepare(*args):
         source_set(os.environ['SET'])
 
     [complete_setup(mod) for mod in modlist()]
-    
+
     logger.debug('Loaded setup')
     kvs = list(setup.items())
     kvs.sort()
@@ -327,7 +327,13 @@ def prepare(*args):
         else:
             optitype = 'optimized'
 
-    print('EPICS Base set up for {0} build with {1} linking'.format(optitype, linktype))
+    if os.environ['PLATFORM'] == 'x86':
+        os.environ['EPICS_HOST_ARCH'] = 'win32-x86'
+    elif os.environ['PLATFORM'] == 'x64':
+        os.environ['EPICS_HOST_ARCH'] = 'windows-x64'
+
+    print('EPICS Base set up on {0} for {1} build with {2} linking'
+          .format(os.environ['EPICS_HOST_ARCH'], optitype, linktype))
 
     if not os.path.isdir(toolsdir):
         os.makedirs(toolsdir)
@@ -360,7 +366,6 @@ def prepare(*args):
 
 def build(*args):
     print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
-
 
 def test(*args):
     print('Running the tests')
