@@ -70,19 +70,18 @@ platform:
 # Matrix configuration: allow specific failing jobs
 matrix:
   exclude:
+  # Run test00 only once: x64 dynamic
+  - platform: x86
+    SET: test00
+  - configuration: static
+    SET: test00
+  - configuration: dynamic-debug
+    SET: test00
+  - configuration: static-debug
+    SET: test00
   # VS2010 Express installs don't have the 64 bit compiler
   - platform: x64
     CC: vs2010
-  # Exclude to reduce total job runtime
-  # skip 64-bit for older and 32-bit for newer
-  - platform: x64
-    CC: vs2012
-  - platform: x86
-    CC: mingw
-  - platform: x86
-    CC: vs2019
-  - platform: x86
-    CC: vs2017
 
 
 #---------------------------------#
