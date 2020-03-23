@@ -40,6 +40,14 @@ else:
 # ensure our 'make' found first
 os.environ['PATH'] = os.pathsep.join([toolsdir, os.environ['PATH']])
 
+
+def modlist():
+    add_modules = os.environ.get('ADD_MODULES', '').upper().split()
+    modules = os.environ.get('MODULES', '').upper().split()
+    ret = ['BASE'] + add_modules + modules
+    logger.debug('Effective module list: %s', ret)
+    return ret
+
 zip7 = 'C:\\Program Files\\7-Zip\\7z'
 
 def host_info():
@@ -74,8 +82,6 @@ def remove_readonly(func, path, excinfo):
 # Source a settings file (extension .set) found in the setup_dirs path
 # May be called recursively (from within a setup file)
 def source_set(name):
-    found = False
-
     # allowed separators: colon or whitespace
     setup_dirs = os.getenv('SETUP_PATH', "").replace(':', ' ').split()
     if len(setup_dirs) == 0:
@@ -106,10 +112,8 @@ def source_set(name):
                     if not setup[assign[0]].strip():
                         logger.debug('Doing assignment: %s = %s', assign[0], assign[1])
                         setup[assign[0]] = assign[1]
-            found = True
             break
-
-    if not found:
+    else:
         raise NameError("{0}Setup file {1} does not exist in SETUP_PATH search path ({2}){3}"
                         .format(ANSI_RED, name, setup_dirs, ANSI_RESET))
 
@@ -160,10 +164,11 @@ def update_release_local(var, location):
     fout.close()
 
 def set_setup_from_env(dep):
-    for postf in ['_DIRNAME', '_REPONAME', '_REPOOWNER', '_REPOURL',
+    for postf in ['', '_DIRNAME', '_REPONAME', '_REPOOWNER', '_REPOURL',
                   '_VARNAME', '_RECURSIVE', '_DEPTH', '_HOOK']:
         if dep+postf in os.environ:
-            setup[dep+postf] = os.getenv(dep+postf)
+            setup[dep+postf] = os.environ[dep+postf]
+            logger.debug('ENV assignment: %s = %s', dep+postf, setup[dep+postf])
 
 def call_git(args, **kws):
     logger.debug("EXEC '%s' in %s", ' '.join(['git'] + args), os.getcwd())
@@ -292,14 +297,7 @@ def prepare(*args):
 
     print('{0}Checking/cloning dependencies{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
-    add_modules = ''
-    if 'ADD_MODULES' in os.environ:
-        add_modules = os.environ['ADD_MODULES']
-    modules = ''
-    if 'MODULES' in os.environ:
-        modules = os.environ['MODULES']
-    modlist = 'BASE {0} {1}'.format(add_modules, modules).upper().split()
-    [add_dependency(mod) for mod in modlist]
+    [add_dependency(mod) for mod in modlist()]
 
     if os.path.isdir('configure'):
         release_local = os.path.join(cachedir, 'RELEASE.local')
@@ -346,7 +344,7 @@ def prepare(*args):
         sp.check_call('relocation.pl.bat', shell=True,
                       cwd=os.path.join(toolsdir, 'strawberry'))
 
-    for mod in modlist:
+    for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
         print('Building '+place)
         sp.check_call('make', shell=True, cwd=place)
