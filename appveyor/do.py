@@ -19,6 +19,8 @@ ANSI_RED = "\033[31;1m"
 ANSI_GREEN = "\033[32;1m"
 ANSI_YELLOW = "\033[33;1m"
 ANSI_BLUE = "\033[34;1m"
+ANSI_MAGENTA = "\033[35;1m"
+ANSI_CYAN = "\033[36;1m"
 ANSI_RESET = "\033[0m"
 ANSI_CLEAR = "\033[0K"
 
@@ -383,6 +385,9 @@ def prepare(*args):
                                                      os.environ['INCLUDE']])
             os.environ['PATH'] = os.pathsep.join(['C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
                                                   os.environ['PATH']])
+    print('{0}$ {1} --version{2}'.format(ANSI_CYAN, make, ANSI_RESET))
+    sys.stdout.flush()
+    sp.check_call([make, '--version'])
 
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
