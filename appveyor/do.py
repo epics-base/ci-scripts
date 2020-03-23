@@ -345,6 +345,12 @@ def prepare(*args):
 
     make = os.path.join(toolsdir, 'make')
 
+    makeargs = ['-j2', '-Otarget']
+    # no parallel make for Base 3.14
+    with open(os.path.join(places[setup['BASE_VARNAME']], 'configure', 'CONFIG_BASE_VERSION')) as myfile:
+        if 'BASE_3_14=YES' in myfile.read():
+            makeargs = []
+
     perlver = '5.30.0.1'
     if os.environ['CC'] == 'vs2019':
         print('Installing Strawberry Perl {0}'.format(perlver))
@@ -381,7 +387,7 @@ def prepare(*args):
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
         print('Building '+place)
-        sp.check_call(make, shell=True, cwd=place)
+        sp.check_call([make] + makeargs, shell=True, cwd=place)
 
 def build(*args):
     print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
