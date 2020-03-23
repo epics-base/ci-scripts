@@ -184,6 +184,19 @@ def get_git_hash(place):
     logger.debug('EXEC DONE')
     return head
 
+def complete_setup(dep):
+    set_setup_from_env(dep)
+    setup.setdefault(dep, 'master')
+    setup.setdefault(dep+"_DIRNAME", dep.lower())
+    setup.setdefault(dep+"_REPONAME", dep.lower())
+    setup.setdefault('REPOOWNER', 'epics-modules')
+    setup.setdefault(dep+"_REPOOWNER", setup['REPOOWNER'])
+    setup.setdefault(dep+"_REPOURL", 'https://github.com/{0}/{1}.git'
+                     .format(setup[dep+'_REPOOWNER'], setup[dep+'_REPONAME']))
+    setup.setdefault(dep+"_VARNAME", dep)
+    setup.setdefault(dep+"_RECURSIVE", 1)
+    setup.setdefault(dep+"_DEPTH", -1)
+
 # add_dependency(dep, tag)
 #
 # Add a dependency to the cache area:
@@ -199,17 +212,6 @@ def get_git_hash(place):
 # - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
 # - Add full path to $modules_to_compile
 def add_dependency(dep):
-    set_setup_from_env(dep)
-    setup.setdefault(dep, 'master')
-    setup.setdefault(dep+"_DIRNAME", dep.lower())
-    setup.setdefault(dep+"_REPONAME", dep.lower())
-    setup.setdefault('REPOOWNER', 'epics-modules')
-    setup.setdefault(dep+"_REPOOWNER", setup['REPOOWNER'])
-    setup.setdefault(dep+"_REPOURL", 'https://github.com/{0}/{1}.git'
-                     .format(setup[dep+'_REPOOWNER'], setup[dep+'_REPONAME']))
-    setup.setdefault(dep+"_VARNAME", dep)
-    setup.setdefault(dep+"_RECURSIVE", 1)
-    setup.setdefault(dep+"_DEPTH", -1)
     if setup[dep+'_RECURSIVE'] not in [0, 'no']:
         recursearg = "--recursive"
     else:
@@ -291,6 +293,13 @@ def prepare(*args):
     source_set('defaults')
     if 'SET' in os.environ:
         source_set(os.environ['SET'])
+
+    [complete_setup(mod) for mod in modlist()]
+    
+    logger.debug('Loaded setup')
+    kvs = list(setup.items())
+    kvs.sort()
+    [logger.debug(' %s = "%s"', *kv) for kv in kvs]
 
     # we're working with tags (detached heads) a lot: suppress advice
     call_git(['config', '--global', 'advice.detachedHead', 'false'])

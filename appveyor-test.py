@@ -169,6 +169,7 @@ class TestAddDependency(unittest.TestCase):
         do.clear_lists()
         os.chdir(builddir)
         do.source_set('defaults')
+        do.complete_setup('BASE')
 
     def test_MissingDependency(self):
         do.setup['BASE'] = 'R3.15.6'
