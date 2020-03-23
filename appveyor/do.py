@@ -37,9 +37,6 @@ else:
     cachedir = os.path.join('.', '.cache')
     toolsdir = os.path.join('.', '.tools')
 
-# ensure our 'make' found first
-os.environ['PATH'] = os.pathsep.join([toolsdir, os.environ['PATH']])
-
 
 def modlist():
     add_modules = os.environ.get('ADD_MODULES', '').upper().split()
@@ -346,6 +343,9 @@ def prepare(*args):
                   cwd=toolsdir)
     sp.check_call([zip7, 'e', 'make-4.2.1.zip'], cwd=toolsdir)
 
+    # put our 'make' in the PATH
+    os.environ['PATH'] = os.pathsep.join([toolsdir, os.environ['PATH']])
+
     perlver = '5.30.0.1'
     if os.environ['CC'] == 'vs2019':
         print('Installing Strawberry Perl {0}'.format(perlver))
@@ -358,6 +358,11 @@ def prepare(*args):
 
         sp.check_call('relocation.pl.bat', shell=True,
                       cwd=os.path.join(toolsdir, 'strawberry'))
+
+        # put our strawberry 'perl' in the PATH
+        os.environ['PATH'] = os.pathsep.join([os.path.join(toolsdir, 'strawberry', 'perl', 'site', 'bin'),
+                                              os.path.join(toolsdir, 'strawberry', 'perl', 'bin'),
+                                              os.environ['PATH']])
 
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
