@@ -48,6 +48,8 @@ def modlist():
     return ret
 
 zip7 = 'C:\\Program Files\\7-Zip\\7z'
+make = ''
+makeargs = []
 
 def host_info():
     print(sys.version)
@@ -393,13 +395,15 @@ def prepare(*args):
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
         print('Building '+place)
-        sp.check_call([make] + makeargs, shell=True, cwd=place)
+        sp.check_call([make] + makeargs, cwd=place)
 
 def build(*args):
     print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    sp.check_call([make] + makeargs)
 
 def test(*args):
-    print('Running the tests')
+    print('{0}Running the tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    sp.check_call([make] + makeargs + ['tapfiles'])
 
 def doExec(*args):
     'exec user command with vcvars'
