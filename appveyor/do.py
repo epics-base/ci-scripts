@@ -47,7 +47,7 @@ def modlist():
     logger.debug('Effective module list: %s', ret)
     return ret
 
-zip7 = 'C:\\Program Files\\7-Zip\\7z'
+zip7 = r'C:\Program Files\7-Zip\7z'
 make = ''
 makeargs = []
 
@@ -378,15 +378,15 @@ def prepare(*args):
             os.environ['INCLUDE'] = ''
         if os.environ['PLATFORM'] == 'x86':
             os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
-            os.environ['INCLUDE'] = os.pathsep.join(['C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+            os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
                                                      os.environ['INCLUDE']])
-            os.environ['PATH'] = os.pathsep.join(['C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+            os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
                                                   os.environ['PATH']])
         elif os.environ['PLATFORM'] == 'x64':
             os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
-            os.environ['INCLUDE'] = os.pathsep.join(['C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+            os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
                                                      os.environ['INCLUDE']])
-            os.environ['PATH'] = os.pathsep.join(['C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
+            os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
                                                   os.environ['PATH']])
     print('{0}$ {1} --version{2}'.format(ANSI_CYAN, make, ANSI_RESET))
     sys.stdout.flush()
