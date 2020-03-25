@@ -324,10 +324,19 @@ def setup_for_build():
         if 'BASE_3_14=YES' in myfile.read():
             makeargs = []
 
+    # there is no combined static and debug EPICS_HOST_ARCH target,
+    # so a combined debug and static target will appear to be just static
+    # but debug will have been specified in CONFIG_SITE by prepare()
+    hostarchsuffix=''
+    if re.search('debug', os.environ['CONFIGURATION']):
+        hostarchsuffix = '-debug'
+    if re.search('static', os.environ['CONFIGURATION']):
+        hostarchsuffix = '-static'
+
     if os.environ['PLATFORM'].lower() == 'x86':
-        os.environ['EPICS_HOST_ARCH'] = 'win32-x86'
+        os.environ['EPICS_HOST_ARCH'] = 'win32-x86' + hostarchsuffix
     elif os.environ['PLATFORM'].lower() == 'x64':
-        os.environ['EPICS_HOST_ARCH'] = 'windows-x64'
+        os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
 
     if os.environ['CC'] == 'vs2019':
         # put our strawberry 'perl' in the PATH
