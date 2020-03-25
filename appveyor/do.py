@@ -298,10 +298,17 @@ def add_dependency(dep):
 
 def setup_for_build():
     global make, makeargs
+
     make = os.path.join(toolsdir, 'make')
     makeargs = ['-j2', '-Otarget']
     # no parallel make for Base 3.14
-    with open(os.path.join(places[setup['BASE_VARNAME']], 'configure', 'CONFIG_BASE_VERSION')) as myfile:
+    with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            if re.search(r'^EPICS_BASE=', line):
+                base_place = line.split('=')[1].strip()
+                break
+    with open(os.path.join(base_place, 'configure', 'CONFIG_BASE_VERSION')) as myfile:
         if 'BASE_3_14=YES' in myfile.read():
             makeargs = []
 
