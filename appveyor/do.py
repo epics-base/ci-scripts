@@ -185,6 +185,18 @@ def call_git(args, **kws):
     logger.debug('EXEC DONE')
     return exitcode
 
+def call_make(args=[], **kws):
+    if 'cwd' in kws:
+        place = kws['cwd']
+    else:
+        place = os.getcwd()
+    logger.debug("EXEC '%s' in %s", ' '.join([make] + makeargs + args), place)
+    sys.stdout.flush()
+    exitcode = sp.call([make] + makeargs + args, **kws)
+    logger.debug('EXEC DONE')
+    if exitcode != 0:
+        sys.exit(exitcode)
+
 def get_git_hash(place):
     logger.debug("EXEC 'git log -n1 --pretty=format:%%H' in %s", place)
     sys.stdout.flush()
@@ -429,20 +441,17 @@ def prepare(*args):
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
         print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
-        sys.stdout.flush()
-        sp.check_call([make] + makeargs, cwd=place)
+        call_make(cwd=place)
 
 def build(*args):
     setup_for_build()
     print('{0}Building the main module{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    sys.stdout.flush()
-    sp.check_call([make] + makeargs)
+    call_make()
 
 def test(*args):
     setup_for_build()
     print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    sys.stdout.flush()
-    sp.check_call([make] + makeargs + ['tapfiles'])
+    call_make(['tapfiles'])
 
 def doExec(*args):
     'exec user command with vcvars'
@@ -497,7 +506,9 @@ call "{vcvars}" {arch}
     print('{0}Calling vcvars-trampoline.bat to set environment for {1} on {2}{3}'
           .format(ANSI_YELLOW, CC, os.environ['PLATFORM'], ANSI_RESET))
     sys.stdout.flush()
-    sp.check_call('vcvars-trampoline.bat', shell=True)
+    returncode = sp.call('vcvars-trampoline.bat', shell=True)
+    if returncode != 0:
+        sys.exit(returncode)
 
 actions = {
     'prepare': prepare,
