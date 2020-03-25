@@ -324,9 +324,9 @@ def setup_for_build():
         if 'BASE_3_14=YES' in myfile.read():
             makeargs = []
 
-    if os.environ['PLATFORM'] == 'x86':
+    if os.environ['PLATFORM'].lower() == 'x86':
         os.environ['EPICS_HOST_ARCH'] = 'win32-x86'
-    elif os.environ['PLATFORM'] == 'x64':
+    elif os.environ['PLATFORM'].lower() == 'x64':
         os.environ['EPICS_HOST_ARCH'] = 'windows-x64'
 
     if os.environ['CC'] == 'vs2019':
@@ -337,13 +337,13 @@ def setup_for_build():
     if os.environ['CC'] == 'mingw':
         if 'INCLUDE' not in os.environ:
             os.environ['INCLUDE'] = ''
-        if os.environ['PLATFORM'] == 'x86':
+        if os.environ['PLATFORM'].lower() == 'x86':
             os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
             os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
                                                      os.environ['INCLUDE']])
             os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
                                                   os.environ['PATH']])
-        elif os.environ['PLATFORM'] == 'x64':
+        elif os.environ['PLATFORM'].lower() == 'x64':
             os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
             os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
                                                      os.environ['INCLUDE']])
@@ -476,7 +476,7 @@ def with_vcvars(cmd):
     info['arch'] = {
         'x86':'x86',   # 'amd64_x86' ??
         'x64':'amd64',
-    }[os.environ['PLATFORM']] # 'x86' or 'x64'
+    }[os.environ['PLATFORM'].lower()] # 'x86' or 'x64'
 
     info['vcvars'] = {
         # https://en.wikipedia.org/wiki/Microsoft_Visual_Studio#History
