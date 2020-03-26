@@ -68,10 +68,11 @@ environment:
   - CC: vs2013
   - CC: vs2012
   - CC: vs2010
+  - CC: vs2008
 
 # Platform: architecture
 platform:
-#  - x86
+  - x86
   - x64
 
 # Matrix configuration: allow specific failing jobs
@@ -86,9 +87,13 @@ matrix:
     SET: test00
   - configuration: static-debug
     SET: test00
-  # VS2010 Express installs don't have the 64 bit compiler
+  # VS2012 and older installs don't have the 64 bit compiler
+  - platform: x64
+    CC: vs2012
   - platform: x64
     CC: vs2010
+  - platform: x64
+    CC: vs2008
 
 
 #---------------------------------#
