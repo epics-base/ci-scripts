@@ -131,7 +131,7 @@ def source_set(name):
 # Set places[var] = location
 def update_release_local(var, location):
     release_local = os.path.join(cachedir, 'RELEASE.local')
-    updated_line = '{0}={1}'.format(var, location)
+    updated_line = '{0}={1}'.format(var, location.replace('\\', '/'))
     places[var] = location
 
     if not os.path.exists(release_local):
