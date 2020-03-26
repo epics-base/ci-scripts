@@ -256,6 +256,6 @@ if __name__ == "__main__":
         else:
             unittest.main()
     else:
-        do.actions['prepare']()
-        do.actions['build']()
-        do.actions['test']()
+        do.main(['prepare'])
+        do.main(['build'])
+        do.main(['test'])

@@ -359,7 +359,7 @@ def setup_for_build():
             os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
                                                   os.environ['PATH']])
 
-def prepare(*args):
+def prepare(args):
     host_info()
 
     print('{0}Loading setup files{1}'.format(ANSI_YELLOW, ANSI_RESET))
@@ -456,22 +456,22 @@ def prepare(*args):
         print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
         call_make(cwd=place)
 
-def build(*args):
+def build(args):
     setup_for_build()
     print('{0}Building the main module{1}'.format(ANSI_YELLOW, ANSI_RESET))
     call_make()
 
-def test(*args):
+def test(args):
     setup_for_build()
     print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
     call_make(['tapfiles'])
 
-def doExec(*args):
+def doExec(args):
     'exec user command with vcvars'
     setup_for_build()
-    print('Execute command {}'.format(args))
+    print('Execute command {}'.format(args.cmd))
     sys.stdout.flush()
-    sp.check_call(' '.join(args), shell=True)
+    sp.check_call(' '.join(args.cmd), shell=True)
 
 def with_vcvars(cmd):
     '''re-exec main script with a (hopefully different) command
@@ -523,21 +523,36 @@ call "{vcvars}" {arch}
     if returncode != 0:
         sys.exit(returncode)
 
-actions = {
-    'prepare': prepare,
-    'build': build,
-    'test': test,
-    'exec': doExec,
-    '_vcvars':lambda:None,
-}
+def getargs():
+    from argparse import ArgumentParser, REMAINDER
+    P = ArgumentParser()
+    P.add_argument('--no-vcvars', dest='vcvars', default=True, action='store_false',
+                   help='Assume vcvarsall.bat has already been run')
+    SP = P.add_subparsers()
 
-if __name__=='__main__':
-    args = sys.argv[1:]
-    if args[0]!='_vcvars' and os.environ['CC']!='mingw':
+    CMD = SP.add_parser('prepare')
+    CMD.set_defaults(func=prepare)
+
+    CMD = SP.add_parser('build')
+    CMD.set_defaults(func=build)
+
+    CMD = SP.add_parser('test')
+    CMD.set_defaults(func=test)
+
+    CMD = SP.add_parser('exec')
+    CMD.add_argument('cmd', nargs=REMAINDER)
+    CMD.set_defaults(func=doExec)
+
+    return P
+
+def main(raw):
+    args = getargs().parse_args(raw)
+    if args.vcvars and os.environ['CC'].startswith('vs'):
         # re-exec with MSVC in PATH
-        with_vcvars(' '.join(['_vcvars']+args))
+        with_vcvars(' '.join(['--no-vcvars']+raw))
 
     else:
-        name = args.pop(0)
-        logger.debug('DO running action %s with %s', name, args)
-        actions[name](*args)
+        args.func(args)
+
+if __name__=='__main__':
+    main(sys.argv[1:])
