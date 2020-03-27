@@ -52,19 +52,21 @@ make = ''
 makeargs = []
 
 def host_info():
+    print('{0}Python setup{1}'.format(ANSI_CYAN, ANSI_RESET))
     print(sys.version)
     print('PYTHONPATH')
     for dname in sys.path:
         print(' ', dname)
-    print('platform = ', distutils.util.get_platform())
+    print('platform =', distutils.util.get_platform())
 
-    print('Listing available VS versions')
+    print('{0}Available Visual Studio versions{1}'.format(ANSI_CYAN, ANSI_RESET))
     from fnmatch import fnmatch
     for base in (r'C:\Program Files (x86)', r'C:\Program Files'):
         for root, dirs, files in os.walk(base):
             for fname in files:
                 if fnmatch(fname, 'vcvarsall.bat'):
                     print('Found', os.path.join(root, fname))
+    sys.stdout.flush()
 
 # Used from unittests
 def clear_lists():
@@ -98,6 +100,7 @@ def source_set(name):
         if os.path.isfile(set_file):
             seen_setups.append(set_file)
             print("Loading setup file {0}".format(set_file))
+            sys.stdout.flush()
             with open(set_file) as fp:
                 for line in fp:
                     logger.debug('Next line: %s', line.strip())
@@ -172,7 +175,11 @@ def set_setup_from_env(dep):
             logger.debug('ENV assignment: %s = %s', dep+postf, setup[dep+postf])
 
 def call_git(args, **kws):
-    logger.debug("EXEC '%s' in %s", ' '.join(['git'] + args), os.getcwd())
+    if 'cwd' in kws:
+        place = kws['cwd']
+    else:
+        place = os.getcwd()
+    logger.debug("EXEC '%s' in %s", ' '.join(['git'] + args), place)
     sys.stdout.flush()
     exitcode = sp.call(['git'] + args, **kws)
     logger.debug('EXEC DONE')
@@ -247,6 +254,7 @@ def add_dependency(dep):
             shutil.rmtree(place, onerror=remove_readonly)
         else:
             print('Found {0} of dependency {1} up-to-date in {2}'.format(tag, dep, place))
+            sys.stdout.flush()
 
     if not os.path.isdir(place):
         if not os.path.isdir(cachedir):
@@ -258,9 +266,10 @@ def add_dependency(dep):
         }.get(setup[dep+'_DEPTH'], ['--depth', setup[dep+'_DEPTH']])
         print('Cloning {0} of dependency {1} into {2}'
               .format(tag, dep, place))
+        sys.stdout.flush()
         call_git(['clone', '--quiet'] + deptharg + [recursearg, '--branch', tag, setup[dep+'_REPOURL'], dirname], cwd=cachedir)
 
-        sp.check_call(['git', 'log', '-n1'])
+        sp.check_call(['git', 'log', '-n1'], cwd=place)
         modules_to_compile.append(place)
 
         # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE
@@ -275,7 +284,7 @@ def add_dependency(dep):
             hook = os.path.join(place, setup[dep+'_HOOK'])
             if os.path.exists(hook):
                 print('Running hook {0} in {1}'.format(setup[dep+'_HOOK'], place))
-
+                sys.stdout.flush()
                 sp.check_call(hook, shell=True, cwd=place)
 
         # write checked out commit hash to marker file
@@ -341,6 +350,7 @@ def prepare(*args):
     call_git(['config', '--global', 'advice.detachedHead', 'false'])
 
     print('{0}Checking/cloning dependencies{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    sys.stdout.flush()
 
     [add_dependency(mod) for mod in modlist()]
 
@@ -348,7 +358,7 @@ def prepare(*args):
         release_local = os.path.join(cachedir, 'RELEASE.local')
         shutil.copy(release_local, 'configure')
 
-    print('{0}Setting up EPICS build system{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    print('{0}Configuring EPICS build system{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
     with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
         if re.search('static', os.environ['CONFIGURATION']):
@@ -391,30 +401,47 @@ def prepare(*args):
 
     setup_for_build()
 
+    print('{0}EPICS_HOST_ARCH = {1}{2}'.format(ANSI_CYAN, os.environ['EPICS_HOST_ARCH'], ANSI_RESET))
+    print('{0}make arguments = {1}{2}'.format(ANSI_CYAN, ' '.join(makeargs), ANSI_RESET))
     print('{0}$ {1} --version{2}'.format(ANSI_CYAN, make, ANSI_RESET))
     sys.stdout.flush()
     sp.check_call([make, '--version'])
+    print('{0}$ perl --version{1}'.format(ANSI_CYAN, ANSI_RESET))
+    sys.stdout.flush()
+    sp.check_call(['perl', '--version'])
+
+    if os.environ['CC'] == 'mingw':
+        print('{0}$ gcc --version{1}'.format(ANSI_CYAN, ANSI_RESET))
+        sys.stdout.flush()
+        sp.check_call(['gcc', '--version'])
+    else:
+        print('{0}$ cl{1}'.format(ANSI_CYAN, ANSI_RESET))
+        sys.stdout.flush()
+        sp.check_call(['cl'])
 
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
-        print('Building '+place)
+        print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
+        sys.stdout.flush()
         sp.check_call([make] + makeargs, cwd=place)
 
 def build(*args):
     setup_for_build()
-    print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    print('{0}Building the main module{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    sys.stdout.flush()
     sp.check_call([make] + makeargs)
 
 def test(*args):
     setup_for_build()
-    print('{0}Running the tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    sys.stdout.flush()
     sp.check_call([make] + makeargs + ['tapfiles'])
 
 def doExec(*args):
     'exec user command with vcvars'
     setup_for_build()
     print('Execute command {}'.format(args))
-
+    sys.stdout.flush()
     sp.check_call(' '.join(args), shell=True)
 
 def with_vcvars(cmd):
@@ -452,12 +479,16 @@ call "{vcvars}" {arch}
 "{python}" "{self}" {cmd}
 '''.format(**info)
 
-    print('vcvars-trampoline.bat')
-    print(script)
+    logger.debug('----- Creating vcvars-trampoline.bat -----')
+    for line in script.split('\n'):
+        logger.debug(line)
+    logger.debug('----- snip -----')
 
     with open('vcvars-trampoline.bat', 'w') as F:
         F.write(script)
 
+    print('{0}Calling vcvars-trampoline.bat to set environment for {1} on {2}{3}'
+          .format(ANSI_YELLOW, CC, os.environ['PLATFORM'], ANSI_RESET))
     sys.stdout.flush()
     sp.check_call('vcvars-trampoline.bat', shell=True)
 
@@ -477,5 +508,5 @@ if __name__=='__main__':
 
     else:
         name = args.pop(0)
-        print('IN', name, 'with', args)
+        logger.debug('DO running action %s with %s', name, args)
         actions[name](*args)
