@@ -46,6 +46,7 @@ environment:
   # common variables
   SETUP_PATH: .:.ci
   SET: test01
+  BASE: 3.15
 
   matrix:
   - CC: vs2019
