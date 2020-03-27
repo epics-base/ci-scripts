@@ -8,6 +8,12 @@
 # Ralph Lange <ralph.lange@gmx.de>
 # Copyright (c) 2020 ITER Organization
 
+#---------------------------------#
+#       build cache               #
+#---------------------------------#
+
+cache:
+  - C:\Users\appveyor\.tools -> appveyor\do.py
 
 #---------------------------------#
 #       repository cloning        #

@@ -407,25 +407,29 @@ def prepare(*args):
     if not os.path.isdir(toolsdir):
         os.makedirs(toolsdir)
 
-    print('Installing Make 4.2.1 from ANL web site')
-    sys.stdout.flush()
-    sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'make-4.2.1.zip',
-                   'https://epics.anl.gov/download/tools/make-4.2.1-win64.zip'],
-                  cwd=toolsdir)
-    sp.check_call([zip7, 'e', 'make-4.2.1.zip'], cwd=toolsdir)
+    makever = '4.2.1'
+    if not os.path.exists(os.path.join(toolsdir, 'make.exe')):
+        print('Installing Make 4.2.1 from ANL web site')
+        sys.stdout.flush()
+        sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'make-{0}.zip'.format(makever),
+                       'https://epics.anl.gov/download/tools/make-{0}-win64.zip'.format(makever)],
+                      cwd=toolsdir)
+        sp.check_call([zip7, 'e', 'make-{0}.zip'.format(makever)], cwd=toolsdir)
+        os.remove(os.path.join(toolsdir, 'make-{0}.zip'.format(makever)))
 
     perlver = '5.30.0.1'
     if os.environ['CC'] == 'vs2019':
-        print('Installing Strawberry Perl {0}'.format(perlver))
-        sys.stdout.flush()
-        sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'perl-{0}.zip'.format(perlver),
-                       'http://strawberryperl.com/download/{0}/strawberry-perl-{0}-64bit.zip'.format(perlver)],
-                      cwd=toolsdir)
-        sp.check_call([zip7, 'x', 'perl-{0}.zip'.format(perlver), '-ostrawberry'], cwd=toolsdir)
-
-        with open(os.devnull, 'w') as devnull:
-            sp.check_call('relocation.pl.bat', shell=True, stdout=devnull,
-                          cwd=os.path.join(toolsdir, 'strawberry'))
+        if not os.path.isdir(os.path.join(toolsdir, 'strawberry')):
+            print('Installing Strawberry Perl {0}'.format(perlver))
+            sys.stdout.flush()
+            sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'perl-{0}.zip'.format(perlver),
+                           'http://strawberryperl.com/download/{0}/strawberry-perl-{0}-64bit.zip'.format(perlver)],
+                          cwd=toolsdir)
+            sp.check_call([zip7, 'x', 'perl-{0}.zip'.format(perlver), '-ostrawberry'], cwd=toolsdir)
+            os.remove(os.path.join(toolsdir, 'perl-{0}.zip'.format(perlver)))
+            with open(os.devnull, 'w') as devnull:
+                sp.check_call('relocation.pl.bat', shell=True, stdout=devnull,
+                              cwd=os.path.join(toolsdir, 'strawberry'))
 
     setup_for_build()
 
