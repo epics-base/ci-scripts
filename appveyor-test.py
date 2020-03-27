@@ -248,14 +248,9 @@ class TestVCVars(unittest.TestCase):
         do.with_vcvars('env')
 
 if __name__ == "__main__":
-    if 'SET' in os.environ and os.environ['SET'] == "test00":
-        do.host_info()
-        if sys.argv[1:]==['env']:
-            # testing with_vcvars
-            [print(K,'=',V) for K, V in os.environ.items()]
-        else:
-            unittest.main()
+    do.host_info()
+    if sys.argv[1:]==['env']:
+        # testing with_vcvars
+        [print(K,'=',V) for K, V in os.environ.items()]
     else:
-        do.main(['prepare'])
-        do.main(['build'])
-        do.main(['test'])
+        unittest.main()

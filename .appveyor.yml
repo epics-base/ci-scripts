@@ -95,14 +95,27 @@ matrix:
   - platform: x64
     CC: vs2008
 
+# Run test script for unit tests (SET = test00)
+for:
+-
+  matrix:
+    only:
+      - SET: test00
+  build_script:
+    - cmd: python appveyor-test.py
+  test_script:
+    - cmd: echo Tests have been run in the build phase
 
 #---------------------------------#
 #     building & testing          #
 #---------------------------------#
 
 build_script:
-  - cmd: python appveyor-test.py
+  - cmd: python appveyor/do.py prepare
+  - cmd: python appveyor/do.py build
 
+test_script:
+  - cmd: python appveyor/do.py test
 
 #---------------------------------#
 #         debugging               #
