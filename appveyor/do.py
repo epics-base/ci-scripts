@@ -287,6 +287,41 @@ def add_dependency(dep):
 
     update_release_local(setup[dep+"_VARNAME"], place)
 
+def setup_for_build():
+    global make, makeargs
+    make = os.path.join(toolsdir, 'make')
+    makeargs = ['-j2', '-Otarget']
+    # no parallel make for Base 3.14
+    with open(os.path.join(places[setup['BASE_VARNAME']], 'configure', 'CONFIG_BASE_VERSION')) as myfile:
+        if 'BASE_3_14=YES' in myfile.read():
+            makeargs = []
+
+    if os.environ['PLATFORM'] == 'x86':
+        os.environ['EPICS_HOST_ARCH'] = 'win32-x86'
+    elif os.environ['PLATFORM'] == 'x64':
+        os.environ['EPICS_HOST_ARCH'] = 'windows-x64'
+
+    if os.environ['CC'] == 'vs2019':
+        # put our strawberry 'perl' in the PATH
+        os.environ['PATH'] = os.pathsep.join([os.path.join(toolsdir, 'strawberry', 'perl', 'site', 'bin'),
+                                              os.path.join(toolsdir, 'strawberry', 'perl', 'bin'),
+                                              os.environ['PATH']])
+    if os.environ['CC'] == 'mingw':
+        if 'INCLUDE' not in os.environ:
+            os.environ['INCLUDE'] = ''
+        if os.environ['PLATFORM'] == 'x86':
+            os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
+            os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+                                                     os.environ['INCLUDE']])
+            os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+                                                  os.environ['PATH']])
+        elif os.environ['PLATFORM'] == 'x64':
+            os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
+            os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+                                                     os.environ['INCLUDE']])
+            os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
+                                                  os.environ['PATH']])
+
 def prepare(*args):
     host_info()
 
@@ -328,38 +363,23 @@ def prepare(*args):
         else:
             optitype = 'optimized'
 
-    if os.environ['PLATFORM'] == 'x86':
-        os.environ['EPICS_HOST_ARCH'] = 'win32-x86'
-    elif os.environ['PLATFORM'] == 'x64':
-        os.environ['EPICS_HOST_ARCH'] = 'windows-x64'
-
-    print('EPICS Base build system set up on {0} for {1} build with {2} linking'
-          .format(os.environ['EPICS_HOST_ARCH'], optitype, linktype))
+    print('EPICS Base build system set up for {0} build with {1} linking'
+          .format(optitype, linktype))
 
     if not os.path.isdir(toolsdir):
         os.makedirs(toolsdir)
 
     print('Installing Make 4.2.1 from ANL web site')
     sys.stdout.flush()
-
     sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'make-4.2.1.zip',
                    'https://epics.anl.gov/download/tools/make-4.2.1-win64.zip'],
                   cwd=toolsdir)
     sp.check_call([zip7, 'e', 'make-4.2.1.zip'], cwd=toolsdir)
 
-    make = os.path.join(toolsdir, 'make')
-
-    makeargs = ['-j2', '-Otarget']
-    # no parallel make for Base 3.14
-    with open(os.path.join(places[setup['BASE_VARNAME']], 'configure', 'CONFIG_BASE_VERSION')) as myfile:
-        if 'BASE_3_14=YES' in myfile.read():
-            makeargs = []
-
     perlver = '5.30.0.1'
     if os.environ['CC'] == 'vs2019':
         print('Installing Strawberry Perl {0}'.format(perlver))
         sys.stdout.flush()
-
         sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'perl-{0}.zip'.format(perlver),
                        'http://strawberryperl.com/download/{0}/strawberry-perl-{0}-64bit.zip'.format(perlver)],
                       cwd=toolsdir)
@@ -369,25 +389,8 @@ def prepare(*args):
             sp.check_call('relocation.pl.bat', shell=True, stdout=devnull,
                           cwd=os.path.join(toolsdir, 'strawberry'))
 
-        # put our strawberry 'perl' in the PATH
-        os.environ['PATH'] = os.pathsep.join([os.path.join(toolsdir, 'strawberry', 'perl', 'site', 'bin'),
-                                              os.path.join(toolsdir, 'strawberry', 'perl', 'bin'),
-                                              os.environ['PATH']])
-    if os.environ['CC'] == 'mingw':
-        if 'INCLUDE' not in os.environ:
-            os.environ['INCLUDE'] = ''
-        if os.environ['PLATFORM'] == 'x86':
-            os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
-            os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
-                                                     os.environ['INCLUDE']])
-            os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
-                                                  os.environ['PATH']])
-        elif os.environ['PLATFORM'] == 'x64':
-            os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
-            os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
-                                                     os.environ['INCLUDE']])
-            os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
-                                                  os.environ['PATH']])
+    setup_for_build()
+
     print('{0}$ {1} --version{2}'.format(ANSI_CYAN, make, ANSI_RESET))
     sys.stdout.flush()
     sp.check_call([make, '--version'])
@@ -398,15 +401,18 @@ def prepare(*args):
         sp.check_call([make] + makeargs, cwd=place)
 
 def build(*args):
+    setup_for_build()
     print('{0}Building the module{1}'.format(ANSI_YELLOW, ANSI_RESET))
     sp.check_call([make] + makeargs)
 
 def test(*args):
+    setup_for_build()
     print('{0}Running the tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
     sp.check_call([make] + makeargs + ['tapfiles'])
 
 def doExec(*args):
     'exec user command with vcvars'
+    setup_for_build()
     print('Execute command {}'.format(args))
 
     sp.check_call(' '.join(args), shell=True)
