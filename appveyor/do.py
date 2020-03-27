@@ -390,13 +390,13 @@ def prepare(args):
 
     with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
         if re.search('static', os.environ['CONFIGURATION']):
-            config_site.write('SHARED_LIBRARIES=NO')
-            config_site.write('STATIC_BUILD=YES')
+            config_site.write('SHARED_LIBRARIES=NO\n')
+            config_site.write('STATIC_BUILD=YES\n')
             linktype = 'static'
         else:
             linktype = 'dynamic (DLL)'
         if re.search('debug', os.environ['CONFIGURATION']):
-            config_site.write('HOST_OPT=NO')
+            config_site.write('HOST_OPT=NO\n')
             optitype = 'debug'
         else:
             optitype = 'optimized'
