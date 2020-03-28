@@ -214,7 +214,7 @@ def complete_setup(dep):
     setup.setdefault(dep+"_REPOURL", 'https://github.com/{0}/{1}.git'
                      .format(setup[dep+'_REPOOWNER'], setup[dep+'_REPONAME']))
     setup.setdefault(dep+"_VARNAME", dep)
-    setup.setdefault(dep+"_RECURSIVE", 1)
+    setup.setdefault(dep+"_RECURSIVE", 'YES')
     setup.setdefault(dep+"_DEPTH", -1)
 
 # add_dependency(dep, tag)
@@ -232,10 +232,13 @@ def complete_setup(dep):
 # - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
 # - Add full path to $modules_to_compile
 def add_dependency(dep):
-    if setup[dep+'_RECURSIVE'] not in [0, 'no']:
-        recursearg = "--recursive"
+    recurse = setup[dep+'_RECURSIVE'].lower()
+    if recurse not in ['0', 'no']:
+        recursearg = ["--recursive"]
+    elif recurse not in ['1', 'yes']:
+        recursearg = []
     else:
-        recursearg = ''
+        raise RuntimeError("Invalid value for {}_RECURSIVE='{}' not 0/NO/1/YES".format(dep, recurse))
 
     tag = setup[dep]
 
@@ -279,7 +282,7 @@ def add_dependency(dep):
         print('Cloning {0} of dependency {1} into {2}'
               .format(tag, dep, place))
         sys.stdout.flush()
-        call_git(['clone', '--quiet'] + deptharg + [recursearg, '--branch', tag, setup[dep+'_REPOURL'], dirname], cwd=cachedir)
+        call_git(['clone', '--quiet'] + deptharg + recursearg + ['--branch', tag, setup[dep+'_REPOURL'], dirname], cwd=cachedir)
 
         sp.check_call(['git', 'log', '-n1'], cwd=place)
         modules_to_compile.append(place)
