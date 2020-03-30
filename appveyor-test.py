@@ -10,6 +10,7 @@ from __future__ import print_function
 import sys, os, shutil, fileinput
 import distutils.util
 import re
+import subprocess as sp
 import unittest
 
 builddir = os.getcwd()
@@ -155,7 +156,7 @@ class TestUpdateReleaseLocal(unittest.TestCase):
         self.assertGreater(foundat['mod2'], foundat['mod1'],
                            'MOD2 (line {0}) appears before MOD1 (line {1})'.format(foundat['mod2'], foundat['mod1']))
 
-class TestAddDependency(unittest.TestCase):
+class TestAddDependencyUpToDateCheck(unittest.TestCase):
 
     hash_3_15_6 = "ce7943fb44beb22b453ddcc0bda5398fadf72096"
     location = os.path.join(do.cachedir, 'base-R3.15.6')
@@ -208,6 +209,52 @@ class TestAddDependency(unittest.TestCase):
         self.assertEqual(checked_out, self.hash_3_15_6,
                          "Wrong commit of dependency checked out (expected='{0}' found='{1}')"
                          .format(self.hash_3_15_6, checked_out))
+
+def is_shallow_repo(place):
+    check = sp.check_output(['git', 'rev-parse', '--is-shallow-repository'], cwd=place).strip()
+    if check == '--is-shallow-repository':
+        if os.path.exists(os.path.join(place, '.git', 'shallow')):
+            check = 'true'
+        else:
+            check = 'false'
+    return check == 'true'
+
+class TestAddDependencyOptions(unittest.TestCase):
+
+    location = os.path.join(do.cachedir, 'mcoreutils-master')
+    testfile = os.path.join(location, '.ci', 'LICENSE')
+
+    def setUp(self):
+        os.environ['SETUP_PATH'] = '.:appveyor'
+        if os.path.exists(self.location):
+            shutil.rmtree(self.location, onerror=do.remove_readonly)
+        do.clear_lists()
+        do.source_set('defaults')
+        do.complete_setup('MCoreUtils')
+        do.setup['MCoreUtils'] = 'master'
+
+    def test_Default(self):
+        do.add_dependency('MCoreUtils')
+        self.assertTrue(os.path.exists(self.testfile),
+                        'Submodule (.ci) not checked out recursively (requested: default=YES')
+        self.assertTrue(is_shallow_repo(self.location),
+                        'Module not checked out shallow (requested: default=5)')
+
+    def test_SetRecursiveNo(self):
+        do.setup['MCoreUtils_RECURSIVE'] = 'NO'
+        do.add_dependency('MCoreUtils')
+        self.assertFalse(os.path.exists(self.testfile), 'Submodule (.ci) checked out recursively')
+
+    def test_SetDepthZero(self):
+        do.setup['MCoreUtils_DEPTH'] = '0'
+        do.add_dependency('MCoreUtils')
+        self.assertFalse(is_shallow_repo(self.location), 'Module checked out shallow (requested full)')
+
+    def test_SetDepthThree(self):
+        do.setup['MCoreUtils_DEPTH'] = '3'
+        do.add_dependency('MCoreUtils')
+        self.assertTrue(is_shallow_repo(self.location),
+                        'Module not checked out shallow (requested: default=5)')
 
 def repo_access(dep):
     do.set_setup_from_env(dep)
