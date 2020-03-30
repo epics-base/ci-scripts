@@ -314,7 +314,7 @@ def add_dependency(dep):
 def setup_for_build():
     global make, makeargs
 
-    make = os.path.join(toolsdir, 'make')
+    make = os.path.join(toolsdir, 'make.exe')
     makeargs = ['-j2', '-Otarget']
     # no parallel make for Base 3.14
     with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
@@ -472,6 +472,7 @@ def test(args):
 def doExec(args):
     'exec user command with vcvars'
     setup_for_build()
+    os.environ['MAKE'] = make
     print('Execute command {}'.format(args.cmd))
     sys.stdout.flush()
     sp.check_call(' '.join(args.cmd), shell=True)
