@@ -462,7 +462,7 @@ def prepare(args):
 def build(args):
     setup_for_build()
     print('{0}Building the main module{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    call_make()
+    call_make(args.makeargs)
 
 def test(args):
     setup_for_build()
@@ -537,6 +537,7 @@ def getargs():
     CMD.set_defaults(func=prepare)
 
     CMD = SP.add_parser('build')
+    CMD.add_argument('makeargs', nargs=REMAINDER)
     CMD.set_defaults(func=build)
 
     CMD = SP.add_parser('test')
