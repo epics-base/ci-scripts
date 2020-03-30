@@ -239,6 +239,10 @@ def add_dependency(dep):
         recursearg = []
     else:
         raise RuntimeError("Invalid value for {}_RECURSIVE='{}' not 0/NO/1/YES".format(dep, recurse))
+    deptharg = {
+        '-1':['--depth', '5'],
+        '0':[],
+    }.get(str(setup[dep+'_DEPTH']), ['--depth', str(setup[dep+'_DEPTH'])])
 
     tag = setup[dep]
 
@@ -275,10 +279,6 @@ def add_dependency(dep):
         if not os.path.isdir(cachedir):
             os.makedirs(cachedir)
         # clone dependency
-        deptharg = {
-            -1:['--depth', '5'],
-            0:[],
-        }.get(setup[dep+'_DEPTH'], ['--depth', setup[dep+'_DEPTH']])
         print('Cloning {0} of dependency {1} into {2}'
               .format(tag, dep, place))
         sys.stdout.flush()
