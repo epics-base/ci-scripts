@@ -37,7 +37,7 @@ static void testOnce(void)
 {
     testDiag("check that tests work");
 
-    dbReadDatabase(&pdbbase, "example.dbd", "../../../dbd", NULL);
+    dbReadDatabase(&pdbbase, "exampleTest.dbd", "../O.Common", NULL);
     exampleTest_registerRecordDeviceDriver(pdbbase);
     dbReadDatabase(&pdbbase, "dbExample1.db", "../../../db", "user=test");
 
