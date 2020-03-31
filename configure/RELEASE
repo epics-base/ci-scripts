@@ -30,7 +30,7 @@
 #SNCSEQ = $(MODULES)/seq-ver
 
 # EPICS_BASE should appear last so earlier modules can override stuff:
-EPICS_BASE = /home/ralph/work/EPICS/V3/base-3.15.6
+EPICS_BASE = /path/to/base/must/be/set/in/a/RELEASE.local/file
 
 # Set RULES here if you want to use build rules from somewhere
 # other than EPICS_BASE:
