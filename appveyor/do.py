@@ -52,7 +52,7 @@ def modlist():
 
 zip7 = r'C:\Program Files\7-Zip\7z'
 make = ''
-makeargs = []
+isbase314 = False
 
 def host_info():
     print('{0}Python setup{1}'.format(ANSI_CYAN, ANSI_RESET))
@@ -189,10 +189,16 @@ def call_git(args, **kws):
     return exitcode
 
 def call_make(args=[], **kws):
-    if 'cwd' in kws:
-        place = kws['cwd']
+    place = kws.get('cwd', os.getcwd())
+    parallel = kws.pop('parallel', 2)
+    silent = kws.pop('silent', False)
+    # no parallel make for Base 3.14
+    if parallel <= 0 or isbase314:
+        makeargs = []
     else:
-        place = os.getcwd()
+        makeargs = ['-j{0}'.format(parallel), '-Otarget']
+    if silent:
+        makeargs += ['-s']
     logger.debug("EXEC '%s' in %s", ' '.join([make] + makeargs + args), place)
     sys.stdout.flush()
     exitcode = sp.call([make] + makeargs + args, **kws)
@@ -315,7 +321,7 @@ def add_dependency(dep):
     update_release_local(setup[dep+"_VARNAME"], place)
 
 def setup_for_build():
-    global make, makeargs
+    global make, isbase314
     dllpaths = []
 
     # there is no combined static and debug EPICS_HOST_ARCH target,
@@ -354,7 +360,6 @@ def setup_for_build():
                                                   os.environ['PATH']])
 
     make = os.path.join(toolsdir, 'make.exe')
-    makeargs = ['-j2', '-Otarget']
 
     with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
         lines = f.readlines()
@@ -365,10 +370,9 @@ def setup_for_build():
                 dllpaths.append(bindir)
             if mod == 'EPICS_BASE':
                 base_place = place
-    # no parallel make for Base 3.14
     with open(os.path.join(base_place, 'configure', 'CONFIG_BASE_VERSION')) as myfile:
         if 'BASE_3_14=YES' in myfile.read():
-            makeargs = []
+            isbase314 = True
 
     bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
     if os.path.isdir(bindir):
@@ -451,10 +455,9 @@ def prepare(args):
     setup_for_build()
 
     print('{0}EPICS_HOST_ARCH = {1}{2}'.format(ANSI_CYAN, os.environ['EPICS_HOST_ARCH'], ANSI_RESET))
-    print('{0}make arguments = {1}{2}'.format(ANSI_CYAN, ' '.join(makeargs), ANSI_RESET))
     print('{0}$ {1} --version{2}'.format(ANSI_CYAN, make, ANSI_RESET))
     sys.stdout.flush()
-    sp.check_call([make, '--version'])
+    call_make(['--version'], parallel=0)
     print('{0}$ perl --version{1}'.format(ANSI_CYAN, ANSI_RESET))
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
@@ -471,7 +474,7 @@ def prepare(args):
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
         print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
-        call_make(cwd=place)
+        call_make(cwd=place) #TBD: default should be silent
 
 def build(args):
     setup_for_build()
@@ -481,7 +484,8 @@ def build(args):
 def test(args):
     setup_for_build()
     print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    call_make(['tapfiles'])
+    call_make(['tapfiles'], parallel=0)
+    call_make(['test-results'], parallel=0, silent=True)
 
 def doExec(args):
     'exec user command with vcvars'
