@@ -313,19 +313,7 @@ def add_dependency(dep):
 
 def setup_for_build():
     global make, makeargs
-
-    make = os.path.join(toolsdir, 'make.exe')
-    makeargs = ['-j2', '-Otarget']
-    # no parallel make for Base 3.14
-    with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            if re.search(r'^EPICS_BASE=', line):
-                base_place = line.split('=')[1].strip()
-                break
-    with open(os.path.join(base_place, 'configure', 'CONFIG_BASE_VERSION')) as myfile:
-        if 'BASE_3_14=YES' in myfile.read():
-            makeargs = []
+    dllpaths = []
 
     # there is no combined static and debug EPICS_HOST_ARCH target,
     # so a combined debug and static target will appear to be just static
@@ -361,6 +349,29 @@ def setup_for_build():
                                                      os.environ['INCLUDE']])
             os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
                                                   os.environ['PATH']])
+
+    make = os.path.join(toolsdir, 'make.exe')
+    makeargs = ['-j2', '-Otarget']
+
+    with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            (mod, place) = line.strip().split('=')
+            bindir = os.path.join(place, 'bin', os.environ['EPICS_HOST_ARCH'])
+            if os.path.isdir(bindir):
+                dllpaths.append(bindir)
+            if mod == 'EPICS_BASE':
+                base_place = place
+    # no parallel make for Base 3.14
+    with open(os.path.join(base_place, 'configure', 'CONFIG_BASE_VERSION')) as myfile:
+        if 'BASE_3_14=YES' in myfile.read():
+            makeargs = []
+
+    bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
+    if os.path.isdir(bindir):
+        dllpaths.append(bindir)
+
+    os.environ['PATH'] = os.pathsep.join(dllpaths + [os.environ['PATH']])
 
 def prepare(args):
     host_info()
