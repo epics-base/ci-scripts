@@ -41,9 +41,12 @@ else:
 
 
 def modlist():
-    add_modules = os.environ.get('ADD_MODULES', '').upper().split()
-    modules = os.environ.get('MODULES', '').upper().split()
-    ret = ['BASE'] + add_modules + modules
+    for var in ['ADD_MODULES', 'MODULES']:
+        setup.setdefault(var, '')
+        if var in os.environ:
+            setup[var] = os.environ[var]
+            logger.debug('ENV assignment: %s = %s', var, setup[var])
+    ret = ['BASE'] + setup['ADD_MODULES'].upper().split() + setup['MODULES'].upper().split()
     logger.debug('Effective module list: %s', ret)
     return ret
 
