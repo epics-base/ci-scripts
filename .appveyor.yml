@@ -16,6 +16,14 @@ cache:
   - C:\Users\appveyor\.tools -> appveyor\do.py
 
 #---------------------------------#
+#       additional packages       #
+#---------------------------------#
+
+install:
+# for the sequencer
+  - cinst re2c
+
+#---------------------------------#
 #       repository cloning        #
 #---------------------------------#
 
