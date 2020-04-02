@@ -12,7 +12,6 @@ import subprocess as sp
 import distutils.util
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 # Setup ANSI Colors
 ANSI_RED = "\033[31;1m"
@@ -53,6 +52,7 @@ def modlist():
 zip7 = r'C:\Program Files\7-Zip\7z'
 make = ''
 isbase314 = False
+silent_dep_builds = True
 
 def host_info():
     print('{0}Python setup{1}'.format(ANSI_CYAN, ANSI_RESET))
@@ -474,7 +474,7 @@ def prepare(args):
     for mod in modlist():
         place = places[setup[mod+"_VARNAME"]]
         print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
-        call_make(cwd=place) #TBD: default should be silent
+        call_make(cwd=place, silent=silent_dep_builds)
 
     print('{0}Dependency module information{1}'.format(ANSI_CYAN, ANSI_RESET))
     print('Module     Tag          Binaries    Commit')
@@ -580,7 +580,12 @@ def getargs():
     return P
 
 def main(raw):
+    global silent_dep_builds
     args = getargs().parse_args(raw)
+    if 'VV' in os.environ and os.environ['VV'] == '1':
+        logging.basicConfig(level=logging.DEBUG)
+        silent_dep_builds = False
+
     if args.vcvars and os.environ['CC'].startswith('vs'):
         # re-exec with MSVC in PATH
         with_vcvars(' '.join(['--no-vcvars']+raw))

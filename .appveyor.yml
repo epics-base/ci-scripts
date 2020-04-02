@@ -61,6 +61,7 @@ environment:
   SETUP_PATH: .:.ci
   SET: test01
   BASE: 3.15
+  VV: 1
 
   matrix:
   - CC: vs2019
@@ -68,6 +69,7 @@ environment:
     SET: test00
   - CC: mingw
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    VV: 0
   - CC: vs2019
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - CC: vs2017
