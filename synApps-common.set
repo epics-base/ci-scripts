@@ -1,0 +1,7 @@
+# Common settings for all synApps releases
+
+DEVIOCSTATS_REPONAME=iocStats
+ETHERIP_REPOOWNER=EPICSTools
+GALIL_REPOOWNER=motorapp
+GALIL_REPONAME=Galil-3-0
+AREADETECTOR_REPOOWNER=areaDetector

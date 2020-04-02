@@ -1,0 +1,44 @@
+# Release tags for synApps modules as per synApps-6.1
+# see https://github.com/EPICS-synApps/support/blob/cc5adba5b8848c9cb98ab96768d668ae927d8859/assemble_synApps.sh
+# also for additional configuration that could be done in hook scripts
+
+#ALLENBRADLEY=2.3
+ALIVE=R1-1-1
+AREA_DETECTOR=R3-7
+ASYN=R4-36
+AUTOSAVE=R5-10
+BUSY=R1-7-2
+CALC=R3-7-3
+CAMAC=R2-7-1
+CAPUTRECORDER=R1-7-2
+DAC128V=R2-9
+DELAYGEN=R1-2-1
+DXP=R6-0
+DXPSITORO=R1-2
+DEVIOCSTATS=3.1.16
+#ETHERIP=ether_ip-3-1
+#GALIL=V3-6
+IP=R2-20-1
+IPAC=2.15
+IP330=R2-9
+IPUNIDIG=R2-11
+LOVE=R3-2-7
+LUA=R2-0
+MCA=R7-8
+MEASCOMP=R2-3
+MODBUS=R3-0
+MOTOR=R7-1
+OPTICS=R2-13-3
+QUADEM=R9-2-1
+SNCSEQ=2.2.6
+SOFTGLUE=R2-8-2
+SOFTGLUEZYNQ=R2-0-2
+SSCAN=R2-11-3
+STD=R3-6
+STREAM=2.8.9
+VAC=R1-9
+VME=R2-9-2
+YOKOGAWA_DAS=R2-0-1
+XXX=R6-1
+
+include synApps-common
