@@ -20,6 +20,7 @@ env:
 addons:
   apt:
     packages:
+    - gdb
     - libreadline6-dev
     - libncurses5-dev
     - perl
@@ -120,11 +121,11 @@ jobs:
 
   - env: SET=test01
     compiler: gcc-6
-    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
+    addons: { apt: { packages: ["g++-6", "gdb"], sources: ["ubuntu-toolchain-r-test"] } }
 
   - env: SET=test01
     compiler: gcc-7
-    addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
+    addons: { apt: { packages: ["g++-7", "gdb"], sources: ["ubuntu-toolchain-r-test"] } }
 
 # MacOS build
 

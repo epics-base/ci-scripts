@@ -4,6 +4,8 @@ set -e
 # Set VV in .travis.yml to make scripts verbose
 [ "$VV" ] && set -x
 
+MYDIR="$(dirname "${BASH_SOURCE[0]}")"
+
 CACHEDIR=${CACHEDIR:-${HOME}/.cache}
 
 eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
@@ -17,6 +19,16 @@ make -j2 $EXTRA
 
 if [ "$TEST" != "NO" ]
 then
-  make tapfiles
+  ulimit -c unlimited
+
+  sudo ${PYTHON:-python} "$MYDIR"/core-dumper.py install
+
+  ret=0
+  make tapfiles || ret=$?
+
+  sudo ${PYTHON:-python} "$MYDIR"/core-dumper.py uninstall
+  ${PYTHON:-python} "$MYDIR"/core-dumper.py report
+
   make -s test-results
+  exit $ret
 fi

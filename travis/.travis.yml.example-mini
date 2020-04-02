@@ -10,6 +10,7 @@ dist: xenial
 addons:
   apt:
     packages:
+    - gdb
     - libreadline6-dev
     - libncurses5-dev
     - perl
