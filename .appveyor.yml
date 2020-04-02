@@ -60,7 +60,7 @@ environment:
   # common variables
   SETUP_PATH: .:.ci
   SET: test01
-  BASE: 3.15
+  BASE_RECURSIVE: NO
   VV: 1
 
   matrix:
@@ -69,8 +69,14 @@ environment:
     SET: test00
   - CC: mingw
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+  - CC: vs2019
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     VV: 0
   - CC: vs2019
+    BASE: 3.15
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - CC: vs2019
+    BASE: 3.14
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - CC: vs2017
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
