@@ -320,7 +320,7 @@ def add_dependency(dep):
 
     update_release_local(setup[dep+"_VARNAME"], place)
 
-def setup_for_build():
+def setup_for_build(args):
     global make, isbase314
     dllpaths = []
 
@@ -379,6 +379,20 @@ def setup_for_build():
         dllpaths.append(bindir)
 
     os.environ['PATH'] = os.pathsep.join(dllpaths + [os.environ['PATH']])
+
+    # apparently %CD% is handled automagically
+    os.environ['TOP'] = os.getcwd()
+
+    addpaths = []
+    for path in args.paths:
+        try:
+            addpaths.append(path.format(**os.environ))
+        except KeyError:
+            print('Environment')
+            [print('  ',K,'=',repr(V)) for K,V in os.environ.items()]
+            raise
+
+    os.environ['PATH'] = os.pathsep.join([os.environ['PATH']] + addpaths)
 
 def prepare(args):
     host_info()
@@ -452,7 +466,7 @@ def prepare(args):
                 sp.check_call('relocation.pl.bat', shell=True, stdout=devnull,
                               cwd=os.path.join(toolsdir, 'strawberry'))
 
-    setup_for_build()
+    setup_for_build(args)
 
     print('{0}EPICS_HOST_ARCH = {1}{2}'.format(ANSI_CYAN, os.environ['EPICS_HOST_ARCH'], ANSI_RESET))
     print('{0}$ {1} --version{2}'.format(ANSI_CYAN, make, ANSI_RESET))
@@ -488,19 +502,19 @@ def prepare(args):
         print(f.read().strip())
 
 def build(args):
-    setup_for_build()
+    setup_for_build(args)
     print('{0}Building the main module{1}'.format(ANSI_YELLOW, ANSI_RESET))
     call_make(args.makeargs)
 
 def test(args):
-    setup_for_build()
+    setup_for_build(args)
     print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
     call_make(['tapfiles'], parallel=0)
     call_make(['test-results'], parallel=0, silent=True)
 
 def doExec(args):
     'exec user command with vcvars'
-    setup_for_build()
+    setup_for_build(args)
     os.environ['MAKE'] = make
     print('Execute command {}'.format(args.cmd))
     sys.stdout.flush()
@@ -561,6 +575,8 @@ def getargs():
     P = ArgumentParser()
     P.add_argument('--no-vcvars', dest='vcvars', default=True, action='store_false',
                    help='Assume vcvarsall.bat has already been run')
+    P.add_argument('--add-path', dest='paths', default=[], action='append',
+                   help='Append directory to %PATH%.  Expands {ENVVAR}')
     SP = P.add_subparsers()
 
     CMD = SP.add_parser('prepare')
