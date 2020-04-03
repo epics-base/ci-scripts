@@ -4,6 +4,23 @@
 # This is YAML - indentation levels are crucial
 
 #---------------------------------#
+#       build cache               #
+#---------------------------------#
+# The AppVeyor cache allowance is way too small (1GB per account across all projects, branches and jobs)
+# to be used for the dependency builds.
+
+cache:
+  - C:\Users\appveyor\.tools -> appveyor\do.py
+
+#---------------------------------#
+#       additional packages       #
+#---------------------------------#
+
+install:
+# for the sequencer
+  - cinst re2c
+
+#---------------------------------#
 #       repository cloning        #
 #---------------------------------#
 
@@ -27,6 +44,10 @@ skip_commits:
 #   build matrix configuration    #
 #---------------------------------#
 
+# Since dependencies cannot be cached and AppVeyor only grants a single builder VM, all jobs
+# are executed sequentially, each one taking 10-15 minutes.
+# Consider this when defining your build matrix. (A full matrix build takes more than 8 hours.)
+
 # Build Configurations: dll/static, regular/debug
 configuration:
   - dynamic
@@ -34,41 +55,54 @@ configuration:
   - dynamic-debug
   - static-debug
 
-# Environment variables: compiler toolchain
+# Environment variables: compiler toolchain, base version, setup file, ...
 environment:
-  matrix:
-  - CC: mingw
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-  - CC: vs2019
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  - CC: vs2017
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-  - CC: vs2015
-  - CC: vs2013
-  - CC: vs2012
-  - CC: vs2010
+  # common / default variables for all jobs
+  SETUP_PATH: .ci-local:.ci
+  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
-# Platform: architecture
+  matrix:
+  - CMP: vs2019
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    SET: test00
+  - CMP: mingw
+  - CMP: vs2019
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - CMP: vs2019
+    BASE: 3.15
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - CMP: vs2019
+    BASE: 3.14
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - CMP: vs2017
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  - CMP: vs2015
+  - CMP: vs2013
+  - CMP: vs2012
+  - CMP: vs2010
+  - CMP: vs2008
+
+# Platform: processor architecture
 platform:
   - x86
   - x64
 
-# Matrix configuration: allow specific failing jobs
+# Matrix configuration: exclude sets of jobs
 matrix:
   exclude:
-  # VS2010 Express installs don't have the 64 bit compiler
+  # VS2012 and older installs don't have the 64 bit compiler
   - platform: x64
-    CC: vs2010
-  # Exclude to reduce total job runtime
-  # skip 64-bit for older and 32-bit for newer
+    CMP: vs2012
   - platform: x64
-    CC: vs2012
-  - platform: x86
-    CC: mingw
-  - platform: x86
-    CC: vs2019
-  - platform: x86
-    CC: vs2017
+    CMP: vs2010
+  - platform: x64
+    CMP: vs2008
+  # Exclude more jobs to reduce build time
+  # E.g., skip 32-bit for newer compilers
+  #- platform: x86
+  #  CMP: vs2019
+  #- platform: x86
+  #  CMP: vs2017
 
 #---------------------------------#
 #     building & testing          #
