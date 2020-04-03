@@ -55,36 +55,35 @@ configuration:
   - dynamic-debug
   - static-debug
 
-# Environment variables: compiler toolchain
+# Environment variables: compiler toolchain, base version, setup file, ...
 environment:
-  # common variables
+  # common / default variables for all jobs
   SETUP_PATH: .:.ci
   SET: test01
   BASE_RECURSIVE: NO
   VV: 1
 
   matrix:
-  - CC: vs2019
+  - CMP: vs2019
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     SET: test00
-  - CC: mingw
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-  - CC: vs2019
+  - CMP: mingw
+  - CMP: vs2019
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     VV: 0
-  - CC: vs2019
+  - CMP: vs2019
     BASE: 3.15
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  - CC: vs2019
+  - CMP: vs2019
     BASE: 3.14
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  - CC: vs2017
+  - CMP: vs2017
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-  - CC: vs2015
-  - CC: vs2013
-  - CC: vs2012
-  - CC: vs2010
-  - CC: vs2008
+  - CMP: vs2015
+  - CMP: vs2013
+  - CMP: vs2012
+  - CMP: vs2010
+  - CMP: vs2008
 
 # Platform: architecture
 platform:
@@ -105,11 +104,11 @@ matrix:
     SET: test00
   # VS2012 and older installs don't have the 64 bit compiler
   - platform: x64
-    CC: vs2012
+    CMP: vs2012
   - platform: x64
-    CC: vs2010
+    CMP: vs2010
   - platform: x64
-    CC: vs2008
+    CMP: vs2008
 
 # Run test script for unit tests (SET = test00)
 for:

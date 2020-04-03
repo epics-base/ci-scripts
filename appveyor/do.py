@@ -338,12 +338,12 @@ def setup_for_build(args):
     elif os.environ['PLATFORM'].lower() == 'x64':
         os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
 
-    if os.environ['CC'] == 'vs2019':
+    if os.environ['CMP'] == 'vs2019':
         # put our strawberry 'perl' in the PATH
         os.environ['PATH'] = os.pathsep.join([os.path.join(toolsdir, 'strawberry', 'perl', 'site', 'bin'),
                                               os.path.join(toolsdir, 'strawberry', 'perl', 'bin'),
                                               os.environ['PATH']])
-    if os.environ['CC'] == 'mingw':
+    if os.environ['CMP'] == 'mingw':
         if 'INCLUDE' not in os.environ:
             os.environ['INCLUDE'] = ''
         if os.environ['PLATFORM'].lower() == 'x86':
@@ -453,7 +453,7 @@ def prepare(args):
         os.remove(os.path.join(toolsdir, 'make-{0}.zip'.format(makever)))
 
     perlver = '5.30.0.1'
-    if os.environ['CC'] == 'vs2019':
+    if os.environ['CMP'] == 'vs2019':
         if not os.path.isdir(os.path.join(toolsdir, 'strawberry')):
             print('Installing Strawberry Perl {0}'.format(perlver))
             sys.stdout.flush()
@@ -476,7 +476,7 @@ def prepare(args):
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
 
-    if os.environ['CC'] == 'mingw':
+    if os.environ['CMP'] == 'mingw':
         print('{0}$ gcc --version{1}'.format(ANSI_CYAN, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call(['gcc', '--version'])
@@ -523,7 +523,7 @@ def doExec(args):
 def with_vcvars(cmd):
     '''re-exec main script with a (hopefully different) command
     '''
-    CC = os.environ['CC']
+    CC = os.environ['CMP']
 
     # cf. https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
 
@@ -602,7 +602,7 @@ def main(raw):
         logging.basicConfig(level=logging.DEBUG)
         silent_dep_builds = False
 
-    if args.vcvars and os.environ['CC'].startswith('vs'):
+    if args.vcvars and os.environ['CMP'].startswith('vs'):
         # re-exec with MSVC in PATH
         with_vcvars(' '.join(['--no-vcvars']+raw))
 

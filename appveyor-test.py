@@ -290,7 +290,7 @@ class TestDefaultModuleURLs(unittest.TestCase):
 
 class TestVCVars(unittest.TestCase):
     def test_vcvars(self):
-        if ('CC' in os.environ and os.environ['CC'] in ('mingw',)) \
+        if ('CMP' in os.environ and os.environ['CMP'] in ('mingw',)) \
                 or distutils.util.get_platform() != "win32":
             raise unittest.SkipTest()
 
@@ -299,7 +299,7 @@ class TestVCVars(unittest.TestCase):
 class TestSetupForBuild(unittest.TestCase):
     configuration = os.environ['CONFIGURATION']
     platform = os.environ['PLATFORM']
-    cc = os.environ['CC']
+    cc = os.environ['CMP']
     args = Namespace(paths=[])
 
     def setUp(self):
@@ -308,7 +308,7 @@ class TestSetupForBuild(unittest.TestCase):
     def tearDown(self):
         os.environ['CONFIGURATION'] = self.configuration
         os.environ['PLATFORM'] = self.platform
-        os.environ['CC'] = self.cc
+        os.environ['CMP'] = self.cc
 
     def test_AddPathsOption(self):
         os.environ['FOOBAR'] = 'BAR'
@@ -344,7 +344,7 @@ class TestSetupForBuild(unittest.TestCase):
         for platform in ['x86', 'x64', 'X64']:
             for cc in ['vs2019', 'mingw']:
                 os.environ['PLATFORM'] = platform
-                os.environ['CC'] = cc
+                os.environ['CMP'] = cc
                 os.environ['CONFIGURATION'] = 'dynamic'
                 do.setup_for_build(self.args)
                 self.assertTrue('EPICS_HOST_ARCH' in os.environ,
@@ -368,7 +368,7 @@ class TestSetupForBuild(unittest.TestCase):
                                     'Include location for {0} not in INCLUDE'.format(pattern))
 
     def test_StrawberryInPath(self):
-        os.environ['CC'] = 'vs2019'
+        os.environ['CMP'] = 'vs2019'
         do.setup_for_build(self.args)
         self.assertTrue(re.search('strawberry', os.environ['PATH']),
                         'Strawberry Perl location not in PATH for vs2019')
