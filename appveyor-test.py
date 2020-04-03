@@ -12,6 +12,8 @@ import distutils.util
 import re
 import subprocess as sp
 import unittest
+import logging
+from argparse import Namespace
 
 builddir = os.getcwd()
 
@@ -294,7 +296,89 @@ class TestVCVars(unittest.TestCase):
 
         do.with_vcvars('env')
 
+class TestSetupForBuild(unittest.TestCase):
+    configuration = os.environ['CONFIGURATION']
+    platform = os.environ['PLATFORM']
+    cc = os.environ['CC']
+    args = Namespace(paths=[])
+
+    def setUp(self):
+        os.environ.pop('EPICS_HOST_ARCH', None)
+
+    def tearDown(self):
+        os.environ['CONFIGURATION'] = self.configuration
+        os.environ['PLATFORM'] = self.platform
+        os.environ['CC'] = self.cc
+
+    def test_AddPathsOption(self):
+        os.environ['FOOBAR'] = 'BAR'
+        args = Namespace(paths=['/my/{FOOBAR}/dir', '/my/foobar'])
+        do.setup_for_build(args)
+        self.assertTrue(re.search('/my/BAR/dir', os.environ['PATH']), 'Expanded path not in PATH')
+        self.assertTrue(re.search('/foobar', os.environ['PATH']), 'Plain path not in PATH')
+        os.environ.pop('FOOBAR', None)
+
+    def test_HostArchConfiguration(self):
+        for config in ['dynamic', 'dynamic-debug', 'static', 'static-debug']:
+            os.environ['CONFIGURATION'] = config
+            do.setup_for_build(self.args)
+            self.assertTrue('EPICS_HOST_ARCH' in os.environ,
+                            'EPICS_HOST_ARCH is not set for Configuration={0}'.format(config))
+            if re.search('static', config):
+                self.assertTrue(re.search('-static$', os.environ['EPICS_HOST_ARCH']),
+                                'EPICS_HOST_ARCH is not -static for Configuration={0}'.format(config))
+                self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
+                                 'EPICS_HOST_ARCH is -debug for Configuration={0}'.format(config))
+            elif re.search('debug', config):
+                self.assertFalse(re.search('static', os.environ['EPICS_HOST_ARCH']),
+                                 'EPICS_HOST_ARCH is -static for Configuration={0}'.format(config))
+                self.assertTrue(re.search('-debug$', os.environ['EPICS_HOST_ARCH']),
+                                'EPICS_HOST_ARCH is not -debug for Configuration={0}'.format(config))
+            else:
+                self.assertFalse(re.search('static', os.environ['EPICS_HOST_ARCH']),
+                                 'EPICS_HOST_ARCH is -static for Configuration={0}'.format(config))
+                self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
+                                 'EPICS_HOST_ARCH is -debug for Configuration={0}'.format(config))
+
+    def test_HostArchPlatform(self):
+        for platform in ['x86', 'x64', 'X64']:
+            for cc in ['vs2019', 'mingw']:
+                os.environ['PLATFORM'] = platform
+                os.environ['CC'] = cc
+                os.environ['CONFIGURATION'] = 'dynamic'
+                do.setup_for_build(self.args)
+                self.assertTrue('EPICS_HOST_ARCH' in os.environ,
+                                'EPICS_HOST_ARCH is not set for {0} / {1}'.format(cc, platform))
+                if platform == 'x86':
+                    self.assertTrue(re.search('^win32-x86', os.environ['EPICS_HOST_ARCH']),
+                                    'EPICS_HOST_ARCH is not win32-x86 for {0} / {1}'.format(cc, platform))
+                else:
+                    self.assertTrue(re.search('^windows-x64', os.environ['EPICS_HOST_ARCH']),
+                                    'EPICS_HOST_ARCH is not windows-x64 for {0} / {1}'.format(cc, platform))
+                if cc == 'mingw':
+                    self.assertTrue(re.search('-mingw$', os.environ['EPICS_HOST_ARCH']),
+                                    'EPICS_HOST_ARCH is not -mingw for {0} / {1}'.format(cc, platform))
+                    if platform == 'x86':
+                        pattern = 'mingw32'
+                    else:
+                        pattern = 'mingw64'
+                    self.assertTrue(re.search(pattern, os.environ['PATH']),
+                                    'Binary location for {0} not in PATH'.format(pattern))
+                    self.assertTrue(re.search(pattern, os.environ['INCLUDE']),
+                                    'Include location for {0} not in INCLUDE'.format(pattern))
+
+    def test_StrawberryInPath(self):
+        os.environ['CC'] = 'vs2019'
+        do.setup_for_build(self.args)
+        self.assertTrue(re.search('strawberry', os.environ['PATH']),
+                        'Strawberry Perl location not in PATH for vs2019')
+
+
 if __name__ == "__main__":
+    if 'VV' in os.environ and os.environ['VV'] == '1':
+        logging.basicConfig(level=logging.DEBUG)
+        do.silent_dep_builds = False
+
     do.host_info()
     if sys.argv[1:]==['env']:
         # testing with_vcvars
