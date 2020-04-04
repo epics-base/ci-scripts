@@ -91,6 +91,10 @@ def install(args):
 def uninstall(args):
     logging.basicConfig(level=logging.DEBUG)
 
+    if not os.path.isfile(core_pattern):
+        log.info('Not Linux')
+        return
+
     with open(core_pattern, 'w') as F:
         F.write('core')
 
