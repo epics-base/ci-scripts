@@ -60,7 +60,7 @@ fn_exists add_dependency || fail "function add_dependency missing from SCRIPTDIR
 # test source_set()
 ######################################################################
 
-SETUP_DIRS= source_set test01 | grep -q "(SETUP_PATH) is empty" || fail "empty search path not detected"
+SETUP_PATH= source_set test01 | grep -q "(SETUP_PATH) is empty" || fail "empty search path not detected"
 source_set xxdoesnotexistxx | grep -q "does not exist" || fail "missing setup file not detected"
 source_set test01 | grep -q "Loading setup file" || fail "test01 setup file not found"
 unset SEEN_SETUPS
