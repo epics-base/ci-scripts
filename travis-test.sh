@@ -5,6 +5,18 @@
 # SET=test00 in .travis.yml runs the tests in this script
 # all other jobs are started as compile jobs
 
+# The following if clause can be removed for ci-scripts major version 3
+if [ "$TRAVIS_OS_NAME" == osx -a "$BASH_VERSINFO" -lt 4 ]
+then
+    brew install bash
+    if [ $(/usr/local/bin/bash -c 'echo $BASH_VERSINFO') -lt 4 ]
+    then
+        echo "Failed to install a recent bash" >&2
+        exit 1
+    fi
+    exec /usr/local/bin/bash $0 "$@"
+fi
+
 # Set VV empty in .travis.yml to make scripts terse
 [ "${VV:-1}" ] && set -x
 
