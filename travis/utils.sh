@@ -178,9 +178,17 @@ add_dependency() {
     git clone --quiet $deptharg $recurse --branch "$TAG" $repourl $dirname-$TAG
     ( cd $dirname-$TAG && git log -n1 )
     do_recompile=yes
-    # fix non-base modules that do not include the .local files in configure/RELEASE
-    if [ $DEP != "BASE" ]
+    # add MSI to Base 3.14
+    if [ $DEP == "BASE" ]
     then
+      versionfile=$CACHEDIR/$dirname-$TAG/configure/CONFIG_BASE_VERSION
+      if [ -e ${versionfile} ] && grep -q "BASE_3_14=YES" ${versionfile}
+      then
+        echo "Adding MSI 1.7 to $CACHEDIR/$dirname-$TAG"
+        ( cd $dirname-$TAG; patch -p0 < $curdir/add-msi-to-314.patch )
+      fi
+    else
+    # fix non-base modules that do not include the .local files in configure/RELEASE
       release=$CACHEDIR/$dirname-$TAG/configure/RELEASE
       if [ -e $release ]
       then

@@ -188,6 +188,13 @@ BUILT=$(cat "$location/built")
 [ "$do_recompile" ] || die "do_recompile flag was not set for outdated dependency"
 echo "$modules_to_compile" | grep -q "$location" || die "Outdated dependency was not set to compile"
 
+# msi is automatically added to 3.14
+rm -fr $location; modules_to_compile=
+location=$CACHEDIR/base-R3.14.12.1
+rm -fr $location;
+add_dependency BASE R3.14.12.1
+[ -e $location/src/dbtools/msi.c ] || die "MSI was not added to Base 3.14"
+
 rm -fr $CACHEDIR/*; modules_to_compile=
 
 # missing inclusion of RELEASE.local in configure/RELEASE
