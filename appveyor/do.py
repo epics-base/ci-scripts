@@ -38,6 +38,8 @@ else:
     cachedir = os.path.join('.', '.cache')
     toolsdir = os.path.join('.', '.tools')
 
+if 'CACHEDIR' in os.environ:
+    cachedir = os.environ['CACHEDIR']
 
 def modlist():
     for var in ['ADD_MODULES', 'MODULES']:
