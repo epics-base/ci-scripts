@@ -228,8 +228,8 @@ class TestAddDependencyOptions(unittest.TestCase):
 
     def setUp(self):
         os.environ['SETUP_PATH'] = '.:appveyor'
-        if os.path.exists(self.location):
-            shutil.rmtree(self.location, onerror=do.remove_readonly)
+        if os.path.exists(do.cachedir):
+            shutil.rmtree(do.cachedir, onerror=do.remove_readonly)
         do.clear_lists()
         do.source_set('defaults')
         do.complete_setup('MCoreUtils')
@@ -257,6 +257,13 @@ class TestAddDependencyOptions(unittest.TestCase):
         do.add_dependency('MCoreUtils')
         self.assertTrue(is_shallow_repo(self.location),
                         'Module not checked out shallow (requested: default=5)')
+
+    def test_AddMsiTo314(self):
+        do.complete_setup('BASE')
+        do.setup['BASE'] = 'R3.14.12.1'
+        msifile = os.path.join(do.cachedir, 'base-R3.14.12.1', 'src', 'dbtools', 'msi.c')
+        do.add_dependency('BASE')
+        self.assertTrue(os.path.exists(msifile), 'MSI was not added to Base 3.14')
 
 def repo_access(dep):
     do.set_setup_from_env(dep)

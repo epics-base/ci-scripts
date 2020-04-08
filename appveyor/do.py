@@ -41,6 +41,10 @@ else:
 if 'CACHEDIR' in os.environ:
     cachedir = os.environ['CACHEDIR']
 
+ciscriptsdir = os.path.abspath(os.path.dirname(sys.argv[0]))
+if os.path.basename(ciscriptsdir) == 'appveyor':
+    ciscriptsdir = ciscriptsdir.rstrip(os.pathsep+'appveyor')
+
 def modlist():
     for var in ['ADD_MODULES', 'MODULES']:
         setup.setdefault(var, '')
@@ -298,8 +302,18 @@ def add_dependency(dep):
         sp.check_call(['git', 'log', '-n1'], cwd=place)
         modules_to_compile.append(place)
 
-        # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE
-        if dep != 'BASE':
+        if dep == 'BASE':
+            # add MSI 1.7 to Base 3.14
+            versionfile = os.path.join(place, 'configure', 'CONFIG_BASE_VERSION')
+            if os.path.exists(versionfile):
+                with open(versionfile) as f:
+                    if 'BASE_3_14=YES' in f.read():
+                        print('Adding MSI 1.7 to {0}'.format(place))
+                        sys.stdout.flush()
+                        sp.check_call(['patch', '-p0', '-i', os.path.join(ciscriptsdir, 'add-msi-to-314.patch')],
+                                      cwd=place)
+        else:
+            # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE
             release = os.path.join(place, "configure", "RELEASE")
             if os.path.exists(release):
                 with open(release, 'w') as fout:
