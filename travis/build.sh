@@ -15,8 +15,13 @@ export EPICS_HOST_ARCH
 
 make -j2 $EXTRA
 
+ret=0
+
 if [ "$TEST" != "NO" ]
 then
-  make tapfiles
+  make tapfiles || ret=$?
+
   make -s test-results
 fi
+
+exit $ret
