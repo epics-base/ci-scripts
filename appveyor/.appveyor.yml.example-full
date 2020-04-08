@@ -10,7 +10,7 @@
 # to be used for the dependency builds.
 
 cache:
-  - C:\Users\appveyor\.tools -> appveyor\do.py
+  - C:\Users\appveyor\.tools
 
 #---------------------------------#
 #       additional packages       #
@@ -59,7 +59,6 @@ configuration:
 environment:
   # common / default variables for all jobs
   SETUP_PATH: .ci-local:.ci
-  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
   matrix:
   - CMP: vs2019
@@ -108,11 +107,8 @@ matrix:
 #     building & testing          #
 #---------------------------------#
 
-install:
-  - cmd: git submodule update --init --recursive
-  - cmd: python .ci/appveyor/do.py prepare
-
 build_script:
+  - cmd: python .ci/appveyor/do.py prepare
   - cmd: python .ci/appveyor/do.py build
 
 test_script:
