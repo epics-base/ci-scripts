@@ -1,5 +1,6 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
 <a target="_blank" href="https://travis-ci.org/epics-base/ci-scripts">![Travis status][badge.travis]</a>
+<a target="_blank" href="https://ci.appveyor.com/project/epics-base/ci-scripts">![AppVeyor status][badge.appveyor]</a>
 
 # Continuous Integration Scripts for EPICS Modules
 
@@ -56,11 +57,17 @@ example.
  - Compile on MacOS
  - Built dependencies are cached (for faster builds)
 
+### AppVeyor
+ - Use different compilers (Visual Studio, MinGW)
+ - Use different Visual Studio versions: \
+  2008, 2010, 2012, 2013, 2015, 2017, 2019
+ - Compile for Windows 32bit and 64bit
+
 ## How to Use the CI-Scripts
 
  1. Get an account on a supported CI service provider platform.
     (e.g. [Travis-CI](https://travis-ci.org/),
-    AppVeyor, Azure Pipelines...)
+    [AppVeyor](https://www.appveyor.com/), Azure Pipelines...)
 
     (More details in the specific README of the subdirectory.)
 
@@ -79,10 +86,10 @@ example.
 
     BASE=3.15
     ASYN=R4-34
-    SNCSEQ=R2-2-7
+    SNCSEQ=R2-2-8
     ```
     will compile against the EPICS Base 3.15 branch, the Sequencer
-    release 2.2.7 and release 4.34 of asyn.
+    release 2.2.8 and release 4.34 of asyn.
     (Any settings can be overridden from the specific job configuration
     in e.g. `.travis.yml`.)
 
@@ -214,16 +221,16 @@ This will make all builds (not just for your module) verbose.
 
 Update the submodule in `.ci` first, then change your CI configuration
 (if needed) and commit both to your module. E.g., to update your Travis
-setup to release 2.1.0 of ci-scripts:
+setup to release 2.2.1 of ci-scripts:
 ```bash
 cd .ci
-git pull origin v2.1.0
+git pull origin v2.2.1
 cd -
 git add .ci
   # if needed:
   edit .travis.yml
   git add .travis.yml
-git commit -m "Update ci-scripts submodule to v2.1.0"
+git commit -m "Update ci-scripts submodule to v2.2.1"
 ```
 
 Check the example configuration files inside ci-scripts (and their
@@ -266,6 +273,7 @@ in file LICENSE that is included with this distribution.
 <!-- Links -->
 [badge.version]: https://badge.fury.io/gh/epics-base%2Fci-scripts.svg
 [badge.travis]: https://travis-ci.org/epics-base/ci-scripts.svg?branch=master
+[badge.appveyor]: https://ci.appveyor.com/api/projects/status/xwdv8fpxu0byp3hn?svg=true
 
 [reddit.bash]: https://www.reddit.com/r/bash/comments/393oqv/why_is_the_version_of_bash_included_in_os_x_so_old/
 
