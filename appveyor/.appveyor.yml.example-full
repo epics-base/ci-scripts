@@ -107,8 +107,11 @@ matrix:
 #     building & testing          #
 #---------------------------------#
 
-build_script:
+install:
+  - cmd: git submodule update --init --recursive
   - cmd: python .ci/appveyor/do.py prepare
+
+build_script:
   - cmd: python .ci/appveyor/do.py build
 
 test_script:
