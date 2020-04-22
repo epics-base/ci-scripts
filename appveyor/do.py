@@ -355,9 +355,9 @@ def setup_for_build(args):
         os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
 
     if os.environ['CMP'] == 'vs2019':
-        # put our strawberry 'perl' in the PATH
-        os.environ['PATH'] = os.pathsep.join([os.path.join(toolsdir, 'strawberry', 'perl', 'site', 'bin'),
-                                              os.path.join(toolsdir, 'strawberry', 'perl', 'bin'),
+        # put strawberry perl in the PATH
+        os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
+                                              os.path.join(r'C:\Strawberry\perl\bin'),
                                               os.environ['PATH']])
     if os.environ['CMP'] == 'mingw':
         if 'INCLUDE' not in os.environ:
@@ -467,20 +467,6 @@ def prepare(args):
                       cwd=toolsdir)
         sp.check_call([zip7, 'e', 'make-{0}.zip'.format(makever)], cwd=toolsdir)
         os.remove(os.path.join(toolsdir, 'make-{0}.zip'.format(makever)))
-
-    perlver = '5.30.0.1'
-    if os.environ['CMP'] == 'vs2019':
-        if not os.path.isdir(os.path.join(toolsdir, 'strawberry')):
-            print('Installing Strawberry Perl {0}'.format(perlver))
-            sys.stdout.flush()
-            sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'perl-{0}.zip'.format(perlver),
-                           'http://strawberryperl.com/download/{0}/strawberry-perl-{0}-64bit.zip'.format(perlver)],
-                          cwd=toolsdir)
-            sp.check_call([zip7, 'x', 'perl-{0}.zip'.format(perlver), '-ostrawberry'], cwd=toolsdir)
-            os.remove(os.path.join(toolsdir, 'perl-{0}.zip'.format(perlver)))
-            with open(os.devnull, 'w') as devnull:
-                sp.check_call('relocation.pl.bat', shell=True, stdout=devnull,
-                              cwd=os.path.join(toolsdir, 'strawberry'))
 
     setup_for_build(args)
 

@@ -377,7 +377,7 @@ class TestSetupForBuild(unittest.TestCase):
     def test_StrawberryInPath(self):
         os.environ['CMP'] = 'vs2019'
         do.setup_for_build(self.args)
-        self.assertTrue(re.search('strawberry', os.environ['PATH']),
+        self.assertTrue(re.search('strawberry', os.environ['PATH'], flags=re.IGNORECASE),
                         'Strawberry Perl location not in PATH for vs2019')
 
 
