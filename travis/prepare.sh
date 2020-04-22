@@ -45,23 +45,31 @@ fold_end load.settings
 # Check out dependencies
 # ----------------------
 
-fold_start check.out.dependencies "Checking/cloning dependencies"
+if [ "$BASE" != "SELF" ]
+then
+  fold_start check.out.dependencies "Checking/cloning dependencies"
 
-for mod in BASE $ADD_MODULES $MODULES
-do
-  mod_uc=${mod^^}
-  eval add_dependency $mod_uc \${${mod_uc}:=master}
-done
-[ -e ./configure ] && cp ${CACHEDIR}/RELEASE.local ./configure/RELEASE.local
+  for mod in BASE $ADD_MODULES $MODULES
+  do
+    mod_uc=${mod^^}
+    eval add_dependency $mod_uc \${${mod_uc}:=master}
+  done
+  [ -e ./configure ] && cp ${CACHEDIR}/RELEASE.local ./configure/RELEASE.local
 
-fold_end check.out.dependencies
+  fold_end check.out.dependencies
+fi
 
 # Set up compiler
 # ---------------
 
 fold_start set.up.epics_build "Setting up EPICS build system"
 
-eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
+if [ "$BASE" = "SELF" ]
+then
+  EPICS_BASE=$CURDIR
+else
+  eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
+fi
 export EPICS_BASE
 echo "EPICS_BASE=$EPICS_BASE"
 
@@ -70,7 +78,7 @@ echo "EPICS_BASE=$EPICS_BASE"
 export EPICS_HOST_ARCH
 echo "EPICS_HOST_ARCH=$EPICS_HOST_ARCH"
 
-if echo ${modules_to_compile} | grep -q "$EPICS_BASE"
+if echo ${modules_to_compile} | grep -q "$EPICS_BASE" || [ "$BASE" = "SELF" ]
 then
 
   # requires wine and g++-mingw-w64-i686
@@ -179,6 +187,8 @@ fold_end set.up.compiler
 
 echo "\$ make --version"
 make --version
+
+[ "$BASE" = "SELF" ] && exit 0
 
 # Build required dependencies
 # ---------------------------
