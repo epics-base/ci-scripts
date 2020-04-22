@@ -27,7 +27,7 @@
     ```
     $ cp .ci/appveyor/.appveyor.yml.example-full .appveyor.yml
     ```
-	
+
  5. Edit the `.appveyor.yml` configuration to include the jobs you want
     AppVeyor to run.
 
@@ -38,16 +38,18 @@
     Select 32bit or 64bit processor architecture.
     3. `environment: / matrix:` \
     List of environment variable settings. Each list element (starting with
-    a dash) is one step on the axis of the build matrix.
-    
-    Your builds will take long.
-    
+    a dash) is one step on the axis of the build matrix. \
+    Set `CMP` to select the compiler: `mingw` for the native
+    [MinGW](http://mingw-w64.org/) GNU compiler, `vs2008` ...`vs2019` 
+    (options listed above) for the Microsoft Visual Studio compilers.
+
+    Your builds will take long. \
     AppVeyor only grants a single worker VM - all jobs of the matrix are
     executed sequentially. Each job will take around 10 minutes.
-    
+
     The `matrix: / exclude:` setting can be used to reduce the number of
     jobs. Check the [AppVeyor docs](https://www.appveyor.com/docs/build-configuration/#build-matrix)
     for more ways to reduce the build matrix size.
-	
+
  6. Push your changes and check
     [ci.appveyor.com](https://ci.appveyor.com/) for your build results.
