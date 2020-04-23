@@ -41,6 +41,17 @@ else:
 if 'CACHEDIR' in os.environ:
     cachedir = os.environ['CACHEDIR']
 
+vcvars_table = {
+    # https://en.wikipedia.org/wiki/Microsoft_Visual_Studio#History
+    'vs2019':r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat',
+    'vs2017':r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat',
+    'vs2015':r'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat',
+    'vs2013':r'C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat',
+    'vs2012':r'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat',
+    'vs2010':r'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat',
+    'vs2008':r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcvarsall.bat',
+}
+
 ciscriptsdir = os.path.abspath(os.path.dirname(sys.argv[0]))
 if os.path.basename(ciscriptsdir) == 'appveyor':
     ciscriptsdir = ciscriptsdir.rstrip(os.pathsep+'appveyor')
@@ -78,12 +89,9 @@ def host_info():
     print('platform =', distutils.util.get_platform())
 
     print('{0}Available Visual Studio versions{1}'.format(ANSI_CYAN, ANSI_RESET))
-    from fnmatch import fnmatch
-    for base in (r'C:\Program Files (x86)', r'C:\Program Files'):
-        for root, dirs, files in os.walk(base):
-            for fname in files:
-                if fnmatch(fname, 'vcvarsall.bat'):
-                    print('Found', os.path.join(root, fname))
+    for key in vcvars_table:
+        if os.path.exists(vcvars_table[key]):
+            print('Found', key, 'in', vcvars_table[key])
     sys.stdout.flush()
 
 # Used from unittests
@@ -548,26 +556,17 @@ def with_vcvars(cmd):
     # cf. https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
 
     info = {
-        'python':sys.executable,
-        'self':sys.argv[0],
+        'python': sys.executable,
+        'self': sys.argv[0],
         'cmd':cmd,
     }
 
     info['arch'] = {
-        'x86':'x86',   # 'amd64_x86' ??
-        'x64':'amd64',
+        'x86': 'x86',   # 'amd64_x86' ??
+        'x64': 'amd64',
     }[os.environ['PLATFORM'].lower()] # 'x86' or 'x64'
 
-    info['vcvars'] = {
-        # https://en.wikipedia.org/wiki/Microsoft_Visual_Studio#History
-        'vs2019':r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat',
-        'vs2017':r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat',
-        'vs2015':r'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat',
-        'vs2013':r'C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat',
-        'vs2012':r'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat',
-        'vs2010':r'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat',
-        'vs2008':r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcvarsall.bat',
-    }[CC]
+    info['vcvars'] = vcvars_table[CC]
 
     script='''
 call "{vcvars}" {arch}
