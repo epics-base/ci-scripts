@@ -53,6 +53,8 @@ script:
 # SET         source setup file
 # ADD_MODULES extra modules (for a specific job)
 # EXTRA       content will be added to make command line
+# EXTRA1..5   additional arguments for the make command
+#             (one argument per variable)
 # STATIC      set to YES for static build (default: NO)
 # TEST        set to NO to skip running the tests (default: YES)
 # VV          set to make build scripts verbose (default: unset)
