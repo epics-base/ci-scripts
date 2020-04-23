@@ -45,13 +45,22 @@ ciscriptsdir = os.path.abspath(os.path.dirname(sys.argv[0]))
 if os.path.basename(ciscriptsdir) == 'appveyor':
     ciscriptsdir = ciscriptsdir.rstrip(os.pathsep+'appveyor')
 
+if 'BASE' not in os.environ or os.environ['BASE'] == 'SELF':
+    building_base = True
+    places['EPICS_BASE'] = '.'
+else:
+    building_base = False
+
 def modlist():
-    for var in ['ADD_MODULES', 'MODULES']:
-        setup.setdefault(var, '')
-        if var in os.environ:
-            setup[var] = os.environ[var]
-            logger.debug('ENV assignment: %s = %s', var, setup[var])
-    ret = ['BASE'] + setup['ADD_MODULES'].upper().split() + setup['MODULES'].upper().split()
+    if building_base:
+        ret = []
+    else:
+        for var in ['ADD_MODULES', 'MODULES']:
+            setup.setdefault(var, '')
+            if var in os.environ:
+                setup[var] = os.environ[var]
+                logger.debug('ENV assignment: %s = %s', var, setup[var])
+        ret = ['BASE'] + setup['ADD_MODULES'].upper().split() + setup['MODULES'].upper().split()
     logger.debug('Effective module list: %s', ret)
     return ret
 
@@ -377,18 +386,23 @@ def setup_for_build(args):
 
     make = os.path.join(toolsdir, 'make.exe')
 
-    with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            (mod, place) = line.strip().split('=')
-            bindir = os.path.join(place, 'bin', os.environ['EPICS_HOST_ARCH'])
-            if os.path.isdir(bindir):
-                dllpaths.append(bindir)
-            if mod == 'EPICS_BASE':
-                base_place = place
-    with open(os.path.join(base_place, 'configure', 'CONFIG_BASE_VERSION')) as myfile:
-        if 'BASE_3_14=YES' in myfile.read():
-            isbase314 = True
+    base_place = '.'
+    if not building_base:
+        with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                (mod, place) = line.strip().split('=')
+                bindir = os.path.join(place, 'bin', os.environ['EPICS_HOST_ARCH'])
+                if os.path.isdir(bindir):
+                    dllpaths.append(bindir)
+                if mod == 'EPICS_BASE':
+                    base_place = place
+
+    cfg_base_version = os.path.join(base_place, 'configure', 'CONFIG_BASE_VERSION')
+    if os.path.exists(cfg_base_version):
+        with open(cfg_base_version) as myfile:
+            if 'BASE_3_14=YES' in myfile.read():
+                isbase314 = True
 
     bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
     if os.path.isdir(bindir):
@@ -433,9 +447,12 @@ def prepare(args):
 
     [add_dependency(mod) for mod in modlist()]
 
-    if os.path.isdir('configure'):
-        release_local = os.path.join(cachedir, 'RELEASE.local')
-        shutil.copy(release_local, 'configure')
+    if not building_base:
+        if os.path.isdir('configure'):
+            targetdir = 'configure'
+        else:
+            targetdir = '.'
+        shutil.copy(os.path.join(cachedir, 'RELEASE.local'), targetdir)
 
     print('{0}Configuring EPICS build system{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
@@ -487,21 +504,22 @@ def prepare(args):
         sys.stdout.flush()
         sp.check_call(['cl'])
 
-    for mod in modlist():
-        place = places[setup[mod+"_VARNAME"]]
-        print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
-        call_make(cwd=place, silent=silent_dep_builds)
+    if not building_base:
+        for mod in modlist():
+            place = places[setup[mod+"_VARNAME"]]
+            print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
+            call_make(cwd=place, silent=silent_dep_builds)
 
-    print('{0}Dependency module information{1}'.format(ANSI_CYAN, ANSI_RESET))
-    print('Module     Tag          Binaries    Commit')
-    print(100 * '-')
-    for mod in modlist():
-        commit = sp.check_output(['git', 'log', '-n1', '--oneline'], cwd=places[setup[mod+"_VARNAME"]]).strip()
-        print("%-10s %-12s %-11s %s" % (mod, setup[mod], 'rebuilt', commit))
+        print('{0}Dependency module information{1}'.format(ANSI_CYAN, ANSI_RESET))
+        print('Module     Tag          Binaries    Commit')
+        print(100 * '-')
+        for mod in modlist():
+            commit = sp.check_output(['git', 'log', '-n1', '--oneline'], cwd=places[setup[mod+"_VARNAME"]]).strip()
+            print("%-10s %-12s %-11s %s" % (mod, setup[mod], 'rebuilt', commit))
 
-    print('{0}Contents of RELEASE.local{1}'.format(ANSI_CYAN, ANSI_RESET))
-    with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
-        print(f.read().strip())
+        print('{0}Contents of RELEASE.local{1}'.format(ANSI_CYAN, ANSI_RESET))
+        with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
+            print(f.read().strip())
 
 def build(args):
     setup_for_build(args)
