@@ -13,7 +13,7 @@ export EPICS_BASE
 [ -z "$EPICS_HOST_ARCH" -a -f $EPICS_BASE/startup/EpicsHostArch.pl ] && EPICS_HOST_ARCH=$(perl $EPICS_BASE/startup/EpicsHostArch.pl)
 export EPICS_HOST_ARCH
 
-make -j2 $EXTRA
+[ -z "$EXTRA" ] && make -j2 || make -j2 "$EXTRA"
 
 ret=0
 
@@ -21,7 +21,7 @@ if [ "$TEST" != "NO" ]
 then
   make tapfiles || ret=$?
 
-  make -s test-results
+  make -sk test-results
 fi
 
 exit $ret

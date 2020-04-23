@@ -53,6 +53,7 @@ script:
 # SET         source setup file
 # ADD_MODULES extra modules (for a specific job)
 # EXTRA       content will be added to make command line
+#             (embedded quotes must be escaped as \\\")
 # STATIC      set to YES for static build (default: NO)
 # TEST        set to NO to skip running the tests (default: YES)
 # VV          set to make build scripts verbose (default: unset)
