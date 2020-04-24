@@ -6,7 +6,12 @@ set -e
 
 CACHEDIR=${CACHEDIR:-${HOME}/.cache}
 
-eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
+if [ "$BASE" = "SELF" ]
+then
+  EPICS_BASE=$CURDIR
+else
+  eval $(grep "EPICS_BASE=" ${CACHEDIR}/RELEASE.local)
+fi
 export EPICS_BASE
 
 [ -z "$EPICS_HOST_ARCH" -a -f $EPICS_BASE/src/tools/EpicsHostArch.pl ] && EPICS_HOST_ARCH=$(perl $EPICS_BASE/src/tools/EpicsHostArch.pl)
