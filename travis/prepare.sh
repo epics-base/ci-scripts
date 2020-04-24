@@ -183,8 +183,10 @@ EOF
 RTEMS_VERSION=$RTEMS
 RTEMS_BASE=$HOME/.rtems
 EOF
+    # Base 3.15 doesn't have -qemu target architecture
+    [ -e $EPICS_BASE/configure/os/CONFIG.Common.RTEMS-pc386-qemu ] && QEMU=-qemu
     cat << EOF >> $EPICS_BASE/configure/CONFIG_SITE
-CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386-qemu
+CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386$QEMU
 EOF
   fi
 
