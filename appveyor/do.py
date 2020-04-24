@@ -56,7 +56,7 @@ ciscriptsdir = os.path.abspath(os.path.dirname(sys.argv[0]))
 if os.path.basename(ciscriptsdir) == 'appveyor':
     ciscriptsdir = ciscriptsdir.rstrip(os.pathsep+'appveyor')
 
-if 'BASE' not in os.environ or os.environ['BASE'] == 'SELF':
+if 'BASE' in os.environ and os.environ['BASE'] == 'SELF':
     building_base = True
     places['EPICS_BASE'] = '.'
 else:
