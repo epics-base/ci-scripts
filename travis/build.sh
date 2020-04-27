@@ -35,7 +35,7 @@ ret=0
 
 if [ "$TEST" != "NO" ]
 then
-  make tapfiles || ret=$?
+  make -j2 tapfiles || ret=$?
 
   make -sk test-results
 fi
