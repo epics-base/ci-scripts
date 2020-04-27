@@ -71,7 +71,8 @@ then
     mod_uc=${mod^^}
     eval add_dependency $mod_uc \${${mod_uc}:=master}
   done
-  [ -e ./configure ] && cp ${CACHEDIR}/RELEASE.local ./configure/RELEASE.local
+  [ -d ./configure ] && target=./configure/RELEASE.local || target=./RELEASE.local
+  cp ${CACHEDIR}/RELEASE.local $target
 
   fold_end check.out.dependencies
 fi
