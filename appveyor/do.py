@@ -81,6 +81,9 @@ isbase314 = False
 silent_dep_builds = True
 
 def host_info():
+    print('{0}AppVeyor Build Worker Image:{1} {2}'
+          .format(ANSI_CYAN, ANSI_RESET, os.environ['APPVEYOR_BUILD_WORKER_IMAGE']))
+
     print('{0}Python setup{1}'.format(ANSI_CYAN, ANSI_RESET))
     print(sys.version)
     print('PYTHONPATH')
