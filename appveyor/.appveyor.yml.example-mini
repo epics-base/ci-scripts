@@ -17,6 +17,7 @@ skip_commits:
     - 'templates/*'
     - '**/*.html'
     - '**/*.md'
+    - '.travis.yml'
 
 # Build Configurations: dll/static, regular/debug
 configuration:

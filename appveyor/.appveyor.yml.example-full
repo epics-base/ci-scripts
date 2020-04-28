@@ -39,6 +39,7 @@ skip_commits:
     - 'templates/*'
     - '**/*.html'
     - '**/*.md'
+    - '.travis.yml'
 
 #---------------------------------#
 #   build matrix configuration    #
@@ -62,8 +63,8 @@ environment:
 
   matrix:
   - CMP: vs2019
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     SET: test00
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - CMP: mingw
   - CMP: vs2019
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
