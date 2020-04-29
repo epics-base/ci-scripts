@@ -330,7 +330,7 @@ def add_dependency(dep):
                     if 'BASE_3_14=YES' in f.read():
                         print('Adding MSI 1.7 to {0}'.format(place))
                         sys.stdout.flush()
-                        sp.check_call(['patch', '-p0', '-i', os.path.join(ciscriptsdir, 'add-msi-to-314.patch')],
+                        sp.check_call(['patch', '-p1', '-i', os.path.join(ciscriptsdir, 'add-msi-to-314.patch')],
                                       cwd=place)
         else:
             # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE

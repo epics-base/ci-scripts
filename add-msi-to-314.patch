@@ -1,7 +1,39 @@
-diff -ruN ../3.14/src/dbtools/Makefile ./src/dbtools/Makefile
---- ../3.14/src/dbtools/Makefile	2017-03-16 21:37:51.278140900 +0100
-+++ ./src/dbtools/Makefile	2020-04-06 12:40:51.723550846 +0200
-@@ -11,6 +11,11 @@
+diff --git a/config/RULES.Db b/config/RULES.Db
+index b4946c7aa..90b76ed08 100644
+--- a/config/RULES.Db
++++ b/config/RULES.Db
+@@ -12,11 +12,7 @@
+ #
+ MAKEBPT		= $(EPICS_BASE_HOST_BIN)/makeBpt$(EXE)
+ 
+-ifndef MSI
+-# Tool from R3.14 extensions bin, R3.13 extensions bin, or user path
+-MSI = $(firstword $(wildcard $(EPICS_EXTENSIONS_HOST_BIN)/msi$(HOSTEXE) \
+-         $(EPICS_EXTENSIONS)/bin/$(HOST_ARCH)/msi$(HOSTEXE)) msi$(HOSTEXE))
+-endif
++MSI = $(EPICS_BASE_HOST_BIN)/msi$(HOSTEXE)
+ 
+ DBEXPAND	= $(EPICS_BASE_HOST_BIN)/dbExpand$(EXE)
+ DBST		= dbst
+diff --git a/configure/CONFIG_BASE b/configure/CONFIG_BASE
+index 7ee5a5b89..9a9793093 100644
+--- a/configure/CONFIG_BASE
++++ b/configure/CONFIG_BASE
+@@ -112,8 +112,5 @@ ifndef DBST
+ DBST = dbst
+ endif
+ 
+-ifndef MSI
+-MSI = msi
+-endif
+-
++MSI = $(EPICS_BASE_HOST_BIN)/msi$(HOSTEXE)
+ 
+diff --git a/src/dbtools/Makefile b/src/dbtools/Makefile
+index 38ed52c9e..8655a5337 100644
+--- a/src/dbtools/Makefile
++++ b/src/dbtools/Makefile
+@@ -11,6 +11,11 @@ TOP=../..
  
  include $(TOP)/configure/CONFIG
  
@@ -13,9 +45,11 @@ diff -ruN ../3.14/src/dbtools/Makefile ./src/dbtools/Makefile
  INC += dbLoadTemplate.h
  INC += dbtoolsIocRegister.h
  
-diff -ruN ../3.14/src/dbtools/msi.c ./src/dbtools/msi.c
---- ../3.14/src/dbtools/msi.c	1970-01-01 01:00:00.000000000 +0100
-+++ ./src/dbtools/msi.c	2013-05-13 19:00:43.000000000 +0200
+diff --git a/src/dbtools/msi.c b/src/dbtools/msi.c
+new file mode 100644
+index 000000000..525d4f25b
+--- /dev/null
++++ b/src/dbtools/msi.c
 @@ -0,0 +1,798 @@
 +/*************************************************************************\
 +* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
