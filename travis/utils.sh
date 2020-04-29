@@ -185,7 +185,7 @@ add_dependency() {
       if [ -e ${versionfile} ] && grep -q "BASE_3_14=YES" ${versionfile}
       then
         echo "Adding MSI 1.7 to $CACHEDIR/$dirname-$TAG"
-        ( cd $dirname-$TAG; patch -p0 < $SCRIPTDIR/../add-msi-to-314.patch )
+        ( cd $dirname-$TAG; patch -p1 < $SCRIPTDIR/../add-msi-to-314.patch )
       fi
     else
     # fix non-base modules that do not include the .local files in configure/RELEASE
