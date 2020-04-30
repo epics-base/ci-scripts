@@ -9,6 +9,9 @@ DB += dbExample2.db
 DB += dbSubExample.db
 DB += user.substitutions
 
+# Host-side expansion of substitutions file with MSI
+DB += dbExample3.db
+
 # If <anyname>.db template is not named <anyname>*.template add
 # <anyname>_TEMPLATE = <templatename>
 

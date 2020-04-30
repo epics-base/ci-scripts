@@ -1,0 +1,8 @@
+# Example host-side substitutions file
+
+file dbExample2.db {
+    pattern { user, no, scan }
+        { "ralph", 4, "1 second" }
+        { "ralph", 5, "2 second" }
+        { "ralph", 6, "5 second" }
+}
