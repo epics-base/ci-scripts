@@ -199,14 +199,25 @@ dependency builds. [default is `$HOME/.cache`]
 
 ## References: EPICS Modules Using ci-scripts
 
-EPICS Base: [pvData](https://github.com/epics-base/pvDataCPP),
+[EPICS Base](https://github.com/epics-base/epics-base) and its submodules
+[pvData](https://github.com/epics-base/pvDataCPP),
 [pvAccess](https://github.com/epics-base/pvAccessCPP),
 [pva2pva](https://github.com/epics-base/pva2pva)
 
-EPICS Modules: [PCAS](https://github.com/epics-modules/pcas),
-[ASYN](https://github.com/epics-modules/asyn)
+EPICS Modules:
+[ASYN](https://github.com/epics-modules/asyn),
+[devlib2](https://github.com/epics-modules/devlib2),
+[ecmc](https://github.com/epics-modules/ecmc),
+[ip](https://github.com/epics-modules/ip),
+[lua](https://github.com/epics-modules/lua),
+[MCoreUtils](https://github.com/epics-modules/MCoreUtils),
+[modbus](https://github.com/epics-modules/modbus),
+[motor](https://github.com/epics-modules/motor),
+[PCAS](https://github.com/epics-modules/pcas),
+[sscan](https://github.com/epics-modules/sscan),
+[vac](https://github.com/epics-modules/vac)
 
-ESS: [Motor driver (model 3) for EtherCAT Motion Controller][ref.ethercatmc]
+ESS: [EtherCAT MC Motor Driver][ref.ethercatmc]
 
 ITER: [OPC UA Device Support](https://github.com/ralphlange/opcua)
 
@@ -221,21 +232,26 @@ This will make all builds (not just for your module) verbose.
 
 Update the submodule in `.ci` first, then change your CI configuration
 (if needed) and commit both to your module. E.g., to update your Travis
-setup to release 2.2.1 of ci-scripts:
+setup to release 2.3.4 of ci-scripts:
 ```bash
 cd .ci
-git pull origin v2.2.1
+git pull origin v2.3.4
 cd -
 git add .ci
   # if needed:
   edit .travis.yml
   git add .travis.yml
-git commit -m "Update ci-scripts submodule to v2.2.1"
+git commit -m "Update ci-scripts submodule to v2.3.4"
 ```
 
 Check the example configuration files inside ci-scripts (and their
 changes) to see what might be needed and/or interesting to change
 in your configuration.
+
+Depending on the changes contained in the ci-scripts update, it might
+be advisable to clear the CI caches after updating ci-scripts. E.g.,
+a change in setting up EPICS Base will not be applied if Base is found 
+in the cache.
 
 **Why does running the scripts locally on my MacOS machine fail?**
 
