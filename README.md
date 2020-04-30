@@ -49,19 +49,23 @@ example.
 
 ## Supported CI Services
 
-### Travis-CI
+### [Travis-CI](https://travis-ci.org/)
  - Use different compilers (gcc, clang)
  - Use different gcc versions
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
  - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.16.2)
  - Compile on MacOS
  - Built dependencies are cached (for faster builds)
+ 
+See specific **[ci-scripts on Travis-CI README](travis/README.md)** for more details.
 
-### AppVeyor
+### [AppVeyor](https://www.appveyor.com/)
  - Use different compilers (Visual Studio, MinGW)
  - Use different Visual Studio versions: \
   2008, 2010, 2012, 2013, 2015, 2017, 2019
  - Compile for Windows 32bit and 64bit
+
+See specific **[ci-scripts on AppVeyor README](appveyor/README.md)** for more details.
 
 ## How to Use the CI-Scripts
 
@@ -289,7 +293,7 @@ in file LICENSE that is included with this distribution.
 <!-- Links -->
 [badge.version]: https://badge.fury.io/gh/epics-base%2Fci-scripts.svg
 [badge.travis]: https://travis-ci.org/epics-base/ci-scripts.svg?branch=master
-[badge.appveyor]: https://ci.appveyor.com/api/projects/status/xwdv8fpxu0byp3hn?svg=true
+[badge.appveyor]: https://ci.appveyor.com/api/projects/status/8b578alg974axvux?svg=true
 
 [reddit.bash]: https://www.reddit.com/r/bash/comments/393oqv/why_is_the_version_of_bash_included_in_os_x_so_old/
 
