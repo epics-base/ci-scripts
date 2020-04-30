@@ -51,6 +51,9 @@ skip_commits:
 # are executed sequentially, each one taking 10-15 minutes.
 # Consider this when defining your build matrix. (A full matrix build takes more than 8 hours.)
 
+# Default build worker image
+image: Visual Studio 2015
+
 # Build Configurations: dll/static, regular/debug
 configuration:
   - dynamic

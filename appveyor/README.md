@@ -53,3 +53,16 @@
 
  6. Push your changes and check
     [ci.appveyor.com](https://ci.appveyor.com/) for your build results.
+
+## Known Issues
+
+#### Build Worker Images
+The AppVeyor documentation on build worker images doesn't seem to fully
+describe the way things are handled internally.
+
+The tested and suggested reproducible way of defining the build worker image
+is shown in the example configuration files:
+
+ - Set the default image using the `image:` tag.
+ - Override the image for specific jobs by setting the
+   `APPVEYOR_BUILD_WORKER_IMAGE` environment variable.
