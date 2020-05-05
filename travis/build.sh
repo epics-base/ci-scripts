@@ -37,7 +37,7 @@ if [ "$TEST" != "NO" ]
 then
   make -j2 tapfiles || ret=$?
 
-  make -sk test-results
+  grep -q "^test-results:" $EPICS_BASE/configure/RULES_BUILD && make -sk test-results
 fi
 
 exit $ret

@@ -78,6 +78,7 @@ def modlist():
 zip7 = r'C:\Program Files\7-Zip\7z'
 make = ''
 isbase314 = False
+has_test_results = False
 silent_dep_builds = True
 
 def host_info():
@@ -99,10 +100,13 @@ def host_info():
 
 # Used from unittests
 def clear_lists():
+    global isbase314, has_test_results
     del seen_setups[:]
     del modules_to_compile[:]
     setup.clear()
     places.clear()
+    isbase314 = False
+    has_test_results = False
 
 # Error-handler to make shutil.rmtree delete read-only files on Windows
 def remove_readonly(func, path, excinfo):
@@ -357,7 +361,7 @@ def add_dependency(dep):
     update_release_local(setup[dep+"_VARNAME"], place)
 
 def setup_for_build(args):
-    global make, isbase314
+    global make, isbase314, has_test_results
     dllpaths = []
 
     # there is no combined static and debug EPICS_HOST_ARCH target,
@@ -414,6 +418,13 @@ def setup_for_build(args):
         with open(cfg_base_version) as myfile:
             if 'BASE_3_14=YES' in myfile.read():
                 isbase314 = True
+
+    rules_build = os.path.join(base_place, 'configure', 'RULES_BUILD')
+    if os.path.exists(rules_build):
+        with open(rules_build) as myfile:
+            for line in myfile:
+                if re.match('^test-results:', line):
+                    has_test_results = True
 
     bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
     if os.path.isdir(bindir):
@@ -541,7 +552,8 @@ def test(args):
     setup_for_build(args)
     print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
     call_make(['tapfiles'])
-    call_make(['test-results'], parallel=0, silent=True)
+    if has_test_results:
+        call_make(['test-results'], parallel=0, silent=True)
 
 def doExec(args):
     'exec user command with vcvars'
