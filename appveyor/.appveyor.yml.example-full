@@ -13,14 +13,6 @@ cache:
   - C:\Users\appveyor\.tools
 
 #---------------------------------#
-#       additional packages       #
-#---------------------------------#
-
-install:
-# for the sequencer
-  - cinst re2c
-
-#---------------------------------#
 #       repository cloning        #
 #---------------------------------#
 
@@ -42,6 +34,16 @@ skip_commits:
     - '**/*.html'
     - '**/*.md'
     - '.travis.yml'
+
+#---------------------------------#
+#       additional packages       #
+#---------------------------------#
+
+install:
+# fetch submodules (like ci-scripts)
+  - cmd: git submodule update --init --recursive
+# for the sequencer
+  - cinst re2c
 
 #---------------------------------#
 #   build matrix configuration    #
@@ -113,11 +115,8 @@ matrix:
 #     building & testing          #
 #---------------------------------#
 
-install:
-  - cmd: git submodule update --init --recursive
-  - cmd: python .ci/appveyor/do.py prepare
-
 build_script:
+  - cmd: python .ci/appveyor/do.py prepare
   - cmd: python .ci/appveyor/do.py build
 
 test_script:

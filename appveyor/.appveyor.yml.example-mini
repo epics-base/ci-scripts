@@ -19,6 +19,9 @@ skip_commits:
     - '**/*.md'
     - '.travis.yml'
 
+install:
+  - cmd: git submodule update --init --recursive
+
 image: Visual Studio 2019
 
 # Build Configurations: dll/static, regular/debug
@@ -54,11 +57,8 @@ matrix:
   - platform: x64
     CMP: vs2008
 
-install:
-  - cmd: git submodule update --init --recursive
-  - cmd: python .ci/appveyor/do.py prepare
-
 build_script:
+  - cmd: python .ci/appveyor/do.py prepare
   - cmd: python .ci/appveyor/do.py build
 
 test_script:

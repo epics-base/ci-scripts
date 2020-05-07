@@ -16,14 +16,6 @@ cache:
   - C:\Users\appveyor\.tools -> appveyor\do.py
 
 #---------------------------------#
-#       additional packages       #
-#---------------------------------#
-
-install:
-# for the sequencer
-  - cinst re2c
-
-#---------------------------------#
 #       repository cloning        #
 #---------------------------------#
 
@@ -31,6 +23,8 @@ install:
 init:
   # Set autocrlf to make batch files work
   - git config --global core.autocrlf true
+  # print the connection info for RDP connections (see 'debugging' below)
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 # Set clone depth (do not fetch complete history)
 clone_depth: 50
@@ -43,6 +37,16 @@ skip_commits:
     - '**/*.html'
     - '**/*.md'
     - '.travis.yml'
+
+#---------------------------------#
+#       additional packages       #
+#---------------------------------#
+
+install:
+# fetch submodules (like ci-scripts)
+  - cmd: git submodule update --init --recursive
+# for the sequencer
+  - cinst re2c
 
 #---------------------------------#
 #   build matrix configuration    #
@@ -144,7 +148,6 @@ test_script:
 ## so you may want to adjust the build matrix above to just build the one of interest
 
 #on_failure:
-#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 
