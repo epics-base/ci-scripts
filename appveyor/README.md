@@ -12,7 +12,7 @@
 
  1. Get an account on [AppVeyor](https://www.appveyor.com/), connect
     it to your GitHub account and activate your support module's
-    repository. For more details, please refer to the
+    repository. For more details, please see below and refer to the
     [AppVeyor documentation](https://www.appveyor.com/docs/).
 
  2. Add the ci-scripts respository as a Git Submodule
@@ -45,14 +45,55 @@
 
     Your builds will take long. \
     AppVeyor only grants a single worker VM - all jobs of the matrix are
-    executed sequentially. Each job will take around 10 minutes.
+    executed sequentially. Each job will take between 6 and 15 minutes,
+    plus testing time.
 
     The `matrix: / exclude:` setting can be used to reduce the number of
-    jobs. Check the [AppVeyor docs](https://www.appveyor.com/docs/build-configuration/#build-matrix)
+    jobs. Check the [AppVeyor docs][appveyor.doc.matrix]
     for more ways to reduce the build matrix size.
+    E.g., you can opt for not creating matrix axes for `configuration:`
+    and`platform:` by moving these configurations into the job lines
+    under `environment: / matrix:`.
 
  6. Push your changes and check
     [ci.appveyor.com](https://ci.appveyor.com/) for your build results.
+
+## GitHub / AppVeyor Integration and Authentication
+
+### Security
+Enabling Two-Factor-Authentication (2FA) is always a good idea, for all 
+your web based services, including GitHub and AppVeyor. \
+Get an app for your phone (Authy works fine for me, but there are plenty),
+and your phone will generate one-time passwords to verify your identity
+to the service if required (e.g., when logging in from a new device).
+
+### Authentication
+You can use different ways and services to authenticate when you log into
+your AppVeyor account. The easiest way - at least when you're using the
+service with repositories on GitHub - is to use GitHub authentication.
+
+### GitHub Integration
+AppVeyor offers two ways to integrate with GitHub: through a GitHub
+application or through an OAuth application. GitHub applications are using
+the newer API, allow easier fine-grained access rights tuning and are
+preferred.
+
+The differences are mostly visible when you work with repositories under
+organizational GitHub accounts: Using OAuth, AppVeyor always has the full
+rights of your personal GitHub account.
+GitHub applications on the other hand have separate instances and
+configuration for every organizational account you are using on GitHub.
+
+### Enabling Builds for your Repository
+On the 'Projects' tab of your AppVeyor web interface, create a new project.
+If the repository is not listed on the project creation page,
+verify the Integration settings. Most of the relevant configuration
+is taken from GitHub and has to be set up there.
+
+### AppVeyor Account Sharing
+You can always invite other AppVeyor users to have access to an AppVeyor
+account, forming a team. Such additional shared accounts are a way to make
+the AppVeyor limits (e.g., one parallel builder per account) more manageable.
 
 ## Known Issues
 
@@ -66,3 +107,6 @@ is shown in the example configuration files:
  - Set the default image using the `image:` tag.
  - Override the image for specific jobs by setting the
    `APPVEYOR_BUILD_WORKER_IMAGE` environment variable.
+
+<!-- Links -->
+[appveyor.doc.matrix]: https://www.appveyor.com/docs/build-configuration/#build-matrix
