@@ -382,37 +382,45 @@ class TestSetupForBuild(unittest.TestCase):
         self.assertTrue(re.search('strawberry', os.environ['PATH'], flags=re.IGNORECASE),
                         'Strawberry Perl location not in PATH for vs2019')
 
-    def test_DetectionBase314No(self):
+    def setBase314(self, yesno):
         cfg_base_version = os.path.join('configure', 'CONFIG_BASE_VERSION')
         fout = open(cfg_base_version, 'w')
-        print('BASE_3_14=NO', file=fout)
+        print('# test file for base version detection', file=fout)
+        print('BASE_3_14={0}'.format(yesno), file=fout)
         fout.close()
+
+    def setTestResultsTarget(self, target):
+        rules_build = os.path.join('configure', 'RULES_BUILD')
+        fout = open(rules_build, 'w')
+        print('# test file for target detection', file=fout)
+        print('{0}: something'.format(target), file=fout)
+        fout.close()
+
+    def test_DetectionBase314No(self):
+        self.setBase314('NO')
         do.setup_for_build(self.args)
         self.assertFalse(do.isbase314, 'Falsely detected Base 3.14')
 
     def test_DetectionBase314Yes(self):
-        cfg_base_version = os.path.join('configure', 'CONFIG_BASE_VERSION')
-        fout = open(cfg_base_version, 'w')
-        print('BASE_3_14=YES', file=fout)
-        fout.close()
+        self.setBase314('YES')
         do.setup_for_build(self.args)
         self.assertTrue(do.isbase314, 'Base 3.14 = YES not detected')
 
-    def test_DetectionTestResultsTargetNo(self):
-        rules_build = os.path.join('configure', 'RULES_BUILD')
-        fout = open(rules_build, 'w')
-        print('# test file for target detection', file=fout)
-        print('nottherighttarget:', file=fout)
-        fout.close()
+    def test_DetectionTestResultsTarget314No(self):
+        self.setBase314('YES')
+        self.setTestResultsTarget('nottherighttarget')
         do.setup_for_build(self.args)
         self.assertFalse(do.has_test_results, 'Falsely detected test-results target')
 
-    def test_DetectionTestResultsTargetYes(self):
-        rules_build = os.path.join('configure', 'RULES_BUILD')
-        fout = open(rules_build, 'w')
-        print('# test file for target detection', file=fout)
-        print('test-results:', file=fout)
-        fout.close()
+    def test_DetectionTestResultsTarget314Yes(self):
+        self.setBase314('YES')
+        self.setTestResultsTarget('test-results')
+        do.setup_for_build(self.args)
+        self.assertFalse(do.has_test_results, 'Falsely found test-results on Base 3.14')
+
+    def test_DetectionTestResultsTargetNot314Yes(self):
+        self.setBase314('NO')
+        self.setTestResultsTarget('test-results')
         do.setup_for_build(self.args)
         self.assertTrue(do.has_test_results, 'Target test-results not detected')
 

@@ -419,12 +419,13 @@ def setup_for_build(args):
             if 'BASE_3_14=YES' in myfile.read():
                 isbase314 = True
 
-    rules_build = os.path.join(base_place, 'configure', 'RULES_BUILD')
-    if os.path.exists(rules_build):
-        with open(rules_build) as myfile:
-            for line in myfile:
-                if re.match('^test-results:', line):
-                    has_test_results = True
+    if not isbase314:
+        rules_build = os.path.join(base_place, 'configure', 'RULES_BUILD')
+        if os.path.exists(rules_build):
+            with open(rules_build) as myfile:
+                for line in myfile:
+                    if re.match('^test-results:', line):
+                        has_test_results = True
 
     bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
     if os.path.isdir(bindir):
