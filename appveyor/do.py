@@ -492,6 +492,29 @@ def prepare(args):
         else:
             optitype = 'optimized'
 
+    # Enable/fix parallel build for VisualStudio compiler on older Base versions
+    add_vs_fix = True
+    config_win = os.path.join(places['EPICS_BASE'], 'configure', 'os', 'CONFIG.win32-x86.win32-x86')
+    with open(config_win) as myfile:
+        for line in myfile:
+            if re.match(r'^ifneq \(\$\(VisualStudioVersion\),11\.0\)', line):
+                add_vs_fix = False
+    if add_vs_fix:
+        with open(config_win, 'a') as myfile:
+            myfile.write('''
+# Fix parallel build for some VisualStudio versions
+ifneq ($(VisualStudioVersion),)
+ifneq ($(VisualStudioVersion),11.0)
+ifeq ($(findstring -FS,$(OPT_CXXFLAGS_NO)),)
+  OPT_CXXFLAGS_NO += -FS
+  OPT_CFLAGS_NO += -FS
+endif
+else
+  OPT_CXXFLAGS_NO := $(filter-out -FS,$(OPT_CXXFLAGS_NO))
+  OPT_CFLAGS_NO := $(filter-out -FS,$(OPT_CFLAGS_NO))
+endif
+endif''')
+
     print('EPICS Base build system set up for {0} build with {1} linking'
           .format(optitype, linktype))
 
