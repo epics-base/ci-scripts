@@ -198,8 +198,8 @@ specific job will run the job with high verbosity,
 printing every command as it is being executed and switching the dependency
 builds to higher verbosity.
 
-For local debugging, you may set `CACHEDIR` to change the location for the
-dependency builds. [default is `$HOME/.cache`]
+For debugging on your local machine, you may set `CACHEDIR` to change the 
+location for the dependency builds. [default is `$HOME/.cache`]
 
 ## References: EPICS Modules Using ci-scripts
 
@@ -236,16 +236,16 @@ This will make all builds (not just for your module) verbose.
 
 Update the submodule in `.ci` first, then change your CI configuration
 (if needed) and commit both to your module. E.g., to update your Travis
-setup to release 2.3.4 of ci-scripts:
+setup to release 2.3.5 of ci-scripts:
 ```bash
 cd .ci
-git pull origin v2.3.4
+git pull origin v2.3.5
 cd -
 git add .ci
   # if needed:
   edit .travis.yml
   git add .travis.yml
-git commit -m "Update ci-scripts submodule to v2.3.4"
+git commit -m "Update ci-scripts submodule to v2.3.5"
 ```
 
 Check the example configuration files inside ci-scripts (and their
