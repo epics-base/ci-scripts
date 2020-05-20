@@ -43,3 +43,18 @@
 	
  6. Push your changes and check
     [travis-ci.org](https://travis-ci.org/) for your build results.
+
+## Caches
+
+Travis keeps the caches separate for different jobs. As soon as the job
+description (in the `.travis.yml` configuration file) or its environment
+settings change (adding a space character is enough), the cache is different
+and will be rebuilt when the job runs.
+
+This also means that changing a value inside a setup file will _not_
+invalidate the cache - in that case you will have to manually delete the cache
+through the Travis web interface. (Or add a space character in the job
+configuration.)
+
+Caches are automatically removed after approx. four weeks.
+Your jobs will have to rebuild them once in a while.
