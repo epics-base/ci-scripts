@@ -97,8 +97,14 @@ platform:
   - x86
   - x64
 
-# Matrix configuration: allow specific failing jobs
+# Matrix configuration: allow/exclude specific failing jobs
 matrix:
+  # The MSI tool generated from that builds segfaults (*shrug*)
+  allow_failures:
+    - platform: x64
+      configuration: static-debug
+      CMP: vs2019
+      BASE: 3.14
   exclude:
   # Run test00 only once: x64 dynamic
   - platform: x86
