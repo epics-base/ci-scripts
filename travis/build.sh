@@ -4,6 +4,7 @@ set -e
 # Set VV in .travis.yml to make scripts verbose
 [ "$VV" ] && set -x
 
+CURDIR="$PWD"
 CACHEDIR=${CACHEDIR:-${HOME}/.cache}
 
 if [ "$BASE" = "SELF" ]
