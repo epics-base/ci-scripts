@@ -575,9 +575,11 @@ def build(args):
 def test(args):
     setup_for_build(args)
     print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    call_make(['tapfiles'])
     if has_test_results:
+        call_make(['tapfiles'])
         call_make(['test-results'], parallel=0, silent=True)
+    else:
+        call_make(['runtests'])
 
 def doExec(args):
     'exec user command with vcvars'

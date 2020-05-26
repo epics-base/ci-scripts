@@ -36,11 +36,12 @@ ret=0
 
 if [ "$TEST" != "NO" ]
 then
-  make -j2 tapfiles || ret=$?
-
-  if grep -q "BASE_3_14=NO" $EPICS_BASE/configure/CONFIG_BASE_VERSION
+  if grep -q "BASE_3_14\s*=\s*NO" $EPICS_BASE/configure/CONFIG_BASE_VERSION && grep -q "^test-results:" $EPICS_BASE/configure/RULES_BUILD
   then
-    grep -q "^test-results:" $EPICS_BASE/configure/RULES_BUILD && make -sk test-results
+    make -j2 tapfiles || ret=$?
+    make -sk test-results
+  else
+    make runtests
   fi
 fi
 
