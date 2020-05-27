@@ -126,7 +126,7 @@ def modlist():
     return ret
 
 zip7 = r'C:\Program Files\7-Zip\7z'
-make = ''
+make = 'make'
 isbase314 = False
 has_test_results = False
 silent_dep_builds = True
