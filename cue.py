@@ -13,6 +13,56 @@ import distutils.util
 
 logger = logging.getLogger(__name__)
 
+# Detect the service and set up environment accordingly
+
+ci_service = '<none>'
+ci_os = '<unknown>'
+ci_platform = '<unknown>'
+ci_compiler = '<unknown>'
+ci_static = False
+ci_debug = False
+
+if 'TRAVIS' in os.environ:
+    ci_service = 'travis'
+    ci_os = os.environ['TRAVIS_OS_NAME']
+    if ci_os == 'windows':
+        # Only Visual Studio 2017 available
+        ci_compiler = 'vs2017'
+    ci_platform = 'x64'
+    ci_compiler = os.environ['TRAVIS_COMPILER']
+    if 'STATIC' in os.environ and os.environ['STATIC'].lower() == 'yes':
+        ci_static = True
+    if 'DEBUG' in os.environ and os.environ['DEBUG'].lower() == 'yes':
+        ci_debug = True
+
+if 'APPVEYOR' in os.environ:
+    ci_service = 'appveyor'
+    if re.match(r'^Visual', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+        ci_os = 'windows'
+    elif re.match(r'^Ubuntu', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+        ci_os = 'linux'
+    elif re.match(r'^macOS', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+        ci_os = 'osx'
+    ci_platform = os.environ['PLATFORM'].lower()
+    if 'CMP' in os.environ:
+        ci_compiler = os.environ['CMP']
+    if re.search('static', os.environ['CONFIGURATION']):
+        ci_static = True
+    if re.search('debug', os.environ['CONFIGURATION']):
+        ci_debug = True
+
+if ci_static:
+    ci_configuration = 'static'
+else:
+    ci_configuration = 'shared'
+if ci_debug:
+    ci_configuration += '-debug'
+else:
+    ci_configuration += '-optimized'
+
+logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s',
+      ci_service, ci_compiler, ci_os, ci_platform, ci_configuration)
+
 # Setup ANSI Colors
 ANSI_RED = "\033[31;1m"
 ANSI_GREEN = "\033[32;1m"
@@ -82,8 +132,8 @@ has_test_results = False
 silent_dep_builds = True
 
 def host_info():
-    print('{0}AppVeyor Build Worker Image:{1} {2}'
-          .format(ANSI_CYAN, ANSI_RESET, os.environ['APPVEYOR_BUILD_WORKER_IMAGE']))
+    print('{0}Build using {1} compiler on {2} ({3}) hosted by {4}{5}'
+          .format(ANSI_CYAN, ci_compiler, ci_os, ci_platform, ci_service, ANSI_RESET))
 
     print('{0}Python setup{1}'.format(ANSI_CYAN, ANSI_RESET))
     print(sys.version)
@@ -368,31 +418,31 @@ def setup_for_build(args):
     # so a combined debug and static target will appear to be just static
     # but debug will have been specified in CONFIG_SITE by prepare()
     hostarchsuffix=''
-    if re.search('debug', os.environ['CONFIGURATION']):
+    if ci_debug:
         hostarchsuffix = '-debug'
-    if re.search('static', os.environ['CONFIGURATION']):
+    if ci_static:
         hostarchsuffix = '-static'
 
-    if os.environ['PLATFORM'].lower() == 'x86':
+    if ci_platform == 'x86':
         os.environ['EPICS_HOST_ARCH'] = 'win32-x86' + hostarchsuffix
-    elif os.environ['PLATFORM'].lower() == 'x64':
+    elif ci_platform == 'x64':
         os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
 
-    if os.environ['CMP'] == 'vs2019':
+    if ci_compiler == 'vs2019':
         # put strawberry perl in the PATH
         os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
                                               os.path.join(r'C:\Strawberry\perl\bin'),
                                               os.environ['PATH']])
-    if os.environ['CMP'] == 'mingw':
+    if ci_compiler == 'mingw':
         if 'INCLUDE' not in os.environ:
             os.environ['INCLUDE'] = ''
-        if os.environ['PLATFORM'].lower() == 'x86':
+        if ci_platform == 'x86':
             os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
             os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
                                                      os.environ['INCLUDE']])
             os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
                                                   os.environ['PATH']])
-        elif os.environ['PLATFORM'].lower() == 'x64':
+        elif ci_platform == 'x64':
             os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
             os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
                                                      os.environ['INCLUDE']])
@@ -480,13 +530,13 @@ def prepare(args):
     print('{0}Configuring EPICS build system{1}'.format(ANSI_YELLOW, ANSI_RESET))
 
     with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
-        if re.search('static', os.environ['CONFIGURATION']):
+        if ci_static:
             config_site.write('SHARED_LIBRARIES=NO\n')
             config_site.write('STATIC_BUILD=YES\n')
             linktype = 'static'
         else:
             linktype = 'dynamic (DLL)'
-        if re.search('debug', os.environ['CONFIGURATION']):
+        if ci_debug:
             config_site.write('HOST_OPT=NO\n')
             optitype = 'debug'
         else:
@@ -541,7 +591,7 @@ endif''')
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
 
-    if os.environ['CMP'] == 'mingw':
+    if ci_compiler == 'mingw':
         print('{0}$ gcc --version{1}'.format(ANSI_CYAN, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call(['gcc', '--version'])
@@ -592,7 +642,7 @@ def doExec(args):
 def with_vcvars(cmd):
     '''re-exec main script with a (hopefully different) command
     '''
-    CC = os.environ['CMP']
+    CC = ci_compiler
 
     # cf. https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
 
@@ -605,7 +655,7 @@ def with_vcvars(cmd):
     info['arch'] = {
         'x86': 'x86',   # 'amd64_x86' ??
         'x64': 'amd64',
-    }[os.environ['PLATFORM'].lower()] # 'x86' or 'x64'
+    }[ci_platform] # 'x86' or 'x64'
 
     info['vcvars'] = vcvars_table[CC]
 
@@ -624,7 +674,7 @@ call "{vcvars}" {arch}
         F.write(script)
 
     print('{0}Calling vcvars-trampoline.bat to set environment for {1} on {2}{3}'
-          .format(ANSI_YELLOW, CC, os.environ['PLATFORM'], ANSI_RESET))
+          .format(ANSI_YELLOW, CC, ci_platform, ANSI_RESET))
     sys.stdout.flush()
     returncode = sp.call('vcvars-trampoline.bat', shell=True)
     if returncode != 0:
@@ -662,7 +712,7 @@ def main(raw):
         logging.basicConfig(level=logging.DEBUG)
         silent_dep_builds = False
 
-    if args.vcvars and os.environ['CMP'].startswith('vs'):
+    if args.vcvars and ci_compiler.startswith('vs'):
         # re-exec with MSVC in PATH
         with_vcvars(' '.join(['--no-vcvars']+raw))
 
