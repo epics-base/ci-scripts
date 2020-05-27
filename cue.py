@@ -471,6 +471,17 @@ def setup_for_build(args):
                 if mod == 'EPICS_BASE':
                     base_place = place
 
+    if 'EPICS_HOST_ARCH' not in os.environ:
+        os.environ['EPICS_HOST_ARCH'] = 'unknown'
+        eha_scripts = [
+            os.pathsep.join(base_place, 'src', 'tools', 'EpicsHostArch.pl'),
+            os.pathsep.join(base_place, 'startup', 'EpicsHostArch.pl'),
+        ]
+        for eha in eha_scripts:
+            if os.path.exists(eha):
+                os.environ['EPICS_HOST_ARCH'] = sp.check_output(['perl', eha])
+                break
+
     cfg_base_version = os.path.join(base_place, 'configure', 'CONFIG_BASE_VERSION')
     if os.path.exists(cfg_base_version):
         with open(cfg_base_version) as myfile:
