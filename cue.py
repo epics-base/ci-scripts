@@ -63,6 +63,20 @@ else:
 logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s',
       ci_service, ci_compiler, ci_os, ci_platform, ci_configuration)
 
+curdir = os.getcwd()
+ci_scriptsdir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+seen_setups = []
+modules_to_compile = []
+setup = {}
+places = {}
+
+if 'BASE' in os.environ and os.environ['BASE'] == 'SELF':
+    building_base = True
+    places['EPICS_BASE'] = curdir
+else:
+    building_base = False
+
 # Setup ANSI Colors
 ANSI_RED = "\033[31;1m"
 ANSI_GREEN = "\033[32;1m"
@@ -72,11 +86,6 @@ ANSI_MAGENTA = "\033[35;1m"
 ANSI_CYAN = "\033[36;1m"
 ANSI_RESET = "\033[0m"
 ANSI_CLEAR = "\033[0K"
-
-seen_setups = []
-modules_to_compile = []
-setup = {}
-places = {}
 
 if 'HomeDrive' in os.environ:
     cachedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.cache')
@@ -101,16 +110,6 @@ vcvars_table = {
     'vs2010':r'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat',
     'vs2008':r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcvarsall.bat',
 }
-
-ciscriptsdir = os.path.abspath(os.path.dirname(sys.argv[0]))
-if os.path.basename(ciscriptsdir) == 'appveyor':
-    ciscriptsdir = ciscriptsdir.rstrip(os.pathsep+'appveyor')
-
-if 'BASE' in os.environ and os.environ['BASE'] == 'SELF':
-    building_base = True
-    places['EPICS_BASE'] = '.'
-else:
-    building_base = False
 
 def modlist():
     if building_base:
@@ -384,7 +383,7 @@ def add_dependency(dep):
                     if 'BASE_3_14=YES' in f.read():
                         print('Adding MSI 1.7 to {0}'.format(place))
                         sys.stdout.flush()
-                        sp.check_call(['patch', '-p1', '-i', os.path.join(ciscriptsdir, 'add-msi-to-314.patch')],
+                        sp.check_call(['patch', '-p1', '-i', os.path.join(ci_scriptsdir, 'add-msi-to-314.patch')],
                                       cwd=place)
         else:
             # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE
@@ -442,54 +441,68 @@ def setup_for_build(args):
                 if 'INCLUDE' not in os.environ:
                     os.environ['INCLUDE'] = ''
                 if ci_platform == 'x86':
-                    os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
                     os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
                                                              os.environ['INCLUDE']])
                     os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
                                                           os.environ['PATH']])
                 elif ci_platform == 'x64':
-                    os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
                     os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
                                                              os.environ['INCLUDE']])
                     os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
                                                           os.environ['PATH']])
-        # Add DLL location to PATH
-        bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
-        if os.path.isdir(bindir):
-            dllpaths.append(bindir)
-        os.environ['PATH'] = os.pathsep.join(dllpaths + [os.environ['PATH']])
+        if ci_compiler == 'gcc':
+            if ci_platform == 'x86':
+                os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
+            elif ci_platform == 'x64':
+                os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
 
-    base_place = '.'
+    # Find BASE location
     if not building_base:
         with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
             lines = f.readlines()
             for line in lines:
                 (mod, place) = line.strip().split('=')
-                bindir = os.path.join(place, 'bin', os.environ['EPICS_HOST_ARCH'])
-                if os.path.isdir(bindir):
-                    dllpaths.append(bindir)
                 if mod == 'EPICS_BASE':
-                    base_place = place
+                    places['EPICS_BASE'] = place
 
     if 'EPICS_HOST_ARCH' not in os.environ:
+        logger.debug('Detecting EPICS host architecture in %s', places['EPICS_BASE'])
         os.environ['EPICS_HOST_ARCH'] = 'unknown'
         eha_scripts = [
-            os.pathsep.join(base_place, 'src', 'tools', 'EpicsHostArch.pl'),
-            os.pathsep.join(base_place, 'startup', 'EpicsHostArch.pl'),
+            os.path.join(places['EPICS_BASE'], 'src', 'tools', 'EpicsHostArch.pl'),
+            os.path.join(places['EPICS_BASE'], 'startup', 'EpicsHostArch.pl'),
         ]
         for eha in eha_scripts:
             if os.path.exists(eha):
-                os.environ['EPICS_HOST_ARCH'] = sp.check_output(['perl', eha])
+                os.environ['EPICS_HOST_ARCH'] = sp.check_output(['perl', eha]).strip()
+                logger.debug('%s returned: %s',
+                             eha, os.environ['EPICS_HOST_ARCH'])
                 break
 
-    cfg_base_version = os.path.join(base_place, 'configure', 'CONFIG_BASE_VERSION')
+    if ci_os == 'windows':
+        if not building_base:
+            with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    (mod, place) = line.strip().split('=')
+                    bindir = os.path.join(place, 'bin', os.environ['EPICS_HOST_ARCH'])
+                    if os.path.isdir(bindir):
+                        dllpaths.append(bindir)
+        # Add DLL location to PATH
+        bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
+        if os.path.isdir(bindir):
+            dllpaths.append(bindir)
+        os.environ['PATH'] = os.pathsep.join(dllpaths + [os.environ['PATH']])
+        logger.debug('DLL paths added to PATH: %s', os.pathsep.join(dllpaths))
+
+    cfg_base_version = os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_BASE_VERSION')
     if os.path.exists(cfg_base_version):
         with open(cfg_base_version) as myfile:
             if 'BASE_3_14=YES' in myfile.read():
                 isbase314 = True
 
     if not isbase314:
-        rules_build = os.path.join(base_place, 'configure', 'RULES_BUILD')
+        rules_build = os.path.join(places['EPICS_BASE'], 'configure', 'RULES_BUILD')
         if os.path.exists(rules_build):
             with open(rules_build) as myfile:
                 for line in myfile:
@@ -555,16 +568,18 @@ def prepare(args):
         else:
             optitype = 'optimized'
 
-    # Enable/fix parallel build for VisualStudio compiler on older Base versions
-    add_vs_fix = True
-    config_win = os.path.join(places['EPICS_BASE'], 'configure', 'os', 'CONFIG.win32-x86.win32-x86')
-    with open(config_win) as myfile:
-        for line in myfile:
-            if re.match(r'^ifneq \(\$\(VisualStudioVersion\),11\.0\)', line):
-                add_vs_fix = False
-    if add_vs_fix:
-        with open(config_win, 'a') as myfile:
-            myfile.write('''
+    if ci_os == 'windows' and re.match(r'^vs', ci_compiler):
+        # Enable/fix parallel build for VisualStudio compiler on older Base versions
+        add_vs_fix = True
+        config_win = os.path.join(places['EPICS_BASE'], 'configure', 'os', 'CONFIG.win32-x86.win32-x86')
+        with open(config_win) as myfile:
+            for line in myfile:
+                if re.match(r'^ifneq \(\$\(VisualStudioVersion\),11\.0\)', line):
+                    add_vs_fix = False
+        if add_vs_fix:
+            logger.debug('Adding parallel build fix for VisualStudio to %s', config_win)
+            with open(config_win, 'a') as myfile:
+                myfile.write('''
 # Fix parallel build for some VisualStudio versions
 ifneq ($(VisualStudioVersion),)
 ifneq ($(VisualStudioVersion),11.0)
@@ -576,8 +591,8 @@ else
   OPT_CXXFLAGS_NO := $(filter-out -FS,$(OPT_CXXFLAGS_NO))
   OPT_CFLAGS_NO := $(filter-out -FS,$(OPT_CFLAGS_NO))
 endif
-endif''')
-
+endif'''
+                             )
     print('EPICS Base build system set up for {0} build with {1} linking'
           .format(optitype, linktype))
 
