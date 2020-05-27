@@ -428,28 +428,29 @@ def setup_for_build(args):
     elif ci_platform == 'x64':
         os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
 
-    if ci_compiler == 'vs2019':
-        # put strawberry perl in the PATH
-        os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
-                                              os.path.join(r'C:\Strawberry\perl\bin'),
-                                              os.environ['PATH']])
-    if ci_compiler == 'mingw':
-        if 'INCLUDE' not in os.environ:
-            os.environ['INCLUDE'] = ''
-        if ci_platform == 'x86':
-            os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
-            os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
-                                                     os.environ['INCLUDE']])
-            os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+    if ci_service == 'appveyor' and ci_os == 'windows':
+        if ci_compiler == 'vs2019':
+            # put strawberry perl in the PATH
+            os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
+                                                  os.path.join(r'C:\Strawberry\perl\bin'),
                                                   os.environ['PATH']])
-        elif ci_platform == 'x64':
-            os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
-            os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
-                                                     os.environ['INCLUDE']])
-            os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
-                                                  os.environ['PATH']])
+        if ci_compiler == 'gcc':
+            if 'INCLUDE' not in os.environ:
+                os.environ['INCLUDE'] = ''
+            if ci_platform == 'x86':
+                os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
+                os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+                                                         os.environ['INCLUDE']])
+                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+                                                      os.environ['PATH']])
+            elif ci_platform == 'x64':
+                os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
+                os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+                                                         os.environ['INCLUDE']])
+                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
+                                                      os.environ['PATH']])
 
-    make = os.path.join(toolsdir, 'make.exe')
+        make = os.path.join(toolsdir, 'make.exe')
 
     base_place = '.'
     if not building_base:
@@ -571,15 +572,16 @@ endif''')
     if not os.path.isdir(toolsdir):
         os.makedirs(toolsdir)
 
-    makever = '4.2.1'
-    if not os.path.exists(os.path.join(toolsdir, 'make.exe')):
-        print('Installing Make 4.2.1 from ANL web site')
-        sys.stdout.flush()
-        sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'make-{0}.zip'.format(makever),
-                       'https://epics.anl.gov/download/tools/make-{0}-win64.zip'.format(makever)],
-                      cwd=toolsdir)
-        sp.check_call([zip7, 'e', 'make-{0}.zip'.format(makever)], cwd=toolsdir)
-        os.remove(os.path.join(toolsdir, 'make-{0}.zip'.format(makever)))
+    if ci_os == 'windows':
+        makever = '4.2.1'
+        if not os.path.exists(os.path.join(toolsdir, 'make.exe')):
+            print('Installing Make 4.2.1 from ANL web site')
+            sys.stdout.flush()
+            sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'make-{0}.zip'.format(makever),
+                           'https://epics.anl.gov/download/tools/make-{0}-win64.zip'.format(makever)],
+                          cwd=toolsdir)
+            sp.check_call([zip7, 'e', 'make-{0}.zip'.format(makever)], cwd=toolsdir)
+            os.remove(os.path.join(toolsdir, 'make-{0}.zip'.format(makever)))
 
     setup_for_build(args)
 
@@ -591,7 +593,7 @@ endif''')
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
 
-    if ci_compiler == 'mingw':
+    if ci_compiler == 'gcc':
         print('{0}$ gcc --version{1}'.format(ANSI_CYAN, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call(['gcc', '--version'])
