@@ -414,43 +414,50 @@ def setup_for_build(args):
     global make, isbase314, has_test_results
     dllpaths = []
 
-    # there is no combined static and debug EPICS_HOST_ARCH target,
-    # so a combined debug and static target will appear to be just static
-    # but debug will have been specified in CONFIG_SITE by prepare()
-    hostarchsuffix=''
-    if ci_debug:
-        hostarchsuffix = '-debug'
-    if ci_static:
-        hostarchsuffix = '-static'
-
-    if ci_platform == 'x86':
-        os.environ['EPICS_HOST_ARCH'] = 'win32-x86' + hostarchsuffix
-    elif ci_platform == 'x64':
-        os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
-
-    if ci_service == 'appveyor' and ci_os == 'windows':
-        if ci_compiler == 'vs2019':
-            # put strawberry perl in the PATH
-            os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
-                                                  os.path.join(r'C:\Strawberry\perl\bin'),
-                                                  os.environ['PATH']])
-        if ci_compiler == 'gcc':
-            if 'INCLUDE' not in os.environ:
-                os.environ['INCLUDE'] = ''
-            if ci_platform == 'x86':
-                os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
-                os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
-                                                         os.environ['INCLUDE']])
-                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
-                                                      os.environ['PATH']])
-            elif ci_platform == 'x64':
-                os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
-                os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
-                                                         os.environ['INCLUDE']])
-                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
-                                                      os.environ['PATH']])
-
+    if ci_os == 'windows':
         make = os.path.join(toolsdir, 'make.exe')
+
+        if re.match(r'^vs', ci_compiler):
+            # there is no combined static and debug EPICS_HOST_ARCH target,
+            # so a combined debug and static target will appear to be just static
+            # but debug will have been specified in CONFIG_SITE by prepare()
+            hostarchsuffix = ''
+            if ci_debug:
+                hostarchsuffix = '-debug'
+            if ci_static:
+                hostarchsuffix = '-static'
+
+            if ci_platform == 'x86':
+                os.environ['EPICS_HOST_ARCH'] = 'win32-x86' + hostarchsuffix
+            elif ci_platform == 'x64':
+                os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
+
+        if ci_service == 'appveyor':
+            if ci_compiler == 'vs2019':
+                # put strawberry perl in the PATH
+                os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
+                                                      os.path.join(r'C:\Strawberry\perl\bin'),
+                                                      os.environ['PATH']])
+            if ci_compiler == 'gcc':
+                if 'INCLUDE' not in os.environ:
+                    os.environ['INCLUDE'] = ''
+                if ci_platform == 'x86':
+                    os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
+                    os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+                                                             os.environ['INCLUDE']])
+                    os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+                                                          os.environ['PATH']])
+                elif ci_platform == 'x64':
+                    os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
+                    os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+                                                             os.environ['INCLUDE']])
+                    os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
+                                                          os.environ['PATH']])
+        # Add DLL location to PATH
+        bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
+        if os.path.isdir(bindir):
+            dllpaths.append(bindir)
+        os.environ['PATH'] = os.pathsep.join(dllpaths + [os.environ['PATH']])
 
     base_place = '.'
     if not building_base:
@@ -477,12 +484,6 @@ def setup_for_build(args):
                 for line in myfile:
                     if re.match('^test-results:', line):
                         has_test_results = True
-
-    bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
-    if os.path.isdir(bindir):
-        dllpaths.append(bindir)
-
-    os.environ['PATH'] = os.pathsep.join(dllpaths + [os.environ['PATH']])
 
     # apparently %CD% is handled automagically
     os.environ['TOP'] = os.getcwd()
