@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Windows (AppVeyor) ci build script
+"""CI build script
 """
 
 from __future__ import print_function
