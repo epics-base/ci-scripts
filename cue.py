@@ -181,23 +181,23 @@ def source_set(name):
 
         if os.path.isfile(set_file):
             seen_setups.append(set_file)
-            print("Loading setup file {0}".format(set_file))
+            print("Opening setup file {0}".format(set_file))
             sys.stdout.flush()
             with open(set_file) as fp:
                 for line in fp:
-                    logger.debug('Next line: %s', line.strip())
                     if not line.strip() or line.strip()[0] == '#':
                         continue
                     if line.startswith("include"):
-                        logger.debug('Found an include, reading %s', line.split()[1])
+                        logger.debug('%s: Found include directive, reading %s next',
+                                     set_file, line.split()[1])
                         source_set(line.split()[1])
                         continue
                     assign = line.replace('"', '').strip().split("=", 1)
-                    logger.debug('Interpreting as assignment')
                     setup.setdefault(assign[0], os.getenv(assign[0], ""))
                     if not setup[assign[0]].strip():
-                        logger.debug('Doing assignment: %s = %s', assign[0], assign[1])
+                        logger.debug('%s: setup[%s] = %s', set_file, assign[0], assign[1])
                         setup[assign[0]] = assign[1]
+            logger.debug('Done with setup file %s', set_file)
             break
     else:
         raise NameError("{0}Setup file {1} does not exist in SETUP_PATH search path ({2}){3}"
