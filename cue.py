@@ -108,14 +108,21 @@ if 'CACHEDIR' in os.environ:
 
 vcvars_table = {
     # https://en.wikipedia.org/wiki/Microsoft_Visual_Studio#History
-    'vs2019':r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat',
-    'vs2017':r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat',
-    'vs2015':r'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat',
-    'vs2013':r'C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat',
-    'vs2012':r'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat',
-    'vs2010':r'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat',
-    'vs2008':r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcvarsall.bat',
+    'vs2019': [r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat'],
+    'vs2017': [r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat',
+                r'C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat'],
+    'vs2015': [r'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat'],
+    'vs2013': [r'C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat'],
+    'vs2012': [r'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat'],
+    'vs2010': [r'C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat'],
+    'vs2008': [r'C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\vcvarsall.bat'],
 }
+
+vcvars_found = {}
+for key in vcvars_table:
+    for dir in vcvars_table[key]:
+        if os.path.exists(dir):
+            vcvars_found[key] = dir
 
 def modlist():
     if building_base:
@@ -146,9 +153,8 @@ def host_info():
     print('platform =', distutils.util.get_platform())
 
     print('{0}Available Visual Studio versions{1}'.format(ANSI_CYAN, ANSI_RESET))
-    for key in vcvars_table:
-        if os.path.exists(vcvars_table[key]):
-            print('Found', key, 'in', vcvars_table[key])
+    for key in vcvars_found:
+        print(key, 'in', vcvars_found[key])
     sys.stdout.flush()
 
 # Used from unittests
@@ -687,7 +693,7 @@ def with_vcvars(cmd):
         'x64': 'amd64',
     }[ci_platform] # 'x86' or 'x64'
 
-    info['vcvars'] = vcvars_table[CC]
+    info['vcvars'] = vcvars_found[CC]
 
     script='''
 call "{vcvars}" {arch}
