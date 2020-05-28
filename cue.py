@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CI build script
+"""CI build script for Linux/MacOS/Windows on Travis/AppVeyor
 """
 
 from __future__ import print_function
@@ -33,10 +33,11 @@ if 'TRAVIS' in os.environ:
         if re.match(r'^vs', ci_compiler):
             # Only Visual Studio 2017 available
             ci_compiler = 'vs2017'
-    if 'STATIC' in os.environ and os.environ['STATIC'].lower() == 'yes':
-        ci_static = True
-    if 'DEBUG' in os.environ and os.environ['DEBUG'].lower() == 'yes':
-        ci_debug = True
+    if 'BCFG' in os.environ:
+        if re.search('static', os.environ['BCFG']):
+            ci_static = True
+        if re.search('debug', os.environ['BCFG']):
+            ci_debug = True
 
 if 'APPVEYOR' in os.environ:
     ci_service = 'appveyor'
