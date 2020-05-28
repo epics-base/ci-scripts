@@ -527,9 +527,9 @@ def prepare(args):
     host_info()
 
     print('{0}Loading setup files{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    source_set('defaults')
     if 'SET' in os.environ:
         source_set(os.environ['SET'])
+    source_set('defaults')
 
     [complete_setup(mod) for mod in modlist()]
 
