@@ -65,7 +65,7 @@ else:
     ci_configuration += '-optimized'
 
 logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s',
-      ci_service, ci_compiler, ci_os, ci_platform, ci_configuration)
+             ci_service, ci_compiler, ci_os, ci_platform, ci_configuration)
 
 curdir = os.getcwd()
 ci_scriptsdir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -94,6 +94,7 @@ ANSI_CYAN = "\033[36;1m"
 ANSI_RESET = "\033[0m"
 ANSI_CLEAR = "\033[0K"
 
+
 # Travis log fold control
 # from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
 
@@ -106,6 +107,7 @@ def fold_start(tag, title):
               .format(ANSI_YELLOW, title, ANSI_RESET))
     sys.stdout.flush()
 
+
 def fold_end(tag, title):
     if ci_service == 'travis':
         print('\ntravis_fold:end:{0}\r'
@@ -114,6 +116,7 @@ def fold_end(tag, title):
         print('{0}----- /\\ /\\ /\\ -----   END: {1} -----{2}'
               .format(ANSI_YELLOW, title, ANSI_RESET))
     sys.stdout.flush()
+
 
 if 'HomeDrive' in os.environ:
     cachedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.cache')
@@ -132,7 +135,7 @@ vcvars_table = {
     # https://en.wikipedia.org/wiki/Microsoft_Visual_Studio#History
     'vs2019': [r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat'],
     'vs2017': [r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat',
-                r'C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat'],
+               r'C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat'],
     'vs2015': [r'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat'],
     'vs2013': [r'C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat'],
     'vs2012': [r'C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat'],
@@ -146,6 +149,7 @@ for key in vcvars_table:
         if os.path.exists(dir):
             vcvars_found[key] = dir
 
+
 def modlist():
     if building_base:
         ret = []
@@ -158,9 +162,11 @@ def modlist():
         ret = ['BASE'] + setup['ADD_MODULES'].upper().split() + setup['MODULES'].upper().split()
     return ret
 
+
 isbase314 = False
 has_test_results = False
 silent_dep_builds = True
+
 
 def host_info():
     print('{0}Build using {1} compiler on {2} ({3}) hosted by {4}{5}'
@@ -174,9 +180,10 @@ def host_info():
     print('platform =', distutils.util.get_platform())
 
     print('{0}Available Visual Studio versions{1}'.format(ANSI_CYAN, ANSI_RESET))
-    for key in vcvars_found:
-        print(key, 'in', vcvars_found[key])
+    for comp in vcvars_found:
+        print(comp, 'in', vcvars_found[comp])
     sys.stdout.flush()
+
 
 # Used from unittests
 def clear_lists():
@@ -188,10 +195,12 @@ def clear_lists():
     isbase314 = False
     has_test_results = False
 
+
 # Error-handler to make shutil.rmtree delete read-only files on Windows
 def remove_readonly(func, path, excinfo):
     os.chmod(path, stat.S_IWRITE)
     func(path)
+
 
 # source_set(setup)
 #
@@ -201,7 +210,7 @@ def source_set(name):
     # allowed separators: colon or whitespace
     setup_dirs = os.getenv('SETUP_PATH', "").replace(':', ' ').split()
     if len(setup_dirs) == 0:
-        raise NameError("{0}Search path for setup files (SETUP_PATH) is empty{1}".format(ANSI_RED,ANSI_RESET))
+        raise NameError("{0}Search path for setup files (SETUP_PATH) is empty{1}".format(ANSI_RED, ANSI_RESET))
 
     for set_dir in setup_dirs:
         set_file = os.path.join(set_dir, name) + ".set"
@@ -234,6 +243,7 @@ def source_set(name):
         raise NameError("{0}Setup file {1} does not exist in SETUP_PATH search path ({2}){3}"
                         .format(ANSI_RED, name, setup_dirs, ANSI_RESET))
 
+
 # update_release_local(var, location)
 #   var       name of the variable to set in RELEASE.local
 #   location  location (absolute path) of where variable should point to
@@ -253,13 +263,13 @@ def update_release_local(var, location):
             os.makedirs(cachedir)
         except:
             pass
-        fout = open(release_local, 'w')
-        fout.close()
+        touch = open(release_local, 'w')
+        touch.close()
     base_line = ''
     found = False
     logger.debug("Opening RELEASE.local for adding '%s'", updated_line)
     for line in fileinput.input(release_local, inplace=1):
-        outputline = line.strip()
+        output_line = line.strip()
         if 'EPICS_BASE=' in line:
             base_line = line.strip()
             logger.debug("Found EPICS_BASE line '%s', not writing it", base_line)
@@ -267,25 +277,27 @@ def update_release_local(var, location):
         elif '{0}='.format(var) in line:
             logger.debug("Found '%s=' line, replacing", var)
             found = True
-            outputline = updated_line
-        logger.debug("Writing line to RELEASE.local: '%s'", outputline)
-        print(outputline)
+            output_line = updated_line
+        logger.debug("Writing line to RELEASE.local: '%s'", output_line)
+        print(output_line)
     fileinput.close()
-    fout = open(release_local,"a")
+    release_local = open(release_local, "a")
     if not found:
         logger.debug("Adding new definition: '%s'", updated_line)
-        print(updated_line, file=fout)
+        print(updated_line, file=release_local)
     if base_line:
         logger.debug("Writing EPICS_BASE line: '%s'", base_line)
-        print(base_line, file=fout)
-    fout.close()
+        print(base_line, file=release_local)
+    release_local.close()
+
 
 def set_setup_from_env(dep):
     for postf in ['', '_DIRNAME', '_REPONAME', '_REPOOWNER', '_REPOURL',
                   '_VARNAME', '_RECURSIVE', '_DEPTH', '_HOOK']:
-        if dep+postf in os.environ:
-            setup[dep+postf] = os.environ[dep+postf]
-            logger.debug('ENV assignment: %s = %s', dep+postf, setup[dep+postf])
+        if dep + postf in os.environ:
+            setup[dep + postf] = os.environ[dep + postf]
+            logger.debug('ENV assignment: %s = %s', dep + postf, setup[dep + postf])
+
 
 def call_git(args, **kws):
     if 'cwd' in kws:
@@ -297,6 +309,7 @@ def call_git(args, **kws):
     exitcode = sp.call(['git'] + args, **kws)
     logger.debug('EXEC DONE')
     return exitcode
+
 
 def call_make(args=[], **kws):
     place = kws.get('cwd', os.getcwd())
@@ -316,6 +329,7 @@ def call_make(args=[], **kws):
     if exitcode != 0:
         sys.exit(exitcode)
 
+
 def get_git_hash(place):
     logger.debug("EXEC 'git log -n1 --pretty=format:%%H' in %s", place)
     sys.stdout.flush()
@@ -323,18 +337,20 @@ def get_git_hash(place):
     logger.debug('EXEC DONE')
     return head
 
+
 def complete_setup(dep):
     set_setup_from_env(dep)
     setup.setdefault(dep, 'master')
-    setup.setdefault(dep+"_DIRNAME", dep.lower())
-    setup.setdefault(dep+"_REPONAME", dep.lower())
+    setup.setdefault(dep + "_DIRNAME", dep.lower())
+    setup.setdefault(dep + "_REPONAME", dep.lower())
     setup.setdefault('REPOOWNER', 'epics-modules')
-    setup.setdefault(dep+"_REPOOWNER", setup['REPOOWNER'])
-    setup.setdefault(dep+"_REPOURL", 'https://github.com/{0}/{1}.git'
-                     .format(setup[dep+'_REPOOWNER'], setup[dep+'_REPONAME']))
-    setup.setdefault(dep+"_VARNAME", dep)
-    setup.setdefault(dep+"_RECURSIVE", 'YES')
-    setup.setdefault(dep+"_DEPTH", -1)
+    setup.setdefault(dep + "_REPOOWNER", setup['REPOOWNER'])
+    setup.setdefault(dep + "_REPOURL", 'https://github.com/{0}/{1}.git'
+                     .format(setup[dep + '_REPOOWNER'], setup[dep + '_REPONAME']))
+    setup.setdefault(dep + "_VARNAME", dep)
+    setup.setdefault(dep + "_RECURSIVE", 'YES')
+    setup.setdefault(dep + "_DEPTH", -1)
+
 
 # add_dependency(dep, tag)
 #
@@ -351,7 +367,7 @@ def complete_setup(dep):
 # - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
 # - Add full path to $modules_to_compile
 def add_dependency(dep):
-    recurse = setup[dep+'_RECURSIVE'].lower()
+    recurse = setup[dep + '_RECURSIVE'].lower()
     if recurse not in ['0', 'no']:
         recursearg = ["--recursive"]
     elif recurse not in ['1', 'yes']:
@@ -359,20 +375,20 @@ def add_dependency(dep):
     else:
         raise RuntimeError("Invalid value for {}_RECURSIVE='{}' not 0/NO/1/YES".format(dep, recurse))
     deptharg = {
-        '-1':['--depth', '5'],
-        '0':[],
-    }.get(str(setup[dep+'_DEPTH']), ['--depth', str(setup[dep+'_DEPTH'])])
+        '-1': ['--depth', '5'],
+        '0': [],
+    }.get(str(setup[dep + '_DEPTH']), ['--depth', str(setup[dep + '_DEPTH'])])
 
     tag = setup[dep]
 
     logger.debug('Adding dependency %s with tag %s', dep, setup[dep])
 
     # determine if dep points to a valid release or branch
-    if call_git(['ls-remote', '--quiet', '--exit-code', '--refs', setup[dep+'_REPOURL'], tag]):
+    if call_git(['ls-remote', '--quiet', '--exit-code', '--refs', setup[dep + '_REPOURL'], tag]):
         raise RuntimeError("{0}{1} is neither a tag nor a branch name for {2} ({3}){4}"
-                           .format(ANSI_RED, tag, dep, setup[dep+'_REPOURL'], ANSI_RESET))
+                           .format(ANSI_RED, tag, dep, setup[dep + '_REPOURL'], ANSI_RESET))
 
-    dirname = setup[dep+'_DIRNAME']+'-{0}'.format(tag)
+    dirname = setup[dep + '_DIRNAME'] + '-{0}'.format(tag)
     place = os.path.join(cachedir, dirname)
     checked_file = os.path.join(place, "checked_out")
 
@@ -401,7 +417,8 @@ def add_dependency(dep):
         print('Cloning {0} of dependency {1} into {2}'
               .format(tag, dep, place))
         sys.stdout.flush()
-        call_git(['clone', '--quiet'] + deptharg + recursearg + ['--branch', tag, setup[dep+'_REPOURL'], dirname], cwd=cachedir)
+        call_git(['clone', '--quiet'] + deptharg + recursearg + ['--branch', tag, setup[dep + '_REPOURL'], dirname],
+                 cwd=cachedir)
 
         sp.check_call(['git', 'log', '-n1'], cwd=place)
         modules_to_compile.append(place)
@@ -424,10 +441,10 @@ def add_dependency(dep):
                     print('-include $(TOP)/../RELEASE.local', file=fout)
 
         # run hook if defined
-        if dep+'_HOOK' in setup:
-            hook = os.path.join(place, setup[dep+'_HOOK'])
+        if dep + '_HOOK' in setup:
+            hook = os.path.join(place, setup[dep + '_HOOK'])
             if os.path.exists(hook):
-                print('Running hook {0} in {1}'.format(setup[dep+'_HOOK'], place))
+                print('Running hook {0} in {1}'.format(setup[dep + '_HOOK'], place))
                 sys.stdout.flush()
                 sp.check_call(hook, shell=True, cwd=place)
 
@@ -438,7 +455,8 @@ def add_dependency(dep):
             print(head, file=fout)
         fout.close()
 
-    update_release_local(setup[dep+"_VARNAME"], place)
+    update_release_local(setup[dep + "_VARNAME"], place)
+
 
 def setup_for_build(args):
     global make, isbase314, has_test_results
@@ -470,13 +488,15 @@ def setup_for_build(args):
                 if 'INCLUDE' not in os.environ:
                     os.environ['INCLUDE'] = ''
                 if ci_platform == 'x86':
-                    os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
-                                                             os.environ['INCLUDE']])
+                    os.environ['INCLUDE'] = os.pathsep.join(
+                        [r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+                         os.environ['INCLUDE']])
                     os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
                                                           os.environ['PATH']])
                 elif ci_platform == 'x64':
-                    os.environ['INCLUDE'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
-                                                             os.environ['INCLUDE']])
+                    os.environ['INCLUDE'] = os.pathsep.join(
+                        [r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+                         os.environ['INCLUDE']])
                     os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
                                                           os.environ['PATH']])
         if ci_service == 'travis':
@@ -518,13 +538,13 @@ def setup_for_build(args):
                 lines = f.readlines()
                 for line in lines:
                     (mod, place) = line.strip().split('=')
-                    bindir = os.path.join(place, 'bin', os.environ['EPICS_HOST_ARCH'])
-                    if os.path.isdir(bindir):
-                        dllpaths.append(bindir)
+                    bin_dir = os.path.join(place, 'bin', os.environ['EPICS_HOST_ARCH'])
+                    if os.path.isdir(bin_dir):
+                        dllpaths.append(bin_dir)
         # Add DLL location to PATH
-        bindir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
-        if os.path.isdir(bindir):
-            dllpaths.append(bindir)
+        bin_dir = os.path.join(os.getcwd(), 'bin', os.environ['EPICS_HOST_ARCH'])
+        if os.path.isdir(bin_dir):
+            dllpaths.append(bin_dir)
         os.environ['PATH'] = os.pathsep.join(dllpaths + [os.environ['PATH']])
         logger.debug('DLL paths added to PATH: %s', os.pathsep.join(dllpaths))
 
@@ -551,10 +571,11 @@ def setup_for_build(args):
             addpaths.append(path.format(**os.environ))
         except KeyError:
             print('Environment')
-            [print('  ',K,'=',repr(V)) for K,V in os.environ.items()]
+            [print('  ', K, '=', repr(V)) for K, V in os.environ.items()]
             raise
 
     os.environ['PATH'] = os.pathsep.join([os.environ['PATH']] + addpaths)
+
 
 def prepare(args):
     host_info()
@@ -574,7 +595,7 @@ def prepare(args):
     kvs.sort()
     [logger.debug(' %s = "%s"', *kv) for kv in kvs]
 
-    logger.debug('Effective module list: %s', ret)
+    logger.debug('Effective module list: %s', modlist())
 
     # we're working with tags (detached heads) a lot: suppress advice
     call_git(['config', '--global', 'advice.detachedHead', 'false'])
@@ -668,7 +689,7 @@ endif'''
     if not building_base:
         fold_start('build.dependencies', 'Build missing/outdated dependencies')
         for mod in modlist():
-            place = places[setup[mod+"_VARNAME"]]
+            place = places[setup[mod + "_VARNAME"]]
             print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
             call_make(cwd=place, silent=silent_dep_builds)
         fold_end('build.dependencies', 'Build missing/outdated dependencies')
@@ -677,18 +698,20 @@ endif'''
         print('Module     Tag          Binaries    Commit')
         print(100 * '-')
         for mod in modlist():
-            commit = sp.check_output(['git', 'log', '-n1', '--oneline'], cwd=places[setup[mod+"_VARNAME"]]).strip()
+            commit = sp.check_output(['git', 'log', '-n1', '--oneline'], cwd=places[setup[mod + "_VARNAME"]]).strip()
             print("%-10s %-12s %-11s %s" % (mod, setup[mod], 'rebuilt', commit))
 
         print('{0}Contents of RELEASE.local{1}'.format(ANSI_CYAN, ANSI_RESET))
         with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
             print(f.read().strip())
 
+
 def build(args):
     setup_for_build(args)
     fold_start('build.module', 'Build the main module')
     call_make(args.makeargs)
     fold_end('build.module', 'Build the main module')
+
 
 def test(args):
     setup_for_build(args)
@@ -701,6 +724,7 @@ def test(args):
         call_make(['runtests'])
     fold_end('test.module', 'Run the main module tests')
 
+
 def doExec(args):
     'exec user command with vcvars'
     setup_for_build(args)
@@ -708,6 +732,7 @@ def doExec(args):
     fold_start('exec.command', 'Execute command {}'.format(args.cmd))
     sp.check_call(' '.join(args.cmd), shell=True)
     fold_end('exec.command', 'Execute command {}'.format(args.cmd))
+
 
 def with_vcvars(cmd):
     '''re-exec main script with a (hopefully different) command
@@ -719,17 +744,17 @@ def with_vcvars(cmd):
     info = {
         'python': sys.executable,
         'self': sys.argv[0],
-        'cmd':cmd,
+        'cmd': cmd,
     }
 
     info['arch'] = {
-        'x86': 'x86',   # 'amd64_x86' ??
+        'x86': 'x86',  # 'amd64_x86' ??
         'x64': 'amd64',
-    }[ci_platform] # 'x86' or 'x64'
+    }[ci_platform]  # 'x86' or 'x64'
 
     info['vcvars'] = vcvars_found[CC]
 
-    script='''
+    script = '''
 call "{vcvars}" {arch}
 
 "{python}" "{self}" {cmd}
@@ -751,30 +776,32 @@ call "{vcvars}" {arch}
     if returncode != 0:
         sys.exit(returncode)
 
+
 def getargs():
     from argparse import ArgumentParser, REMAINDER
-    P = ArgumentParser()
-    P.add_argument('--no-vcvars', dest='vcvars', default=True, action='store_false',
+    p = ArgumentParser()
+    p.add_argument('--no-vcvars', dest='vcvars', default=True, action='store_false',
                    help='Assume vcvarsall.bat has already been run')
-    P.add_argument('--add-path', dest='paths', default=[], action='append',
+    p.add_argument('--add-path', dest='paths', default=[], action='append',
                    help='Append directory to %PATH%.  Expands {ENVVAR}')
-    SP = P.add_subparsers()
+    subp = p.add_subparsers()
 
-    CMD = SP.add_parser('prepare')
-    CMD.set_defaults(func=prepare)
+    cmd = subp.add_parser('prepare')
+    cmd.set_defaults(func=prepare)
 
-    CMD = SP.add_parser('build')
-    CMD.add_argument('makeargs', nargs=REMAINDER)
-    CMD.set_defaults(func=build)
+    cmd = subp.add_parser('build')
+    cmd.add_argument('makeargs', nargs=REMAINDER)
+    cmd.set_defaults(func=build)
 
-    CMD = SP.add_parser('test')
-    CMD.set_defaults(func=test)
+    cmd = subp.add_parser('test')
+    cmd.set_defaults(func=test)
 
-    CMD = SP.add_parser('exec')
-    CMD.add_argument('cmd', nargs=REMAINDER)
-    CMD.set_defaults(func=doExec)
+    cmd = subp.add_parser('exec')
+    cmd.add_argument('cmd', nargs=REMAINDER)
+    cmd.set_defaults(func=doExec)
 
-    return P
+    return p
+
 
 def main(raw):
     global silent_dep_builds
@@ -785,10 +812,11 @@ def main(raw):
 
     if args.vcvars and ci_compiler.startswith('vs'):
         # re-exec with MSVC in PATH
-        with_vcvars(' '.join(['--no-vcvars']+raw))
+        with_vcvars(' '.join(['--no-vcvars'] + raw))
 
     else:
         args.func(args)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main(sys.argv[1:])
