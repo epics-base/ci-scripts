@@ -459,7 +459,7 @@ def add_dependency(dep):
 
 
 def setup_for_build(args):
-    global make, isbase314, has_test_results
+    global isbase314, has_test_results
     dllpaths = []
 
     if ci_os == 'windows':
@@ -517,6 +517,8 @@ def setup_for_build(args):
                 (mod, place) = line.strip().split('=')
                 if mod == 'EPICS_BASE':
                     places['EPICS_BASE'] = place
+    else:
+        places['EPICS_BASE'] = '.'
 
     if 'EPICS_HOST_ARCH' not in os.environ:
         logger.debug('Detecting EPICS host architecture in %s', places['EPICS_BASE'])
