@@ -179,9 +179,11 @@ def host_info():
         print(' ', dname)
     print('platform =', distutils.util.get_platform())
 
-    print('{0}Available Visual Studio versions{1}'.format(ANSI_CYAN, ANSI_RESET))
-    for comp in vcvars_found:
-        print(comp, 'in', vcvars_found[comp])
+    if ci_os == 'windows':
+        print('{0}Available Visual Studio versions{1}'.format(ANSI_CYAN, ANSI_RESET))
+        for comp in vcvars_found:
+            print(comp, 'in', vcvars_found[comp])
+
     sys.stdout.flush()
 
 
