@@ -17,6 +17,7 @@ env:
   global:
     - SETUP_PATH=.:.ci
     - VV=1
+    - CHOCO=re2c
 
 addons:
   apt:

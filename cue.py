@@ -21,15 +21,18 @@ ci_platform = '<unknown>'
 ci_compiler = '<unknown>'
 ci_static = False
 ci_debug = False
+ci_choco = ['make']
 
 if 'TRAVIS' in os.environ:
     ci_service = 'travis'
     ci_os = os.environ['TRAVIS_OS_NAME']
-    if ci_os == 'windows':
-        # Only Visual Studio 2017 available
-        ci_compiler = 'vs2017'
     ci_platform = 'x64'
     ci_compiler = os.environ['TRAVIS_COMPILER']
+    if ci_os == 'windows':
+        ci_choco.append('strawberryperl')
+        if re.match(r'^vs', ci_compiler):
+            # Only Visual Studio 2017 available
+            ci_compiler = 'vs2017'
     if 'STATIC' in os.environ and os.environ['STATIC'].lower() == 'yes':
         ci_static = True
     if 'DEBUG' in os.environ and os.environ['DEBUG'].lower() == 'yes':
@@ -76,6 +79,9 @@ if 'BASE' in os.environ and os.environ['BASE'] == 'SELF':
     places['EPICS_BASE'] = curdir
 else:
     building_base = False
+
+if 'CHOCO' in os.environ:
+    ci_choco.extend(os.environ['CHOCO'].split())
 
 # Setup ANSI Colors
 ANSI_RED = "\033[31;1m"
@@ -124,8 +130,6 @@ def modlist():
     logger.debug('Effective module list: %s', ret)
     return ret
 
-zip7 = r'C:\Program Files\7-Zip\7z'
-make = 'make'
 isbase314 = False
 has_test_results = False
 silent_dep_builds = True
@@ -278,9 +282,9 @@ def call_make(args=[], **kws):
         makeargs = ['-j{0}'.format(parallel), '-Otarget']
     if silent:
         makeargs += ['-s']
-    logger.debug("EXEC '%s' in %s", ' '.join([make] + makeargs + args), place)
+    logger.debug("EXEC '%s' in %s", ' '.join(['make'] + makeargs + args), place)
     sys.stdout.flush()
-    exitcode = sp.call([make] + makeargs + args, **kws)
+    exitcode = sp.call(['make'] + makeargs + args, **kws)
     logger.debug('EXEC DONE')
     if exitcode != 0:
         sys.exit(exitcode)
@@ -414,8 +418,6 @@ def setup_for_build(args):
     dllpaths = []
 
     if ci_os == 'windows':
-        make = os.path.join(toolsdir, 'make.exe')
-
         if re.match(r'^vs', ci_compiler):
             # there is no combined static and debug EPICS_HOST_ARCH target,
             # so a combined debug and static target will appear to be just static
@@ -450,6 +452,10 @@ def setup_for_build(args):
                                                              os.environ['INCLUDE']])
                     os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
                                                           os.environ['PATH']])
+        if ci_service == 'travis':
+            os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\perl\site\bin', r'C:\Strawberry\perl\bin',
+                                                  os.environ['PATH']])
+
         if ci_compiler == 'gcc':
             if ci_platform == 'x86':
                 os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
@@ -600,20 +606,15 @@ endif'''
         os.makedirs(toolsdir)
 
     if ci_os == 'windows':
-        makever = '4.2.1'
-        if not os.path.exists(os.path.join(toolsdir, 'make.exe')):
-            print('Installing Make 4.2.1 from ANL web site')
+        if ci_choco:
+            print('Installing chocolatey packages: {0}'.format(ci_choco))
             sys.stdout.flush()
-            sp.check_call(['curl', '-fsS', '--retry', '3', '-o', 'make-{0}.zip'.format(makever),
-                           'https://epics.anl.gov/download/tools/make-{0}-win64.zip'.format(makever)],
-                          cwd=toolsdir)
-            sp.check_call([zip7, 'e', 'make-{0}.zip'.format(makever)], cwd=toolsdir)
-            os.remove(os.path.join(toolsdir, 'make-{0}.zip'.format(makever)))
+            sp.check_call(['choco', 'install'] + ci_choco)
 
     setup_for_build(args)
 
     print('{0}EPICS_HOST_ARCH = {1}{2}'.format(ANSI_CYAN, os.environ['EPICS_HOST_ARCH'], ANSI_RESET))
-    print('{0}$ {1} --version{2}'.format(ANSI_CYAN, make, ANSI_RESET))
+    print('{0}$ make --version{1}'.format(ANSI_CYAN, ANSI_RESET))
     sys.stdout.flush()
     call_make(['--version'], parallel=0)
     print('{0}$ perl --version{1}'.format(ANSI_CYAN, ANSI_RESET))
@@ -663,7 +664,7 @@ def test(args):
 def doExec(args):
     'exec user command with vcvars'
     setup_for_build(args)
-    os.environ['MAKE'] = make
+    os.environ['MAKE'] = 'make'
     print('Execute command {}'.format(args.cmd))
     sys.stdout.flush()
     sp.check_call(' '.join(args.cmd), shell=True)
