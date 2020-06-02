@@ -17,6 +17,20 @@ from argparse import Namespace
 
 builddir = os.getcwd()
 
+# Detect basic context (service, os)
+if 'TRAVIS' in os.environ:
+    ci_service = 'travis'
+    ci_os = os.environ['TRAVIS_OS_NAME']
+
+if 'APPVEYOR' in os.environ:
+    ci_service = 'appveyor'
+    if re.match(r'^Visual', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+        ci_os = 'windows'
+    elif re.match(r'^Ubuntu', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+        ci_os = 'linux'
+    elif re.match(r'^macOS', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+        ci_os = 'osx'
+
 
 def find_in_file(regex, filename):
     file = open(filename, "r")
@@ -232,10 +246,11 @@ class TestAddDependencyOptions(unittest.TestCase):
     testfile = os.path.join(location, '.ci', 'LICENSE')
 
     def setUp(self):
-        os.environ['SETUP_PATH'] = '.:appveyor'
+        os.environ['SETUP_PATH'] = '.'
         if os.path.exists(cue.cachedir):
             shutil.rmtree(cue.cachedir, onerror=cue.remove_readonly)
         cue.clear_lists()
+        cue.detect_context()
         cue.source_set('defaults')
         cue.complete_setup('MCoreUtils')
         cue.setup['MCoreUtils'] = 'master'
@@ -318,6 +333,7 @@ class TestSetupForBuild(unittest.TestCase):
     def setUp(self):
         os.environ.pop('EPICS_HOST_ARCH', None)
         cue.clear_lists()
+        cue.detect_context()
 
     def tearDown(self):
         os.environ.pop('EPICS_HOST_ARCH', None)
@@ -331,7 +347,7 @@ class TestSetupForBuild(unittest.TestCase):
         self.assertTrue(re.search('/foobar', os.environ['PATH']), 'Plain path not in PATH')
         os.environ.pop('FOOBAR', None)
 
-    @unittest.skipIf(cue.ci_os != 'windows', 'HostArchConfiguration test only applies to windows')
+    @unittest.skipIf(ci_os != 'windows', 'HostArchConfiguration test only applies to windows')
     def test_HostArchConfiguration(self):
         cue.ci['compiler'] = 'vs2017'
         for cue.ci['debug'] in [True, False]:
@@ -360,7 +376,7 @@ class TestSetupForBuild(unittest.TestCase):
                     self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
                                      'EPICS_HOST_ARCH is -debug for Configuration={0}'.format(config))
 
-    @unittest.skipIf(cue.ci_os != 'windows', 'HostArchPlatform test only applies to windows')
+    @unittest.skipIf(ci_os != 'windows', 'HostArchPlatform test only applies to windows')
     def test_HostArchPlatform(self):
         if ci_service == 'travis':
             platforms = ['x64']
@@ -391,7 +407,7 @@ class TestSetupForBuild(unittest.TestCase):
                                     'Binary location for {0} not in PATH (found {1})'
                                     .format(pattern[platform], os.environ['PATH']))
 
-    @unittest.skipIf(cue.ci_os != 'windows', 'Strawberry perl test only applies to windows')
+    @unittest.skipIf(ci_os != 'windows', 'Strawberry perl test only applies to windows')
     def test_StrawberryInPathVS2019(self):
         if 'APPVEYOR' in os.environ:
             os.environ['CMP'] = 'vs2019'
@@ -448,6 +464,7 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.DEBUG)
         cue.silent_dep_builds = False
 
+    cue.detect_context()
     cue.host_info()
     if sys.argv[1:] == ['env']:
         # testing with_vcvars

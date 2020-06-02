@@ -13,76 +13,94 @@ import distutils.util
 
 logger = logging.getLogger(__name__)
 
-# Detect the service and set up environment accordingly
 
-ci_service = '<none>'
-ci_os = '<unknown>'
-ci_platform = '<unknown>'
-ci_compiler = '<unknown>'
-ci_static = False
-ci_debug = False
-ci_choco = ['make']
+# Detect the service and set up context hash accordingly
+def detect_context():
+    if 'TRAVIS' in os.environ:
+        ci['service'] = 'travis'
+        ci['os'] = os.environ['TRAVIS_OS_NAME']
+        ci['platform'] = 'x64'
+        ci['compiler'] = os.environ['TRAVIS_COMPILER']
+        if ci['os'] == 'windows':
+            ci['choco'].append('strawberryperl')
+            if re.match(r'^vs', ci['compiler']):
+                # Only Visual Studio 2017 available
+                ci['compiler'] = 'vs2017'
+        if 'BCFG' in os.environ:
+            if re.search('static', os.environ['BCFG']):
+                ci['static'] = True
+            if re.search('debug', os.environ['BCFG']):
+                ci['debug'] = True
 
-if 'TRAVIS' in os.environ:
-    ci_service = 'travis'
-    ci_os = os.environ['TRAVIS_OS_NAME']
-    ci_platform = 'x64'
-    ci_compiler = os.environ['TRAVIS_COMPILER']
-    if ci_os == 'windows':
-        ci_choco.append('strawberryperl')
-        if re.match(r'^vs', ci_compiler):
-            # Only Visual Studio 2017 available
-            ci_compiler = 'vs2017'
-    if 'BCFG' in os.environ:
-        if re.search('static', os.environ['BCFG']):
-            ci_static = True
-        if re.search('debug', os.environ['BCFG']):
-            ci_debug = True
+    if 'APPVEYOR' in os.environ:
+        ci['service'] = 'appveyor'
+        if re.match(r'^Visual', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+            ci['os'] = 'windows'
+        elif re.match(r'^Ubuntu', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+            ci['os'] = 'linux'
+        elif re.match(r'^macOS', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
+            ci['os'] = 'osx'
+        ci['platform'] = os.environ['PLATFORM'].lower()
+        if 'CMP' in os.environ:
+            ci['compiler'] = os.environ['CMP']
+        if re.search('static', os.environ['CONFIGURATION']):
+            ci['static'] = True
+        if re.search('debug', os.environ['CONFIGURATION']):
+            ci['debug'] = True
 
-if 'APPVEYOR' in os.environ:
-    ci_service = 'appveyor'
-    if re.match(r'^Visual', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
-        ci_os = 'windows'
-    elif re.match(r'^Ubuntu', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
-        ci_os = 'linux'
-    elif re.match(r'^macOS', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
-        ci_os = 'osx'
-    ci_platform = os.environ['PLATFORM'].lower()
-    if 'CMP' in os.environ:
-        ci_compiler = os.environ['CMP']
-    if re.search('static', os.environ['CONFIGURATION']):
-        ci_static = True
-    if re.search('debug', os.environ['CONFIGURATION']):
-        ci_debug = True
+    if ci['static']:
+        ci['configuration'] = 'static'
+    else:
+        ci['configuration'] = 'shared'
+    if ci['debug']:
+        ci['configuration'] += '-debug'
+    else:
+        ci['configuration'] += '-optimized'
 
-if ci_static:
-    ci_configuration = 'static'
-else:
-    ci_configuration = 'shared'
-if ci_debug:
-    ci_configuration += '-debug'
-else:
-    ci_configuration += '-optimized'
+    ci['scriptsdir'] = os.path.abspath(os.path.dirname(sys.argv[0]))
 
-logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s',
-             ci_service, ci_compiler, ci_os, ci_platform, ci_configuration)
+    if 'CHOCO' in os.environ:
+        ci['choco'].extend(os.environ['CHOCO'].split())
+
+    logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s',
+                 ci['service'], ci['compiler'], ci['os'], ci['platform'], ci['configuration'])
+
 
 curdir = os.getcwd()
-ci_scriptsdir = os.path.abspath(os.path.dirname(sys.argv[0]))
 
+ci = {}
 seen_setups = []
 modules_to_compile = []
 setup = {}
 places = {}
+
+
+def clear_lists():
+    global isbase314, has_test_results, ci
+    del seen_setups[:]
+    del modules_to_compile[:]
+    setup.clear()
+    places.clear()
+    isbase314 = False
+    has_test_results = False
+    ci['service'] = '<none>'
+    ci['os'] = '<unknown>'
+    ci['platform'] = '<unknown>'
+    ci['compiler'] = '<unknown>'
+    ci['static'] = False
+    ci['debug'] = False
+    ci['configuration'] = '<unknown>'
+    ci['scriptsdir'] = ''
+    ci['choco'] = ['make']
+
+
+clear_lists()
 
 if 'BASE' in os.environ and os.environ['BASE'] == 'SELF':
     building_base = True
     places['EPICS_BASE'] = curdir
 else:
     building_base = False
-
-if 'CHOCO' in os.environ:
-    ci_choco.extend(os.environ['CHOCO'].split())
 
 # Setup ANSI Colors
 ANSI_RED = "\033[31;1m"
@@ -99,7 +117,7 @@ ANSI_CLEAR = "\033[0K"
 # from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
 
 def fold_start(tag, title):
-    if ci_service == 'travis':
+    if ci['service'] == 'travis':
         print('travis_fold:start:{0}{1}{2}{3}'
               .format(tag, ANSI_YELLOW, title, ANSI_RESET))
     elif ci['service'] == 'appveyor':
@@ -109,10 +127,10 @@ def fold_start(tag, title):
 
 
 def fold_end(tag, title):
-    if ci_service == 'travis':
+    if ci['service'] == 'travis':
         print('\ntravis_fold:end:{0}\r'
               .format(tag), end='')
-    elif ci_service == 'appveyor':
+    elif ci['service'] == 'appveyor':
         print('{0}----- /\\ /\\ /\\ -----   END: {1} -----{2}'
               .format(ANSI_YELLOW, title, ANSI_RESET))
     sys.stdout.flush()
@@ -170,7 +188,7 @@ silent_dep_builds = True
 
 def host_info():
     print('{0}Build using {1} compiler on {2} ({3}) hosted by {4}{5}'
-          .format(ANSI_CYAN, ci_compiler, ci_os, ci_platform, ci_service, ANSI_RESET))
+          .format(ANSI_CYAN, ci['compiler'], ci['os'], ci['platform'], ci['service'], ANSI_RESET))
 
     print('{0}Python setup{1}'.format(ANSI_CYAN, ANSI_RESET))
     print(sys.version)
@@ -179,23 +197,12 @@ def host_info():
         print(' ', dname)
     print('platform =', distutils.util.get_platform())
 
-    if ci_os == 'windows':
+    if ci['os'] == 'windows':
         print('{0}Available Visual Studio versions{1}'.format(ANSI_CYAN, ANSI_RESET))
         for comp in vcvars_found:
             print(comp, 'in', vcvars_found[comp])
 
     sys.stdout.flush()
-
-
-# Used from unittests
-def clear_lists():
-    global isbase314, has_test_results
-    del seen_setups[:]
-    del modules_to_compile[:]
-    setup.clear()
-    places.clear()
-    isbase314 = False
-    has_test_results = False
 
 
 # Error-handler to make shutil.rmtree delete read-only files on Windows
@@ -433,7 +440,7 @@ def add_dependency(dep):
                     if 'BASE_3_14=YES' in f.read():
                         print('Adding MSI 1.7 to {0}'.format(place))
                         sys.stdout.flush()
-                        sp.check_call(['patch', '-p1', '-i', os.path.join(ci_scriptsdir, 'add-msi-to-314.patch')],
+                        sp.check_call(['patch', '-p1', '-i', os.path.join(ci['scriptsdir'], 'add-msi-to-314.patch')],
                                       cwd=place)
         else:
             # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE
@@ -464,51 +471,51 @@ def setup_for_build(args):
     global isbase314, has_test_results
     dllpaths = []
 
-    if ci_os == 'windows':
-        if re.match(r'^vs', ci_compiler):
+    if ci['os'] == 'windows':
+        if re.match(r'^vs', ci['compiler']):
             # there is no combined static and debug EPICS_HOST_ARCH target,
             # so a combined debug and static target will appear to be just static
             # but debug will have been specified in CONFIG_SITE by prepare()
             hostarchsuffix = ''
-            if ci_debug:
+            if ci['debug']:
                 hostarchsuffix = '-debug'
-            if ci_static:
+            if ci['static']:
                 hostarchsuffix = '-static'
 
-            if ci_platform == 'x86':
+            if ci['platform'] == 'x86':
                 os.environ['EPICS_HOST_ARCH'] = 'win32-x86' + hostarchsuffix
-            elif ci_platform == 'x64':
+            elif ci['platform'] == 'x64':
                 os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
 
-        if ci_service == 'appveyor':
-            if ci_compiler == 'vs2019':
+        if ci['service'] == 'appveyor':
+            if ci['compiler'] == 'vs2019':
                 # put strawberry perl in the PATH
                 os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
                                                       os.path.join(r'C:\Strawberry\perl\bin'),
                                                       os.environ['PATH']])
-            if ci_compiler == 'gcc':
+            if ci['compiler'] == 'gcc':
                 if 'INCLUDE' not in os.environ:
                     os.environ['INCLUDE'] = ''
-                if ci_platform == 'x86':
+                if ci['platform'] == 'x86':
                     os.environ['INCLUDE'] = os.pathsep.join(
                         [r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
                          os.environ['INCLUDE']])
                     os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
                                                           os.environ['PATH']])
-                elif ci_platform == 'x64':
+                elif ci['platform'] == 'x64':
                     os.environ['INCLUDE'] = os.pathsep.join(
                         [r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
                          os.environ['INCLUDE']])
                     os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
                                                           os.environ['PATH']])
-        if ci_service == 'travis':
+        if ci['service'] == 'travis':
             os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\perl\site\bin', r'C:\Strawberry\perl\bin',
                                                   os.environ['PATH']])
 
-        if ci_compiler == 'gcc':
-            if ci_platform == 'x86':
+        if ci['compiler'] == 'gcc':
+            if ci['platform'] == 'x86':
                 os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
-            elif ci_platform == 'x64':
+            elif ci['platform'] == 'x64':
                 os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
 
     # Find BASE location
@@ -536,7 +543,7 @@ def setup_for_build(args):
                              eha, os.environ['EPICS_HOST_ARCH'])
                 break
 
-    if ci_os == 'windows':
+    if ci['os'] == 'windows':
         if not building_base:
             with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
                 lines = f.readlines()
@@ -620,19 +627,19 @@ def prepare(args):
     fold_start('set.up.epics_build', 'Configuring EPICS build system')
 
     with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
-        if ci_static:
+        if ci['static']:
             config_site.write('SHARED_LIBRARIES=NO\n')
             config_site.write('STATIC_BUILD=YES\n')
             linktype = 'static'
         else:
             linktype = 'dynamic (DLL)'
-        if ci_debug:
+        if ci['debug']:
             config_site.write('HOST_OPT=NO\n')
             optitype = 'debug'
         else:
             optitype = 'optimized'
 
-    if ci_os == 'windows' and re.match(r'^vs', ci_compiler):
+    if ci['os'] == 'windows' and re.match(r'^vs', ci['compiler']):
         # Enable/fix parallel build for VisualStudio compiler on older Base versions
         add_vs_fix = True
         config_win = os.path.join(places['EPICS_BASE'], 'configure', 'os', 'CONFIG.win32-x86.win32-x86')
@@ -666,9 +673,9 @@ endif'''
     if not os.path.isdir(toolsdir):
         os.makedirs(toolsdir)
 
-    if ci_os == 'windows' and ci_choco:
+    if ci['os'] == 'windows' and ci['choco']:
         fold_start('install.choco', 'Installing CHOCO packages')
-        sp.check_call(['choco', 'install'] + ci_choco)
+        sp.check_call(['choco', 'install'] + ci['choco'])
         fold_end('install.choco', 'Installing CHOCO packages')
 
     setup_for_build(args)
@@ -681,7 +688,7 @@ endif'''
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
 
-    if ci_compiler == 'gcc':
+    if ci['compiler'] == 'gcc':
         print('{0}$ gcc --version{1}'.format(ANSI_CYAN, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call(['gcc', '--version'])
@@ -741,7 +748,7 @@ def doExec(args):
 def with_vcvars(cmd):
     '''re-exec main script with a (hopefully different) command
     '''
-    CC = ci_compiler
+    CC = ci['compiler']
 
     # cf. https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line
 
@@ -754,7 +761,7 @@ def with_vcvars(cmd):
     info['arch'] = {
         'x86': 'x86',  # 'amd64_x86' ??
         'x64': 'amd64',
-    }[ci_platform]  # 'x86' or 'x64'
+    }[ci['platform']]  # 'x86' or 'x64'
 
     info['vcvars'] = vcvars_found[CC]
 
@@ -765,7 +772,7 @@ call "{vcvars}" {arch}
 '''.format(**info)
 
     print('{0}Calling vcvars-trampoline.bat to set environment for {1} on {2}{3}'
-          .format(ANSI_YELLOW, CC, ci_platform, ANSI_RESET))
+          .format(ANSI_YELLOW, CC, ci['platform'], ANSI_RESET))
     sys.stdout.flush()
 
     logger.debug('----- Creating vcvars-trampoline.bat -----')
@@ -814,10 +821,11 @@ def main(raw):
         logging.basicConfig(level=logging.DEBUG)
         silent_dep_builds = False
 
-    if args.vcvars and ci_compiler.startswith('vs'):
+    detect_context()
+
+    if args.vcvars and ci['compiler'].startswith('vs'):
         # re-exec with MSVC in PATH
         with_vcvars(' '.join(['--no-vcvars'] + raw))
-
     else:
         args.func(args)
 
