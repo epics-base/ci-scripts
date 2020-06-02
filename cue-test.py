@@ -326,6 +326,180 @@ class TestVCVars(unittest.TestCase):
         cue.with_vcvars('env')
 
 
+class TestDetectContext(unittest.TestCase):
+    def tearDown(self):
+        cue.clear_lists()
+        os.environ.pop('BCFG', None)
+
+    def test_TravisLinuxGccNone(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'linux'
+        os.environ['TRAVIS_COMPILER'] = 'gcc'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'linux', "ci['os'] is {0} (expected: linux)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'gcc', "ci['compiler'] is {0} (expected: gcc)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x64', "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+
+    def test_TravisLinuxClangNone(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'linux'
+        os.environ['TRAVIS_COMPILER'] = 'clang'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'linux', "ci['os'] is {0} (expected: linux)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'clang', "ci['compiler'] is {0} (expected: clang)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x64', "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+
+    def test_TravisBcfgShared(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'linux'
+        os.environ['TRAVIS_COMPILER'] = 'gcc'
+        os.environ['BCFG'] = 'shared'
+        cue.detect_context()
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+
+    def test_TravisBcfgStatic(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'linux'
+        os.environ['TRAVIS_COMPILER'] = 'gcc'
+        os.environ['BCFG'] = 'static'
+        cue.detect_context()
+        self.assertTrue(cue.ci['static'], "ci['static'] is False (expected: True)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'static-optimized',
+                         "ci['configuration'] is {0} (expected: static-optimized)"
+                         .format(cue.ci['configuration']))
+
+    def test_TravisBcfgDebug(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'linux'
+        os.environ['TRAVIS_COMPILER'] = 'gcc'
+        os.environ['BCFG'] = 'debug'
+        cue.detect_context()
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertTrue(cue.ci['debug'], "ci['debug'] is False (expected: True)")
+        self.assertEqual(cue.ci['configuration'], 'shared-debug',
+                         "ci['configuration'] is {0} (expected: shared-debug)"
+                         .format(cue.ci['configuration']))
+
+    def test_TravisBcfgStaticDebug(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'linux'
+        os.environ['TRAVIS_COMPILER'] = 'gcc'
+        os.environ['BCFG'] = 'static-debug'
+        cue.detect_context()
+        self.assertTrue(cue.ci['static'], "ci['static'] is False (expected: True)")
+        self.assertTrue(cue.ci['debug'], "ci['debug'] is False (expected: True)")
+        self.assertEqual(cue.ci['configuration'], 'static-debug',
+                         "ci['configuration'] is {0} (expected: static-debug)"
+                         .format(cue.ci['configuration']))
+
+    def test_TravisWindowsGccNone(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'windows'
+        os.environ['TRAVIS_COMPILER'] = 'gcc'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'windows', "ci['os'] is {0} (expected: windows)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'gcc', "ci['compiler'] is {0} (expected: gcc)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x64', "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertIn('strawberryperl', cue.ci['choco'], "'strawberryperl' is not in ci['choco']")
+        self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
+
+    def test_TravisWindowsVs2017None(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'windows'
+        os.environ['TRAVIS_COMPILER'] = 'vs2017'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'windows', "ci['os'] is {0} (expected: windows)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'vs2017', "ci['compiler'] is {0} (expected: vs2017)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x64', "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertIn('strawberryperl', cue.ci['choco'], "'strawberryperl' is not in ci['choco']")
+        self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
+
+    def test_TravisWindowsVs2019None(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'windows'
+        os.environ['TRAVIS_COMPILER'] = 'vs2019'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'windows', "ci['os'] is {0} (expected: windows)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'vs2017', "ci['compiler'] is {0} (expected: vs2017)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x64', "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertIn('strawberryperl', cue.ci['choco'], "'strawberryperl' is not in ci['choco']")
+        self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
+
+    def test_TravisOsxClangNone(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'osx'
+        os.environ['TRAVIS_COMPILER'] = 'clang'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'osx', "ci['os'] is {0} (expected: osx)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'clang', "ci['compiler'] is {0} (expected: clang)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x64', "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+
+
 class TestSetupForBuild(unittest.TestCase):
     args = Namespace(paths=[])
     cue.building_base = True
