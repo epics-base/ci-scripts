@@ -86,7 +86,7 @@ class TestSourceSet(unittest.TestCase):
         self.assertEqual(cue.setup['FOO'], 'bar', 'Setting of single word does not work')
         self.assertEqual(cue.setup['FOO2'], 'bar bar2', 'Setting of multiple words does not work')
         self.assertEqual(cue.setup['FOO3'], 'bar bar2', 'Indented setting of multiple words does not work')
-        self.assertEqual(cue.setup['SNCSEQ'], 'R2-2-7', 'Setup test01 was not included')
+        self.assertEqual(cue.setup['SNCSEQ'], 'R2-2-8', 'Setup test01 was not included')
 
     def test_DoubleIncludeGetsIgnored(self):
         capturedOutput = getStringIO()
@@ -312,9 +312,6 @@ class TestVCVars(unittest.TestCase):
 
 
 class TestSetupForBuild(unittest.TestCase):
-    configuration = os.environ['CONFIGURATION']
-    platform = os.environ['PLATFORM']
-    cc = os.environ['CMP']
     args = Namespace(paths=[])
     cue.building_base = True
 
@@ -323,9 +320,8 @@ class TestSetupForBuild(unittest.TestCase):
         cue.clear_lists()
 
     def tearDown(self):
-        os.environ['CONFIGURATION'] = self.configuration
-        os.environ['PLATFORM'] = self.platform
-        os.environ['CMP'] = self.cc
+        os.environ.pop('EPICS_HOST_ARCH', None)
+        cue.clear_lists()
 
     def test_AddPathsOption(self):
         os.environ['FOOBAR'] = 'BAR'
@@ -335,60 +331,74 @@ class TestSetupForBuild(unittest.TestCase):
         self.assertTrue(re.search('/foobar', os.environ['PATH']), 'Plain path not in PATH')
         os.environ.pop('FOOBAR', None)
 
+    @unittest.skipIf(cue.ci_os != 'windows', 'HostArchConfiguration test only applies to windows')
     def test_HostArchConfiguration(self):
-        for config in ['dynamic', 'dynamic-debug', 'static', 'static-debug']:
-            os.environ['CONFIGURATION'] = config
-            cue.setup_for_build(self.args)
-            self.assertTrue('EPICS_HOST_ARCH' in os.environ,
-                            'EPICS_HOST_ARCH is not set for Configuration={0}'.format(config))
-            if re.search('static', config):
-                self.assertTrue(re.search('-static$', os.environ['EPICS_HOST_ARCH']),
-                                'EPICS_HOST_ARCH is not -static for Configuration={0}'.format(config))
-                self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
-                                 'EPICS_HOST_ARCH is -debug for Configuration={0}'.format(config))
-            elif re.search('debug', config):
-                self.assertFalse(re.search('static', os.environ['EPICS_HOST_ARCH']),
-                                 'EPICS_HOST_ARCH is -static for Configuration={0}'.format(config))
-                self.assertTrue(re.search('-debug$', os.environ['EPICS_HOST_ARCH']),
-                                'EPICS_HOST_ARCH is not -debug for Configuration={0}'.format(config))
-            else:
-                self.assertFalse(re.search('static', os.environ['EPICS_HOST_ARCH']),
-                                 'EPICS_HOST_ARCH is -static for Configuration={0}'.format(config))
-                self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
-                                 'EPICS_HOST_ARCH is -debug for Configuration={0}'.format(config))
-
-    def test_HostArchPlatform(self):
-        for platform in ['x86', 'x64', 'X64']:
-            for cc in ['vs2019', 'mingw']:
-                os.environ['PLATFORM'] = platform
-                os.environ['CMP'] = cc
-                os.environ['CONFIGURATION'] = 'dynamic'
+        cue.ci['compiler'] = 'vs2017'
+        for cue.ci['debug'] in [True, False]:
+            for cue.ci['static'] in [True, False]:
+                config_st = {True: 'static', False: 'shared'}
+                config_db = {True: '-debug', False: '-optimized'}
+                config = config_st[cue.ci['static']] + config_db[cue.ci['debug']]
                 cue.setup_for_build(self.args)
                 self.assertTrue('EPICS_HOST_ARCH' in os.environ,
-                                'EPICS_HOST_ARCH is not set for {0} / {1}'.format(cc, platform))
+                                'EPICS_HOST_ARCH is not set for Configuration={0}'.format(config))
+                if cue.ci['static']:
+                    self.assertTrue(re.search('-static$', os.environ['EPICS_HOST_ARCH']),
+                                    'EPICS_HOST_ARCH is not -static for Configuration={0}'.format(config))
+                    self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
+                                     'EPICS_HOST_ARCH is -debug for Configuration={0}'.format(config))
+                elif cue.ci['debug']:
+                    self.assertFalse(re.search('static', os.environ['EPICS_HOST_ARCH']),
+                                     'EPICS_HOST_ARCH (found {0}) is -static for Configuration={1}'
+                                     .format(os.environ['EPICS_HOST_ARCH'], config))
+                    self.assertTrue(re.search('-debug$', os.environ['EPICS_HOST_ARCH']),
+                                    'EPICS_HOST_ARCH (found {0}) is not -debug for Configuration={1}'
+                                    .format(os.environ['EPICS_HOST_ARCH'], config))
+                else:
+                    self.assertFalse(re.search('static', os.environ['EPICS_HOST_ARCH']),
+                                     'EPICS_HOST_ARCH is -static for Configuration={0}'.format(config))
+                    self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
+                                     'EPICS_HOST_ARCH is -debug for Configuration={0}'.format(config))
+
+    @unittest.skipIf(cue.ci_os != 'windows', 'HostArchPlatform test only applies to windows')
+    def test_HostArchPlatform(self):
+        if ci_service == 'travis':
+            platforms = ['x64']
+        else:
+            platforms = ['x86', 'x64']
+        for platform in platforms:
+            for cc in ['vs2019', 'gcc']:
+                cue.ci['platform'] = platform
+                cue.ci['compiler'] = cc
+                cue.setup_for_build(self.args)
+                self.assertTrue('EPICS_HOST_ARCH' in os.environ,
+                                'EPICS_HOST_ARCH is not set for {0} / {1}'
+                                .format(cc, cue.ci['platform']))
                 if platform == 'x86':
                     self.assertTrue(re.search('^win32-x86', os.environ['EPICS_HOST_ARCH']),
-                                    'EPICS_HOST_ARCH is not win32-x86 for {0} / {1}'.format(cc, platform))
+                                    'EPICS_HOST_ARCH (found {0}) is not win32-x86 for {1} / {2}'
+                                    .format(os.environ['EPICS_HOST_ARCH'], cc, platform))
                 else:
                     self.assertTrue(re.search('^windows-x64', os.environ['EPICS_HOST_ARCH']),
-                                    'EPICS_HOST_ARCH is not windows-x64 for {0} / {1}'.format(cc, platform))
-                if cc == 'mingw':
+                                    'EPICS_HOST_ARCH (found {0}) is not windows-x64 for {1} / {2}'
+                                    .format(os.environ['EPICS_HOST_ARCH'], cc, platform))
+                if cc == 'gcc':
                     self.assertTrue(re.search('-mingw$', os.environ['EPICS_HOST_ARCH']),
-                                    'EPICS_HOST_ARCH is not -mingw for {0} / {1}'.format(cc, platform))
-                    if platform == 'x86':
-                        pattern = 'mingw32'
-                    else:
-                        pattern = 'mingw64'
-                    self.assertTrue(re.search(pattern, os.environ['PATH']),
-                                    'Binary location for {0} not in PATH'.format(pattern))
-                    self.assertTrue(re.search(pattern, os.environ['INCLUDE']),
-                                    'Include location for {0} not in INCLUDE'.format(pattern))
+                                    'EPICS_HOST_ARCH (found {0}) is not -mingw for {1} / {2}'
+                                    .format(os.environ['EPICS_HOST_ARCH'], cc, platform))
+                    pattern = {'x86': 'mingw32', 'x64': 'mingw64'}
+                    self.assertTrue(re.search(pattern[platform], os.environ['PATH']),
+                                    'Binary location for {0} not in PATH (found {1})'
+                                    .format(pattern[platform], os.environ['PATH']))
 
+    @unittest.skipIf(cue.ci_os != 'windows', 'Strawberry perl test only applies to windows')
     def test_StrawberryInPathVS2019(self):
-        os.environ['CMP'] = 'vs2019'
+        if 'APPVEYOR' in os.environ:
+            os.environ['CMP'] = 'vs2019'
         cue.setup_for_build(self.args)
         self.assertTrue(re.search('strawberry', os.environ['PATH'], flags=re.IGNORECASE),
-                        'Strawberry Perl location not in PATH for vs2019')
+                        'Strawberry Perl installed but location not in PATH (found {0})'
+                        .format(os.environ['PATH']))
 
     def setBase314(self, yesno):
         cfg_base_version = os.path.join('configure', 'CONFIG_BASE_VERSION')

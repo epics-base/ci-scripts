@@ -63,6 +63,24 @@ script:
 jobs:
   include:
 
+# Run unit tests
+
+  - env: SET=test00
+    install: python cue-test.py env
+    script: python cue-test.py
+
+  - env: SET=test00
+    os: osx
+    install: python cue-test.py env
+    script: python cue-test.py
+
+  - env: SET=test00
+    os: windows
+    install: python cue-test.py env
+    script: python cue-test.py
+
+# Compile example
+
   - env: SET=test01
 
   - env: SET=test01 BCFG=static
