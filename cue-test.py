@@ -503,6 +503,8 @@ class TestDetectContext(unittest.TestCase):
 class TestSetupForBuild(unittest.TestCase):
     args = Namespace(paths=[])
     cue.building_base = True
+    if ci_os == 'windows':
+        sp.check_call(['choco', 'install', 'make'])
 
     def setUp(self):
         os.environ.pop('EPICS_HOST_ARCH', None)
@@ -607,12 +609,12 @@ class TestSetupForBuild(unittest.TestCase):
     def test_DetectionBase314No(self):
         self.setBase314('NO')
         cue.setup_for_build(self.args)
-        self.assertFalse(cue.isbase314, 'Falsely detected Base 3.14')
+        self.assertFalse(cue.is_base314, 'Falsely detected Base 3.14')
 
     def test_DetectionBase314Yes(self):
         self.setBase314('YES')
         cue.setup_for_build(self.args)
-        self.assertTrue(cue.isbase314, 'Base 3.14 = YES not detected')
+        self.assertTrue(cue.is_base314, 'Base 3.14 = YES not detected')
 
     def test_DetectionTestResultsTarget314No(self):
         self.setBase314('YES')

@@ -74,15 +74,22 @@ modules_to_compile = []
 setup = {}
 places = {}
 
+is_base314 = False
+is_make3 = False
+has_test_results = False
+silent_dep_builds = True
+
 
 def clear_lists():
-    global isbase314, has_test_results, ci
+    global is_base314, has_test_results, silent_dep_builds, is_make3
     del seen_setups[:]
     del modules_to_compile[:]
     setup.clear()
     places.clear()
-    isbase314 = False
+    is_base314 = False
+    is_make3 = False
     has_test_results = False
+    silent_dep_builds = True
     ci['service'] = '<none>'
     ci['os'] = '<unknown>'
     ci['platform'] = '<unknown>'
@@ -179,11 +186,6 @@ def modlist():
                 logger.debug('ENV assignment: %s = %s', var, setup[var])
         ret = ['BASE'] + setup['ADD_MODULES'].upper().split() + setup['MODULES'].upper().split()
     return ret
-
-
-isbase314 = False
-has_test_results = False
-silent_dep_builds = True
 
 
 def host_info():
@@ -325,10 +327,12 @@ def call_make(args=[], **kws):
     parallel = kws.pop('parallel', 2)
     silent = kws.pop('silent', False)
     # no parallel make for Base 3.14
-    if parallel <= 0 or isbase314:
+    if parallel <= 0 or is_base314:
         makeargs = []
     else:
-        makeargs = ['-j{0}'.format(parallel), '-Otarget']
+        makeargs = ['-j{0}'.format(parallel)]
+        if not is_make3:
+            makeargs += ['-Otarget']
     if silent:
         makeargs += ['-s']
     logger.debug("EXEC '%s' in %s", ' '.join(['make'] + makeargs + args), place)
@@ -468,7 +472,7 @@ def add_dependency(dep):
 
 
 def setup_for_build(args):
-    global isbase314, has_test_results
+    global is_base314, has_test_results, is_make3
     dllpaths = []
 
     if ci['os'] == 'windows':
@@ -563,15 +567,19 @@ def setup_for_build(args):
     if os.path.exists(cfg_base_version):
         with open(cfg_base_version) as myfile:
             if 'BASE_3_14=YES' in myfile.read():
-                isbase314 = True
+                is_base314 = True
 
-    if not isbase314:
+    if not is_base314:
         rules_build = os.path.join(places['EPICS_BASE'], 'configure', 'RULES_BUILD')
         if os.path.exists(rules_build):
             with open(rules_build) as myfile:
                 for line in myfile:
                     if re.match('^test-results:', line):
                         has_test_results = True
+
+    # Check make version
+    if re.match(r'^GNU Make 3', sp.check_output(['make', '-v'])):
+        is_make3 = True
 
     # apparently %CD% is handled automagically
     os.environ['TOP'] = os.getcwd()
