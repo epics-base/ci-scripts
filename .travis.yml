@@ -94,11 +94,8 @@ jobs:
     dist: trusty
 
   - env: SET=test01
-
   - env: SET=test01 BCFG=static
-
   - env: SET=test01 BCFG=debug
-
   - env: SET=test01 BCFG=static-debug
 
   - env: SET=test01
@@ -108,29 +105,41 @@ jobs:
     compiler: clang
 
   - env: SET=test01
-    os: windows
-
-  - env: SET=test01 BCFG=static
-    os: windows
+    os: osx
+    compiler: clang
 
   - env: SET=test01 BCFG=debug
-    os: windows
+    os: osx
+    compiler: clang
 
+  - env: SET=test01 WINE=32 TEST=NO
+  - env: SET=test01 WINE=32 TEST=NO BCFG=static
+  - env: SET=test01 WINE=32 TEST=NO BCFG=debug
+  - env: SET=test01 WINE=32 TEST=NO BCFG=static-debug
+
+  - env: SET=test01 WINE=64 TEST=NO
+  - env: SET=test01 WINE=64 TEST=NO BCFG=static
+  - env: SET=test01 WINE=64 TEST=NO BCFG=debug
+  - env: SET=test01 WINE=64 TEST=NO BCFG=static-debug
+
+  - env: SET=test01
+    os: windows
+  - env: SET=test01 BCFG=static
+    os: windows
+  - env: SET=test01 BCFG=debug
+    os: windows
   - env: SET=test01 BCFG=static-debug
     os: windows
 
   - env: SET=test01
     compiler: vs2017
     os: windows
-
   - env: SET=test01 BCFG=static
     compiler: vs2017
     os: windows
-
   - env: SET=test01 BCFG=debug
     compiler: vs2017
     os: windows
-
   - env: SET=test01 BCFG=static-debug
     compiler: vs2017
     os: windows
