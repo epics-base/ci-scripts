@@ -82,12 +82,30 @@ jobs:
 # Compile example
 
   - env: SET=test01
+    dist: bionic
+
+  - env: SET=test01 BCFG=static-debug
+    dist: bionic
+
+  - env: SET=test01
+    dist: trusty
+
+  - env: SET=test01 BCFG=static-debug
+    dist: trusty
+
+  - env: SET=test01
 
   - env: SET=test01 BCFG=static
 
   - env: SET=test01 BCFG=debug
 
   - env: SET=test01 BCFG=static-debug
+
+  - env: SET=test01
+    compiler: clang
+
+  - env: SET=test01 BCFG=static-debug
+    compiler: clang
 
   - env: SET=test01
     os: windows
