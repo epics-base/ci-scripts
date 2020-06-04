@@ -18,6 +18,7 @@ env:
     - SETUP_PATH=.:.ci
     - VV=1
     - CHOCO=re2c
+    - BASE_RECURSIVE=NO
 
 addons:
   apt:
