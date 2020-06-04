@@ -434,7 +434,7 @@ def add_dependency(dep):
                  cwd=cachedir)
 
         sp.check_call(['git', 'log', '-n1'], cwd=place)
-        modules_to_compile.append(place)
+        modules_to_compile.append(dep)
 
         if dep == 'BASE':
             # add MSI 1.7 to Base 3.14
@@ -471,10 +471,7 @@ def add_dependency(dep):
     update_release_local(setup[dep + "_VARNAME"], place)
 
 
-def setup_for_build(args):
-    global is_base314, has_test_results, is_make3
-    dllpaths = []
-
+def detect_epics_host_arch():
     if ci['os'] == 'windows':
         if re.match(r'^vs', ci['compiler']):
             # there is no combined static and debug EPICS_HOST_ARCH target,
@@ -491,6 +488,32 @@ def setup_for_build(args):
             elif ci['platform'] == 'x64':
                 os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
 
+        elif ci['compiler'] == 'gcc':
+            if ci['platform'] == 'x86':
+                os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
+            elif ci['platform'] == 'x64':
+                os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
+
+    if 'EPICS_HOST_ARCH' not in os.environ:
+        logger.debug('Running script to detect EPICS host architecture in %s', places['EPICS_BASE'])
+        os.environ['EPICS_HOST_ARCH'] = 'unknown'
+        eha_scripts = [
+            os.path.join(places['EPICS_BASE'], 'src', 'tools', 'EpicsHostArch.pl'),
+            os.path.join(places['EPICS_BASE'], 'startup', 'EpicsHostArch.pl'),
+        ]
+        for eha in eha_scripts:
+            if os.path.exists(eha):
+                os.environ['EPICS_HOST_ARCH'] = sp.check_output(['perl', eha]).strip()
+                logger.debug('%s returned: %s',
+                             eha, os.environ['EPICS_HOST_ARCH'])
+                break
+
+
+def setup_for_build(args):
+    global is_base314, has_test_results, is_make3
+    dllpaths = []
+
+    if ci['os'] == 'windows':
         if ci['service'] == 'appveyor':
             if ci['compiler'] == 'vs2019':
                 # put strawberry perl in the PATH
@@ -516,12 +539,6 @@ def setup_for_build(args):
             os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\perl\site\bin', r'C:\Strawberry\perl\bin',
                                                   os.environ['PATH']])
 
-        if ci['compiler'] == 'gcc':
-            if ci['platform'] == 'x86':
-                os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
-            elif ci['platform'] == 'x64':
-                os.environ['EPICS_HOST_ARCH'] = 'windows-x64-mingw'
-
     # Find BASE location
     if not building_base:
         with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
@@ -533,19 +550,7 @@ def setup_for_build(args):
     else:
         places['EPICS_BASE'] = '.'
 
-    if 'EPICS_HOST_ARCH' not in os.environ:
-        logger.debug('Detecting EPICS host architecture in %s', places['EPICS_BASE'])
-        os.environ['EPICS_HOST_ARCH'] = 'unknown'
-        eha_scripts = [
-            os.path.join(places['EPICS_BASE'], 'src', 'tools', 'EpicsHostArch.pl'),
-            os.path.join(places['EPICS_BASE'], 'startup', 'EpicsHostArch.pl'),
-        ]
-        for eha in eha_scripts:
-            if os.path.exists(eha):
-                os.environ['EPICS_HOST_ARCH'] = sp.check_output(['perl', eha]).strip()
-                logger.debug('%s returned: %s',
-                             eha, os.environ['EPICS_HOST_ARCH'])
-                break
+    detect_epics_host_arch()
 
     if ci['os'] == 'windows':
         if not building_base:
@@ -632,33 +637,40 @@ def prepare(args):
 
     fold_end('check.out.dependencies', 'Checking/cloning dependencies')
 
-    fold_start('set.up.epics_build', 'Configuring EPICS build system')
+    if 'BASE' in modules_to_compile or building_base:
+        fold_start('set.up.epics_build', 'Configuring EPICS build system')
 
-    with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
-        if ci['static']:
-            config_site.write('SHARED_LIBRARIES=NO\n')
-            config_site.write('STATIC_BUILD=YES\n')
-            linktype = 'static'
-        else:
-            linktype = 'dynamic (DLL)'
-        if ci['debug']:
-            config_site.write('HOST_OPT=NO\n')
-            optitype = 'debug'
-        else:
-            optitype = 'optimized'
+        detect_epics_host_arch()
 
-    if ci['os'] == 'windows' and re.match(r'^vs', ci['compiler']):
+        # Set static/debug in CONFIG_SITE
+        with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
+            if ci['static']:
+                f.write('SHARED_LIBRARIES=NO\n')
+                f.write('STATIC_BUILD=YES\n')
+                linktype = 'static'
+            else:
+                linktype = 'shared (DLL)'
+            if ci['debug']:
+                f.write('HOST_OPT=NO\n')
+                optitype = 'debug'
+            else:
+                optitype = 'optimized'
+
+        print('EPICS Base build system set up for {0} build with {1} linking'
+                  .format(optitype, linktype))
+
         # Enable/fix parallel build for VisualStudio compiler on older Base versions
-        add_vs_fix = True
-        config_win = os.path.join(places['EPICS_BASE'], 'configure', 'os', 'CONFIG.win32-x86.win32-x86')
-        with open(config_win) as myfile:
-            for line in myfile:
-                if re.match(r'^ifneq \(\$\(VisualStudioVersion\),11\.0\)', line):
-                    add_vs_fix = False
-        if add_vs_fix:
-            logger.debug('Adding parallel build fix for VisualStudio to %s', config_win)
-            with open(config_win, 'a') as myfile:
-                myfile.write('''
+        if ci['os'] == 'windows' and re.match(r'^vs', ci['compiler']):
+            add_vs_fix = True
+            config_win = os.path.join(places['EPICS_BASE'], 'configure', 'os', 'CONFIG.win32-x86.win32-x86')
+            with open(config_win) as f:
+                for line in f:
+                    if re.match(r'^ifneq \(\$\(VisualStudioVersion\),11\.0\)', line):
+                        add_vs_fix = False
+            if add_vs_fix:
+                logger.debug('Adding parallel build fix for VisualStudio to %s', config_win)
+                with open(config_win, 'a') as f:
+                    f.write('''
 # Fix parallel build for some VisualStudio versions
 ifneq ($(VisualStudioVersion),)
 ifneq ($(VisualStudioVersion),11.0)
@@ -670,13 +682,62 @@ else
   OPT_CXXFLAGS_NO := $(filter-out -FS,$(OPT_CXXFLAGS_NO))
   OPT_CFLAGS_NO := $(filter-out -FS,$(OPT_CFLAGS_NO))
 endif
-endif'''
-                             )
+endif''')
 
-    print('EPICS Base build system set up for {0} build with {1} linking'
-          .format(optitype, linktype))
+        # Cross compilation on Linux to Windows/Wine
+        # requires wine and g++-mingw-w64-i686 / g++-mingw-w64-x86-64
+        if ci['os'] == 'linux' and 'WINE' in os.environ:
 
-    fold_end('set.up.epics_build', 'Configuring EPICS build system')
+            if os.environ['WINE'] == '32':
+                print('Cross compiler mingw32 / Wine')
+                with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                             'CONFIG.linux-x86.win32-x86-mingw'), 'a') as f:
+                    f.write('''
+CMPLR_PREFIX=i686-w64-mingw32-''')
+                with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
+                    f.write('''
+CROSS_COMPILER_TARGET_ARCHS+=win32-x86-mingw''')
+
+            if os.environ['WINE'] == '64':
+                print('Cross compiler mingw64 / Wine')
+                with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                       'CONFIG.linux-x86.windows-x64-mingw'), 'a') as f:
+                    f.write('''
+CMPLR_PREFIX=x86_64-w64-mingw32-''')
+                with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
+                    f.write('''
+CROSS_COMPILER_TARGET_ARCHS+=windows-x64-mingw''')
+
+        host_ccmplr_name = re.sub(r'^([a-zA-Z][^-]*(-[a-zA-Z][^-]*)*)+(-[0-9.]|)$', r'\1', ci['compiler'])
+        host_cmplr_ver_suffix = re.sub(r'^([a-zA-Z][^-]*(-[a-zA-Z][^-]*)*)+(-[0-9.]|)$', r'\3', ci['compiler'])
+        host_cmpl_ver = host_cmplr_ver_suffix[1:]
+
+        if host_ccmplr_name == 'clang':
+            print('Host compiler clang')
+            host_cppcmplr_name = re.sub(r'clang', r'clang++', host_ccmplr_name)
+            with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                   'CONFIG_SITE.Common.'+os.environ['EPICS_HOST_ARCH']), 'a') as f:
+                f.write('''
+GNU         = NO
+CMPLR_CLASS = clang
+CC          = {0}{2}
+CCC         = {1}{2}'''.format(host_ccmplr_name, host_cppcmplr_name, host_cmplr_ver_suffix))
+
+            # hack
+            with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG.gnuCommon'), 'a') as f:
+                f.write('''
+CMPLR_CLASS = clang''')
+
+        if host_ccmplr_name == 'gcc':
+            print('Host compiler gcc')
+            host_cppcmplr_name = re.sub(r'gcc', r'g++', host_ccmplr_name)
+            with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                   'CONFIG_SITE.Common.' + os.environ['EPICS_HOST_ARCH']), 'a') as f:
+                f.write('''
+CC          = {0}{2}
+CCC         = {1}{2}'''.format(host_ccmplr_name, host_cppcmplr_name, host_cmplr_ver_suffix))
+
+        fold_end('set.up.epics_build', 'Configuring EPICS build system')
 
     if not os.path.isdir(toolsdir):
         os.makedirs(toolsdir)
@@ -696,14 +757,15 @@ endif'''
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
 
-    if ci['compiler'] == 'gcc':
-        print('{0}$ gcc --version{1}'.format(ANSI_CYAN, ANSI_RESET))
-        sys.stdout.flush()
-        sp.check_call(['gcc', '--version'])
-    else:
+    if re.match(r'^vs', ci['compiler']):
         print('{0}$ cl{1}'.format(ANSI_CYAN, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call(['cl'])
+    else:
+        cc = ci['compiler']
+        print('{0}$ {1} --version{2}'.format(ANSI_CYAN, cc, ANSI_RESET))
+        sys.stdout.flush()
+        sp.check_call([cc, '--version'])
 
     if not building_base:
         fold_start('build.dependencies', 'Build missing/outdated dependencies')
