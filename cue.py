@@ -817,7 +817,7 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
 
     if not building_base:
         fold_start('build.dependencies', 'Build missing/outdated dependencies')
-        for mod in modlist():
+        for mod in modules_to_compile:
             place = places[setup[mod + "_VARNAME"]]
             print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
             call_make(cwd=place, silent=silent_dep_builds)
@@ -827,8 +827,12 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
         print('Module     Tag          Binaries    Commit')
         print(100 * '-')
         for mod in modlist():
+            if mod in modules_to_compile:
+                stat = 'rebuilt'
+            else:
+                stat = 'from cache'
             commit = sp.check_output(['git', 'log', '-n1', '--oneline'], cwd=places[setup[mod + "_VARNAME"]]).strip()
-            print("%-10s %-12s %-11s %s" % (mod, setup[mod], 'rebuilt', commit))
+            print("%-10s %-12s %-11s %s" % (mod, setup[mod], stat, commit))
 
         print('{0}Contents of RELEASE.local{1}'.format(ANSI_CYAN, ANSI_RESET))
         with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
