@@ -22,7 +22,7 @@ def detect_context():
         ci['platform'] = 'x64'
         ci['compiler'] = os.environ['TRAVIS_COMPILER']
         if ci['os'] == 'windows':
-            ci['choco'].append('strawberryperl')
+            ci['choco'] += ['strawberryperl']
             if re.match(r'^vs', ci['compiler']):
                 # Only Visual Studio 2017 available
                 ci['compiler'] = 'vs2017'
@@ -143,18 +143,18 @@ def fold_end(tag, title):
     sys.stdout.flush()
 
 
+homedir = curdir
 if 'HomeDrive' in os.environ:
-    cachedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.cache')
-    toolsdir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.tools')
+    homedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'))
 elif 'HOME' in os.environ:
-    cachedir = os.path.join(os.getenv('HOME'), '.cache')
-    toolsdir = os.path.join(os.getenv('HOME'), '.tools')
-else:
-    cachedir = os.path.join('.', '.cache')
-    toolsdir = os.path.join('.', '.tools')
+    homedir = os.getenv('HOME')
+cachedir = os.path.join(homedir, '.cache')
+toolsdir = os.path.join(homedir, '.tools')
+rtemsdir = os.path.join(homedir, '.rtems')
 
 if 'CACHEDIR' in os.environ:
     cachedir = os.environ['CACHEDIR']
+
 
 vcvars_table = {
     # https://en.wikipedia.org/wiki/Microsoft_Visual_Studio#History
@@ -684,29 +684,50 @@ else
 endif
 endif''')
 
-        # Cross compilation on Linux to Windows/Wine
-        # requires wine and g++-mingw-w64-i686 / g++-mingw-w64-x86-64
-        if ci['os'] == 'linux' and 'WINE' in os.environ:
+        # Cross-compilations from Linux platform
+        if ci['os'] == 'linux':
 
-            if os.environ['WINE'] == '32':
-                print('Cross compiler mingw32 / Wine')
-                with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                             'CONFIG.linux-x86.win32-x86-mingw'), 'a') as f:
-                    f.write('''
+            # Cross compilation to Windows/Wine (set WINE to architecture "32", "64")
+            # requires wine and g++-mingw-w64-i686 / g++-mingw-w64-x86-64
+            if 'WINE' in os.environ:
+                if os.environ['WINE'] == '32':
+                    print('Cross compiler mingw32 / Wine')
+                    with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                                 'CONFIG.linux-x86.win32-x86-mingw'), 'a') as f:
+                        f.write('''
 CMPLR_PREFIX=i686-w64-mingw32-''')
-                with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
-                    f.write('''
+                    with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
+                        f.write('''
 CROSS_COMPILER_TARGET_ARCHS+=win32-x86-mingw''')
 
-            if os.environ['WINE'] == '64':
-                print('Cross compiler mingw64 / Wine')
-                with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                       'CONFIG.linux-x86.windows-x64-mingw'), 'a') as f:
-                    f.write('''
+                if os.environ['WINE'] == '64':
+                    print('Cross compiler mingw64 / Wine')
+                    with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                           'CONFIG.linux-x86.windows-x64-mingw'), 'a') as f:
+                        f.write('''
 CMPLR_PREFIX=x86_64-w64-mingw32-''')
+                    with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
+                        f.write('''
+CROSS_COMPILER_TARGET_ARCHS += windows-x64-mingw''')
+
+            # Cross compilation on Linux to RTEMS  (set RTEMS to version "4.9", "4.10")
+            # requires qemu, bison, flex, texinfo, install-info
+            if 'RTEMS' in os.environ:
+                print('Cross compiler RTEMS{0} @ pc386',format(os.environ['RTEMS']))
+                with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                       'CONFIG_SITE.Common.RTEMS'), 'a') as f:
+                    f.write('''
+RTEMS_VERSION={0}
+RTEMS_BASE={1}'''.format(os.environ['RTEMS'], rtemsdir))
+
+                # Base 3.15 doesn't have -qemu target architecture
+                qemu_suffix = ''
+                if os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                               'CONFIG.Common.RTEMS-pc386-qemu')):
+                    qemu_suffix = '-qemu'
                 with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
                     f.write('''
-CROSS_COMPILER_TARGET_ARCHS+=windows-x64-mingw''')
+CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386{0}'''.format(qemu_suffix))
 
         host_ccmplr_name = re.sub(r'^([a-zA-Z][^-]*(-[a-zA-Z][^-]*)*)+(-[0-9.]|)$', r'\1', ci['compiler'])
         host_cmplr_ver_suffix = re.sub(r'^([a-zA-Z][^-]*(-[a-zA-Z][^-]*)*)+(-[0-9.]|)$', r'\3', ci['compiler'])
@@ -761,6 +782,18 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
         fold_start('install.choco', 'Installing CHOCO packages')
         sp.check_call(['choco', 'install'] + ci['choco'])
         fold_end('install.choco', 'Installing CHOCO packages')
+
+    if ci['os'] == 'linux' and 'RTEMS' in os.environ:
+        tar_name = 'i386-rtems{0}-trusty-20171203-{0}.tar.bz2'.format(os.environ['RTEMS'])
+        print('Downloading RTEMS {0} cross compiler: {1}'
+              .format(os.environ['RTEMS'], tar_name))
+        sys.stdout.flush()
+        sp.check_call(['curl', '-fsSL', '--retry', '3', '-o', tar_name,
+                       'https://github.com/mdavidsaver/rsb/releases/download/20171203-{0}/{1}'
+                      .format(os.environ['RTEMS'], tar_name)],
+                      cwd=toolsdir)
+        sp.check_call(['tar', '-C', '/', '-xmj', '-f', os.path.join(toolsdir, tar_name)])
+        os.remove(os.path.join(toolsdir, tar_name))
 
     setup_for_build(args)
 
