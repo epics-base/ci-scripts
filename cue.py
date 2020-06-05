@@ -849,13 +849,21 @@ def build(args):
 def test(args):
     setup_for_build(args)
     fold_start('test.module', 'Run the main module tests')
-    print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
     if has_test_results:
         call_make(['tapfiles'])
-        call_make(['test-results'], parallel=0, silent=True)
     else:
         call_make(['runtests'])
     fold_end('test.module', 'Run the main module tests')
+
+
+def test_results(args):
+    setup_for_build(args)
+    fold_start('test.results', 'Sum up main module test results')
+    if has_test_results:
+        call_make(['test-results'], parallel=0, silent=True)
+    else:
+        print("{0}Base {1} does not implement 'test-results' target{2}".format(ANSI_YELLOW, setup['BASE'], ANSI_RESET))
+    fold_end('test.results', 'Sum up main module test results')
 
 
 def doExec(args):
@@ -928,6 +936,9 @@ def getargs():
 
     cmd = subp.add_parser('test')
     cmd.set_defaults(func=test)
+
+    cmd = subp.add_parser('test-results')
+    cmd.set_defaults(func=test_results)
 
     cmd = subp.add_parser('exec')
     cmd.add_argument('cmd', nargs=REMAINDER)
