@@ -1,4 +1,5 @@
 # EPICS Base
+BASE=7.0
 BASE_DIRNAME=base
 BASE_REPONAME=epics-base
 BASE_REPOOWNER=epics-base

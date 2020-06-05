@@ -285,6 +285,11 @@ class TestAddDependencyOptions(unittest.TestCase):
         cue.add_dependency('BASE')
         self.assertTrue(os.path.exists(msifile), 'MSI was not added to Base 3.14')
 
+    def test_DefaultBaseBranch(self):
+        cue.complete_setup('BASE')
+        self.assertEqual(cue.setup['BASE'], '7.0',
+                         'Default Base branch is not 7.0 (found {0})'.format(cue.setup['BASE']))
+
 
 def repo_access(dep):
     cue.set_setup_from_env(dep)
