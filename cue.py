@@ -94,6 +94,27 @@ ANSI_CYAN = "\033[36;1m"
 ANSI_RESET = "\033[0m"
 ANSI_CLEAR = "\033[0K"
 
+# Travis log fold control
+# from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
+
+def fold_start(tag, title):
+    if ci_service == 'travis':
+        print('travis_fold:start:{0}{1}{2}{3}'
+              .format(tag, ANSI_YELLOW, title, ANSI_RESET))
+    elif ci['service'] == 'appveyor':
+        print('{0}===== \\/ \\/ \\/ ===== START: {1} ====={2}'
+              .format(ANSI_YELLOW, title, ANSI_RESET))
+    sys.stdout.flush()
+
+def fold_end(tag, title):
+    if ci_service == 'travis':
+        print('\ntravis_fold:end:{0}\r'
+              .format(tag), end='')
+    elif ci_service == 'appveyor':
+        print('{0}----- /\\ /\\ /\\ -----   END: {1} -----{2}'
+              .format(ANSI_YELLOW, title, ANSI_RESET))
+    sys.stdout.flush()
+
 if 'HomeDrive' in os.environ:
     cachedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.cache')
     toolsdir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'), '.tools')
@@ -135,7 +156,6 @@ def modlist():
                 setup[var] = os.environ[var]
                 logger.debug('ENV assignment: %s = %s', var, setup[var])
         ret = ['BASE'] + setup['ADD_MODULES'].upper().split() + setup['MODULES'].upper().split()
-    logger.debug('Effective module list: %s', ret)
     return ret
 
 isbase314 = False
@@ -539,23 +559,27 @@ def setup_for_build(args):
 def prepare(args):
     host_info()
 
-    print('{0}Loading setup files{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    fold_start('load.setup', 'Loading setup files')
+
     if 'SET' in os.environ:
         source_set(os.environ['SET'])
     source_set('defaults')
 
     [complete_setup(mod) for mod in modlist()]
 
+    fold_end('load.setup', 'Loading setup files')
+
     logger.debug('Loaded setup')
     kvs = list(setup.items())
     kvs.sort()
     [logger.debug(' %s = "%s"', *kv) for kv in kvs]
 
+    logger.debug('Effective module list: %s', ret)
+
     # we're working with tags (detached heads) a lot: suppress advice
     call_git(['config', '--global', 'advice.detachedHead', 'false'])
 
-    print('{0}Checking/cloning dependencies{1}'.format(ANSI_YELLOW, ANSI_RESET))
-    sys.stdout.flush()
+    fold_start('check.out.dependencies', 'Checking/cloning dependencies')
 
     [add_dependency(mod) for mod in modlist()]
 
@@ -566,7 +590,9 @@ def prepare(args):
             targetdir = '.'
         shutil.copy(os.path.join(cachedir, 'RELEASE.local'), targetdir)
 
-    print('{0}Configuring EPICS build system{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    fold_end('check.out.dependencies', 'Checking/cloning dependencies')
+
+    fold_start('set.up.epics_build', 'Configuring EPICS build system')
 
     with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as config_site:
         if ci_static:
@@ -606,17 +632,19 @@ else
 endif
 endif'''
                              )
+
     print('EPICS Base build system set up for {0} build with {1} linking'
           .format(optitype, linktype))
+
+    fold_end('set.up.epics_build', 'Configuring EPICS build system')
 
     if not os.path.isdir(toolsdir):
         os.makedirs(toolsdir)
 
-    if ci_os == 'windows':
-        if ci_choco:
-            print('Installing chocolatey packages: {0}'.format(ci_choco))
-            sys.stdout.flush()
-            sp.check_call(['choco', 'install'] + ci_choco)
+    if ci_os == 'windows' and ci_choco:
+        fold_start('install.choco', 'Installing CHOCO packages')
+        sp.check_call(['choco', 'install'] + ci_choco)
+        fold_end('install.choco', 'Installing CHOCO packages')
 
     setup_for_build(args)
 
@@ -638,10 +666,12 @@ endif'''
         sp.check_call(['cl'])
 
     if not building_base:
+        fold_start('build.dependencies', 'Build missing/outdated dependencies')
         for mod in modlist():
             place = places[setup[mod+"_VARNAME"]]
             print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
             call_make(cwd=place, silent=silent_dep_builds)
+        fold_end('build.dependencies', 'Build missing/outdated dependencies')
 
         print('{0}Dependency module information{1}'.format(ANSI_CYAN, ANSI_RESET))
         print('Module     Tag          Binaries    Commit')
@@ -656,25 +686,28 @@ endif'''
 
 def build(args):
     setup_for_build(args)
-    print('{0}Building the main module{1}'.format(ANSI_YELLOW, ANSI_RESET))
+    fold_start('build.module', 'Build the main module')
     call_make(args.makeargs)
+    fold_end('build.module', 'Build the main module')
 
 def test(args):
     setup_for_build(args)
+    fold_start('test.module', 'Run the main module tests')
     print('{0}Running the main module tests{1}'.format(ANSI_YELLOW, ANSI_RESET))
     if has_test_results:
         call_make(['tapfiles'])
         call_make(['test-results'], parallel=0, silent=True)
     else:
         call_make(['runtests'])
+    fold_end('test.module', 'Run the main module tests')
 
 def doExec(args):
     'exec user command with vcvars'
     setup_for_build(args)
     os.environ['MAKE'] = 'make'
-    print('Execute command {}'.format(args.cmd))
-    sys.stdout.flush()
+    fold_start('exec.command', 'Execute command {}'.format(args.cmd))
     sp.check_call(' '.join(args.cmd), shell=True)
+    fold_end('exec.command', 'Execute command {}'.format(args.cmd))
 
 def with_vcvars(cmd):
     '''re-exec main script with a (hopefully different) command
@@ -702,6 +735,10 @@ call "{vcvars}" {arch}
 "{python}" "{self}" {cmd}
 '''.format(**info)
 
+    print('{0}Calling vcvars-trampoline.bat to set environment for {1} on {2}{3}'
+          .format(ANSI_YELLOW, CC, ci_platform, ANSI_RESET))
+    sys.stdout.flush()
+
     logger.debug('----- Creating vcvars-trampoline.bat -----')
     for line in script.split('\n'):
         logger.debug(line)
@@ -710,9 +747,6 @@ call "{vcvars}" {arch}
     with open('vcvars-trampoline.bat', 'w') as F:
         F.write(script)
 
-    print('{0}Calling vcvars-trampoline.bat to set environment for {1} on {2}{3}'
-          .format(ANSI_YELLOW, CC, ci_platform, ANSI_RESET))
-    sys.stdout.flush()
     returncode = sp.call('vcvars-trampoline.bat', shell=True)
     if returncode != 0:
         sys.exit(returncode)
