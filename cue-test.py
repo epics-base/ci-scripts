@@ -331,12 +331,13 @@ class TestVCVars(unittest.TestCase):
         cue.with_vcvars('env')
 
 
-class TestDetectContext(unittest.TestCase):
+@unittest.skipIf(ci_service != 'travis', 'Run travis tests only on travis')
+class TestTravisDetectContext(unittest.TestCase):
     def tearDown(self):
         cue.clear_lists()
         os.environ.pop('BCFG', None)
 
-    def test_TravisLinuxGccNone(self):
+    def test_LinuxGccNone(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'linux'
         os.environ['TRAVIS_COMPILER'] = 'gcc'
@@ -355,7 +356,7 @@ class TestDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: shared-optimized)"
                          .format(cue.ci['configuration']))
 
-    def test_TravisLinuxClangNone(self):
+    def test_LinuxClangNone(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'linux'
         os.environ['TRAVIS_COMPILER'] = 'clang'
@@ -374,7 +375,7 @@ class TestDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: shared-optimized)"
                          .format(cue.ci['configuration']))
 
-    def test_TravisBcfgShared(self):
+    def test_BcfgShared(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'linux'
         os.environ['TRAVIS_COMPILER'] = 'gcc'
@@ -386,7 +387,7 @@ class TestDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: shared-optimized)"
                          .format(cue.ci['configuration']))
 
-    def test_TravisBcfgStatic(self):
+    def test_BcfgStatic(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'linux'
         os.environ['TRAVIS_COMPILER'] = 'gcc'
@@ -398,7 +399,7 @@ class TestDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: static-optimized)"
                          .format(cue.ci['configuration']))
 
-    def test_TravisBcfgDebug(self):
+    def test_BcfgDebug(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'linux'
         os.environ['TRAVIS_COMPILER'] = 'gcc'
@@ -410,7 +411,7 @@ class TestDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: shared-debug)"
                          .format(cue.ci['configuration']))
 
-    def test_TravisBcfgStaticDebug(self):
+    def test_BcfgStaticDebug(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'linux'
         os.environ['TRAVIS_COMPILER'] = 'gcc'
@@ -422,7 +423,7 @@ class TestDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: static-debug)"
                          .format(cue.ci['configuration']))
 
-    def test_TravisWindowsGccNone(self):
+    def test_WindowsGccNone(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'windows'
         os.environ['TRAVIS_COMPILER'] = 'gcc'
@@ -443,7 +444,7 @@ class TestDetectContext(unittest.TestCase):
         self.assertIn('strawberryperl', cue.ci['choco'], "'strawberryperl' is not in ci['choco']")
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
-    def test_TravisWindowsVs2017None(self):
+    def test_WindowsVs2017None(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'windows'
         os.environ['TRAVIS_COMPILER'] = 'vs2017'
@@ -464,7 +465,7 @@ class TestDetectContext(unittest.TestCase):
         self.assertIn('strawberryperl', cue.ci['choco'], "'strawberryperl' is not in ci['choco']")
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
-    def test_TravisWindowsVs2019None(self):
+    def test_WindowsVs2019None(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'windows'
         os.environ['TRAVIS_COMPILER'] = 'vs2019'
@@ -485,7 +486,7 @@ class TestDetectContext(unittest.TestCase):
         self.assertIn('strawberryperl', cue.ci['choco'], "'strawberryperl' is not in ci['choco']")
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
-    def test_TravisOsxClangNone(self):
+    def test_OsxClangNone(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'osx'
         os.environ['TRAVIS_COMPILER'] = 'clang'
@@ -503,6 +504,175 @@ class TestDetectContext(unittest.TestCase):
         self.assertEqual(cue.ci['configuration'], 'shared-optimized',
                          "ci['configuration'] is {0} (expected: shared-optimized)"
                          .format(cue.ci['configuration']))
+
+
+@unittest.skipIf(ci_service != 'appveyor', 'Run appveyor tests only on appveyor')
+class TestAppveyorDetectContext(unittest.TestCase):
+    def tearDown(self):
+        cue.clear_lists()
+        os.environ.pop('CONFIGURATION', None)
+
+    def test_Platform32(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'vs2019'
+        os.environ['CONFIGURATION'] = 'default'
+        os.environ['PLATFORM'] = 'x86'
+        cue.detect_context()
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertEqual(cue.ci['platform'], 'x86',
+                         "ci['platform'] is {0} (expected: x86)"
+                         .format(cue.ci['platform']))
+
+    def test_Platform64(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'vs2019'
+        os.environ['CONFIGURATION'] = 'default'
+        os.environ['PLATFORM'] = 'x64'
+        cue.detect_context()
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertEqual(cue.ci['platform'], 'x64',
+                         "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+
+    def test_PlatformX64(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'vs2019'
+        os.environ['CONFIGURATION'] = 'default'
+        os.environ['PLATFORM'] = 'X64'
+        cue.detect_context()
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertEqual(cue.ci['platform'], 'x64',
+                         "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+
+    def test_ConfigDefault(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'gcc'
+        os.environ['CONFIGURATION'] = 'default'
+        cue.detect_context()
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+
+    def test_ConfigStatic(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'gcc'
+        os.environ['CONFIGURATION'] = 'static'
+        cue.detect_context()
+        self.assertTrue(cue.ci['static'], "ci['static'] is False (expected: True)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'static-optimized',
+                         "ci['configuration'] is {0} (expected: static-optimized)"
+                         .format(cue.ci['configuration']))
+
+    def test_ConfigDebug(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'gcc'
+        os.environ['CONFIGURATION'] = 'debug'
+        cue.detect_context()
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertTrue(cue.ci['debug'], "ci['debug'] is False (expected: True)")
+        self.assertEqual(cue.ci['configuration'], 'shared-debug',
+                         "ci['configuration'] is {0} (expected: shared-debug)"
+                         .format(cue.ci['configuration']))
+
+    def test_ConfigStaticDebug(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'gcc'
+        os.environ['CONFIGURATION'] = 'static-debug'
+        cue.detect_context()
+        self.assertTrue(cue.ci['static'], "ci['static'] is False (expected: True)")
+        self.assertTrue(cue.ci['debug'], "ci['debug'] is False (expected: True)")
+        self.assertEqual(cue.ci['configuration'], 'static-debug',
+                         "ci['configuration'] is {0} (expected: static-debug)"
+                         .format(cue.ci['configuration']))
+
+    def test_WindowsGccNone(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'gcc'
+        os.environ['CONFIGURATION'] = 'default'
+        os.environ['PLATFORM'] = 'x64'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'appveyor', "ci['service'] is {0} (expected: appveyor)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'windows', "ci['os'] is {0} (expected: windows)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'gcc', "ci['compiler'] is {0} (expected: gcc)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x64', "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
+
+    def test_WindowsVs2017None(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2017'
+        os.environ['CMP'] = 'vs2017'
+        os.environ['CONFIGURATION'] = 'default'
+        os.environ['PLATFORM'] = 'x86'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'appveyor', "ci['service'] is {0} (expected: appveyor)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'windows', "ci['os'] is {0} (expected: windows)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'vs2017', "ci['compiler'] is {0} (expected: vs2017)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x86', "ci['platform'] is {0} (expected: x86)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
+
+    def test_WindowsVs2019None(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'vs2019'
+        os.environ['CONFIGURATION'] = 'default'
+        os.environ['PLATFORM'] = 'x64'
+        cue.detect_context()
+        self.assertEqual(cue.ci['service'], 'appveyor', "ci['service'] is {0} (expected: appveyor)"
+                         .format(cue.ci['service']))
+        self.assertEqual(cue.ci['os'], 'windows', "ci['os'] is {0} (expected: windows)"
+                         .format(cue.ci['os']))
+        self.assertEqual(cue.ci['compiler'], 'vs2019', "ci['compiler'] is {0} (expected: vs2019)"
+                         .format(cue.ci['compiler']))
+        self.assertEqual(cue.ci['platform'], 'x64', "ci['platform'] is {0} (expected: x64)"
+                         .format(cue.ci['platform']))
+        self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
+        self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
+        self.assertEqual(cue.ci['configuration'], 'shared-optimized',
+                         "ci['configuration'] is {0} (expected: shared-optimized)"
+                         .format(cue.ci['configuration']))
+        self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
 
 class TestSetupForBuild(unittest.TestCase):
