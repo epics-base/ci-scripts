@@ -38,7 +38,9 @@ testHarness_SRCS += epicsRunExampleTests.c
 exampleTestHarness_SRCS += $(testHarness_SRCS)
 exampleTestHarness_SRCS_RTEMS += rtemsTestHarness.c
 
+ifdef BASE_7_0
 PROD_SRCS_RTEMS += rtemsTestData.c
+endif
 
 PROD_vxWorks = exampleTestHarness
 PROD_RTEMS = exampleTestHarness
@@ -54,5 +56,7 @@ endif
 
 include $(TOP)/configure/RULES
 
+ifdef BASE_7_0
 rtemsTestData.c : $(TESTFILES) $(TOOLS)/epicsMakeMemFs.pl
 	$(PERL) $(TOOLS)/epicsMakeMemFs.pl $@ epicsRtemsFSImage $(TESTFILES)
+endif
