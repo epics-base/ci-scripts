@@ -78,6 +78,7 @@ is_base314 = False
 is_make3 = False
 has_test_results = False
 silent_dep_builds = True
+do_recompile = False
 
 
 def clear_lists():
@@ -90,6 +91,7 @@ def clear_lists():
     is_make3 = False
     has_test_results = False
     silent_dep_builds = True
+    do_recompile = False
     ci['service'] = '<none>'
     ci['os'] = '<unknown>'
     ci['platform'] = '<unknown>'
@@ -380,6 +382,7 @@ def complete_setup(dep):
 # - Add $dep_VARNAME line to the RELEASE.local file in the cache area (unless already there)
 # - Add full path to $modules_to_compile
 def add_dependency(dep):
+    global do_recompile
     recurse = setup[dep + '_RECURSIVE'].lower()
     if recurse not in ['0', 'no']:
         recursearg = ["--recursive"]
@@ -434,7 +437,8 @@ def add_dependency(dep):
                  cwd=cachedir)
 
         sp.check_call(['git', 'log', '-n1'], cwd=place)
-        modules_to_compile.append(dep)
+        logger.debug('Setting do_recompile = True (all following modules will be recompiled')
+        do_recompile = True
 
         if dep == 'BASE':
             # add MSI 1.7 to Base 3.14
@@ -468,6 +472,8 @@ def add_dependency(dep):
             print(head, file=fout)
         fout.close()
 
+    if do_recompile:
+        modules_to_compile.append(dep)
     update_release_local(setup[dep + "_VARNAME"], place)
 
 
