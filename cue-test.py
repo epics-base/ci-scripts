@@ -321,13 +321,12 @@ class TestDefaultModuleURLs(unittest.TestCase):
             self.assertEqual(repo_access(mod), 0, 'Defaults for {0} do not point to a valid git repository at {1}'
                              .format(mod, cue.setup[mod + '_REPOURL']))
 
-
+@unittest.skipIf(ci_os != 'windows', 'VCVars test only applies to windows')
 class TestVCVars(unittest.TestCase):
     def test_vcvars(self):
-        if ('CMP' in os.environ and os.environ['CMP'] in ('mingw',)) \
-                or distutils.util.get_platform() != "win32":
-            raise unittest.SkipTest()
-
+        if ci_service == 'appveyor':
+            os.environ['CONFIGURATION'] = 'default'
+        cue.detect_context()
         cue.with_vcvars('env')
 
 
@@ -684,6 +683,8 @@ class TestSetupForBuild(unittest.TestCase):
     def setUp(self):
         os.environ.pop('EPICS_HOST_ARCH', None)
         cue.clear_lists()
+        if ci_service == 'appveyor':
+            os.environ['CONFIGURATION'] = 'default'
         cue.detect_context()
 
     def tearDown(self):
