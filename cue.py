@@ -862,7 +862,8 @@ def test_results(args):
     if has_test_results:
         call_make(['test-results'], parallel=0, silent=True)
     else:
-        print("{0}Base {1} does not implement 'test-results' target{2}".format(ANSI_YELLOW, setup['BASE'], ANSI_RESET))
+        print("{0}Base in {1} does not implement 'test-results' target{2}"
+              .format(ANSI_YELLOW, places['EPICS_BASE'], ANSI_RESET))
     fold_end('test.results', 'Sum up main module test results')
 
 

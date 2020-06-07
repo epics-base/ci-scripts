@@ -40,6 +40,8 @@ install:
 
 script:
   - python cue.py build
+  - python cue.py test
+  - python cue.py test-results
 
 # If you need to do more during install and build,
 # add a local directory to your module and do e.g.
