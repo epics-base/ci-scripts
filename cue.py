@@ -71,6 +71,9 @@ def detect_context():
     if 'CHOCO' in os.environ:
         ci['choco'].extend(os.environ['CHOCO'].split())
 
+    if 'APT' in os.environ:
+        ci['apt'].extend(os.environ['APT'].split())
+
     ci['test'] = True
     if 'TEST' in os.environ and os.environ['TEST'].lower() == 'no':
         ci['test'] = False
@@ -126,6 +129,7 @@ def clear_lists():
     ci['configuration'] = '<unknown>'
     ci['scriptsdir'] = ''
     ci['choco'] = ['make']
+    ci['apt'] = []
 
 
 clear_lists()
@@ -821,6 +825,11 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
         fold_start('install.choco', 'Installing CHOCO packages')
         sp.check_call(['choco', 'install'] + ci['choco'])
         fold_end('install.choco', 'Installing CHOCO packages')
+
+    if ci['os'] == 'linux' and ci['apt']:
+        fold_start('install.apt', 'Installing APT packages')
+        sp.check_call(['sudo', 'apt-get', '-y', 'install'] + ci['apt'])
+        fold_end('install.apt', 'Installing APT packages')
 
     if ci['os'] == 'linux' and 'RTEMS' in os.environ:
         tar_name = 'i386-rtems{0}-trusty-20171203-{0}.tar.bz2'.format(os.environ['RTEMS'])
