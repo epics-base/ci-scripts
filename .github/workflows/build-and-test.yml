@@ -1,0 +1,48 @@
+name: ci-scripts CI build/test
+
+on:
+  push:
+    branches: [ devel/gh-actions ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-16.04, windows-2019]
+    env:
+      SETUP_PATH: .:.ci
+      SET: test01
+      VV: 1
+      BASE_RECURSIVE: NO
+      CMP: gcc
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: prepare
+      run: python cue.py prepare
+    - name: build
+      run: python cue.py build
+    - name: test
+      run: python cue.py test
+    - name: test-results
+      run: python cue.py test-results
+
+  unit-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-16.04, windows-2019]
+    env:
+      SETUP_PATH: .:.ci
+      SET: test00
+      VV: 1
+      BASE_RECURSIVE: NO
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: show environment
+      run: python cue-test.py env
+    - name: unit tests
+      run: python cue-test.py
