@@ -2,11 +2,12 @@
 
 ## Features
 
- - Use different compilers (Visual Studio, MinGW)
- - Use different VS versions (2008, 2010, 2012, 2013, 2015, 2017, 2019)
+ - One parallel runner (all builds are sequential)
+ - Use different compilers (Visual Studio, gcc/MinGW)
+ - Use different Visual Studio versions: \
+   2008, 2010, 2012, 2013, 2015, 2017, 2019
  - Compile for Windows 32bit and 64bit
- - Create static libraries or DLLs (plus the matching executables)
- - Create optimized or debug builds
+ - No useful caching available.
 
 ## How to Use these Scripts
 
@@ -33,24 +34,26 @@
 
     AppVeyor automatically creates a build matrix with the following axes:
     1. `configuration:` \
-    Select static or dynamic (DLL) as well as regular or debug builds.
+    Select shared (DLL) or static as well as optimized or debug builds. \
+    Default: `shared-optimized`
     2. `platform:` \
     Select 32bit or 64bit processor architecture.
     3. `environment: / matrix:` \
     List of environment variable settings. Each list element (starting with
     a dash) is one step on the axis of the build matrix. \
-    Set `CMP` to select the compiler: `mingw` for the native
+    Set `CMP` to select the compiler: `gcc` for the native
     [MinGW](http://mingw-w64.org/) GNU compiler, `vs2008` ...`vs2019` 
     (options listed above) for the Microsoft Visual Studio compilers.
 
     Your builds will take long. \
-    AppVeyor only grants a single worker VM - all jobs of the matrix are
-    executed sequentially. Each job will take between 6 and 15 minutes,
-    plus testing time.
+    AppVeyor only grants a single parallel runner VM - all jobs of the matrix
+    are executed sequentially. AppVeyor also does not provide a usable cache
+    mechanism to retain dependency artifacts across builds.
+    Each job will take between 6 and 15 minutes, plus testing time, every time.
 
     The `matrix: / exclude:` setting can be used to reduce the number of
     jobs. Check the [AppVeyor docs][appveyor.doc.matrix]
-    for more ways to reduce the build matrix size.
+    for more ways to reduce the build matrix size. \
     E.g., you can opt for not creating matrix axes for `configuration:`
     and`platform:` by moving these configurations into the job lines
     under `environment: / matrix:`.

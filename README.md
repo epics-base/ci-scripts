@@ -20,58 +20,70 @@ never break existing use.
 
 ## This Repository
 
-In addition to the scripts themselves (in the subdirectories),
-this repository contains the test suite that is used to verify
-functionality and features of the ci-scripts.
+In addition to the script that runs the builds and tests, this repository
+contains service specific documentation and example configuration files
+(in the subdirectories), and a small test suite that is used to verify
+functionality and features of the ci-scripts module itself
 
 You are welcome to use the test suite as a reference, but keep in
-mind that in your module the path to the scripts has one level more
-(e.g., `./travis/abc` here would be `./.ci/travis/abc` in your
+mind that in your main module the path to the scripts has one level more
+(e.g., `./abc` here would be `./.ci/abc` in your
 module).
-Also, a test suite might not show the same level of quality as an
-example.
+Also, a test suite might not show the same quality and documentation levels
+as an example.
 
 ## Features
 
  - Compile against different branches or releases of EPICS Base and
-   additional dependencies (modules like asyn, std, etc.).
+   additional dependencies (modules like asyn, std, sequencer, etc.).
 
  - Define settings files that declare sets of dependencies
    with their versions and locations.
 
- - Define hook scripts for any dependency.
+ - Define hooks for any dependency.
    Hooks are run on the dependency module before it is compiled, so
    the module can be patched or further configured.
 
- - Define static or shared builds (executables, libraries).
+ - Define shared (default) or static builds (for executables and libraries).
+ 
+ - Define optimized (default) or debug builds.
 
- - Run tests (using the EPICS unit test suite).
+ - Run tests (using the EPICS build system, i.e., `make runtests`
+   and friends).
 
 ## Supported CI Services
 
 ### [Travis-CI](https://travis-ci.org/)
+ - Five parallel runners on Linux/Windows (one runner on MacOS)
  - Use different compilers (gcc, clang)
  - Use different gcc versions
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.16.2)
- - Compile on MacOS
- - Built dependencies are cached (for faster builds)
+ - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Compile natively on MacOS (clang)
+ - Compile natively on Windows (gcc/MinGW, Visual Studio 2017)
+ - Built dependencies are cached (for faster builds).
  
-See specific **[ci-scripts on Travis-CI README](travis/README.md)** for more details.
+See specific
+**[ci-scripts on Travis-CI README](travis/README.md)**
+for more details.
 
 ### [AppVeyor](https://www.appveyor.com/)
- - Use different compilers (Visual Studio, MinGW)
+ - One parallel runner (all builds are sequential)
+ - Use different compilers (Visual Studio, gcc/MinGW)
  - Use different Visual Studio versions: \
-  2008, 2010, 2012, 2013, 2015, 2017, 2019
+   2008, 2010, 2012, 2013, 2015, 2017, 2019
  - Compile for Windows 32bit and 64bit
+ - No useful caching available.
 
-See specific **[ci-scripts on AppVeyor README](appveyor/README.md)** for more details.
+See specific
+**[ci-scripts on AppVeyor README](appveyor/README.md)**
+for more details.
 
 ## How to Use the CI-Scripts
 
  1. Get an account on a supported CI service provider platform.
     (e.g. [Travis-CI](https://travis-ci.org/),
-    [AppVeyor](https://www.appveyor.com/), Azure Pipelines...)
+    [AppVeyor](https://www.appveyor.com/), ...)
 
     (More details in the specific README of the subdirectory.)
 
@@ -94,8 +106,8 @@ See specific **[ci-scripts on AppVeyor README](appveyor/README.md)** for more de
     ```
     will compile against the EPICS Base 3.15 branch, the Sequencer
     release 2.2.8 and release 4.34 of asyn.
-    (Any settings can be overridden from the specific job configuration
-    in e.g. `.travis.yml`.)
+    (Any settings can be overridden from the specific job line
+    in the service configuration, e.g., `.travis.yml`.)
 
  4. Create a configuration for the CI service by copying one of
     the examples provided in the service specific subdirectory
@@ -111,8 +123,8 @@ Your module might depend on EPICS Base and a few other support modules.
 (E.g., a specific driver might need StreamDevice, ASYN and the Sequencer.)
 In that case, building against every possible combination of released
 versions of those dependencies is not possible:
-Base (37) x StreamDevice (50) x ASYN (40) x Sequencer (51) would produce
-more than 3.7 million different combinations, i.e. build jobs.
+Base (39) x StreamDevice (50) x ASYN (40) x Sequencer (52) would produce
+more than 4 million different combinations, i.e. build jobs.
 
 A more reasonable approach is to create a few setups, each being a
 combination of dependency releases, that do a few scans of the available
@@ -200,6 +212,13 @@ builds to higher verbosity.
 
 For debugging on your local machine, you may set `CACHEDIR` to change the 
 location for the dependency builds. [default is `$HOME/.cache`]
+
+Service specific debugging options are described in the README files
+in the service specific subdirectories:
+
+- [Travis-CI README](travis/README.md)
+- [AppVeyor README](appveyor/README.md)
+
 
 ## References: EPICS Modules Using ci-scripts
 
