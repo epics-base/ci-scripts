@@ -86,6 +86,9 @@ environment:
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - CMP: vs2017
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    EXTRA: EXTRA_DEF="extra"
+    EXTRA1: EXTRA1_DEF="extra 1"
+    EXTRA2: EXTRA2_DEF="extra 2"
   - CMP: vs2015
   - CMP: vs2013
   - CMP: vs2012
