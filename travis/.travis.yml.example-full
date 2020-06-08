@@ -14,6 +14,8 @@ cache:
 env:
   global:
     - SETUP_PATH=.ci-local:.ci
+    # for the sequencer on Windows
+    - CHOCO=re2c
 
 addons:
   apt:
@@ -31,17 +33,17 @@ addons:
     - qemu-system-x86
   homebrew:
     packages:
-    # for all EPICS builds
-    - bash
     # for the sequencer
     - re2c
     update: true
 
 install:
-  - ./.ci/travis/prepare.sh
+  - python .ci/cue.py prepare
 
 script:
-  - ./.ci/travis/build.sh
+  - python .ci/cue.py build
+  - python .ci/cue.py test
+  - python .ci/cue.py test-results
 
 # If you need to do more during install and build,
 # add a local directory to your module and do e.g.
@@ -52,12 +54,13 @@ script:
 # Well-known variables to use
 # SET         source setup file
 # ADD_MODULES extra modules (for a specific job)
-# EXTRA       content will be added to make command line
-# EXTRA1..5   additional arguments for the make command
-#             (one argument per variable)
-# STATIC      set to YES for static build (default: NO)
+# BCFG        build configuration (static/debug/static-debug;
+#             default: shared-optimized)
 # TEST        set to NO to skip running the tests (default: YES)
 # VV          set to make build scripts verbose (default: unset)
+# EXTRA       content will be added to make command line
+# EXTRA1..5   more additional arguments for the make command
+#             (one argument per variable)
 
 # Usually from setup files, but may be specified or overridden
 #  on a job line
@@ -76,7 +79,7 @@ jobs:
   - env: BASE=7.0
     compiler: clang
 
-  - env: BASE=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
+  - env: BASE=7.0
 
   - env: BASE=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
     compiler: clang
@@ -89,19 +92,17 @@ jobs:
   - env: BASE=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
     dist: trusty
 
-# Cross-compilations to Windows using MinGW and WINE
-    
-  - env: BASE=7.0 WINE=32 TEST=NO STATIC=YES
-    compiler: mingw
+# Cross-compilations to Windows using gcc/MinGW and WINE
 
-  - env: BASE=7.0 WINE=64 TEST=NO STATIC=NO
-    compiler: mingw
+  - env: BASE=7.0 WINE=32 TEST=NO BCFG=static
+
+  - env: BASE=7.0 WINE=64 TEST=NO
 
 # Cross-compilation to RTEMS
 
-  - env: BASE=7.0 RTEMS=4.10 TEST=NO
+  - env: BASE=7.0 RTEMS=4.10
 
-  - env: BASE=7.0 RTEMS=4.9 TEST=NO
+  - env: BASE=7.0 RTEMS=4.9
 
 # Other gcc versions (added as an extra package)
 
@@ -118,3 +119,12 @@ jobs:
   - env: BASE=7.0
     os: osx
     compiler: clang
+
+# Windows builds
+
+  - env: BASE=7.0
+    os: windows
+    compiler: vs2017
+
+  - env: BASE=7.0
+    os: windows

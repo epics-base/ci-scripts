@@ -15,12 +15,14 @@ addons:
     - perl
 
 install:
-  - ./.ci/travis/prepare.sh
+  - python .ci/cue.py prepare
 
 script:
-  - ./.ci/travis/build.sh
+  - python .ci/cue.py build
+  - python .ci/cue.py test
+  - python .ci/cue.py test-results
 
-# Build using default gcc for Base branches 7.0 and 3.15
+# Build on Linux using default gcc for Base branches 7.0 and 3.15
 
 jobs:
   include:
