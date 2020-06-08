@@ -73,6 +73,7 @@ seen_setups = []
 modules_to_compile = []
 setup = {}
 places = {}
+extra_makeargs = []
 
 is_base314 = False
 is_make3 = False
@@ -85,6 +86,7 @@ def clear_lists():
     global is_base314, has_test_results, silent_dep_builds, is_make3
     del seen_setups[:]
     del modules_to_compile[:]
+    del extra_makeargs[:]
     setup.clear()
     places.clear()
     is_base314 = False
@@ -328,6 +330,7 @@ def call_make(args=[], **kws):
     place = kws.get('cwd', os.getcwd())
     parallel = kws.pop('parallel', 2)
     silent = kws.pop('silent', False)
+    use_extra = kws.pop('use_extra', False)
     # no parallel make for Base 3.14
     if parallel <= 0 or is_base314:
         makeargs = []
@@ -337,6 +340,8 @@ def call_make(args=[], **kws):
             makeargs += ['-Otarget']
     if silent:
         makeargs += ['-s']
+    if use_extra:
+        makeargs += extra_makeargs
     logger.debug("EXEC '%s' in %s", ' '.join(['make'] + makeargs + args), place)
     sys.stdout.flush()
     exitcode = sp.call(['make'] + makeargs + args, **kws)
@@ -605,6 +610,11 @@ def setup_for_build(args):
             raise
 
     os.environ['PATH'] = os.pathsep.join([os.environ['PATH']] + addpaths)
+
+    # Add EXTRA make arguments
+    for tag in ['EXTRA', 'EXTRA1', 'EXTRA2', 'EXTRA3', 'EXTRA4', 'EXTRA5']:
+        if tag in os.environ:
+            extra_makeargs.append(os.environ[tag])
 
 
 def prepare(args):

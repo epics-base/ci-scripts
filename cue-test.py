@@ -681,8 +681,6 @@ class TestSetupForBuild(unittest.TestCase):
         sp.check_call(['choco', 'install', 'make'])
 
     def setUp(self):
-        os.environ.pop('EPICS_HOST_ARCH', None)
-        cue.clear_lists()
         if ci_service == 'appveyor':
             os.environ['CONFIGURATION'] = 'default'
         cue.detect_context()
@@ -810,6 +808,16 @@ class TestSetupForBuild(unittest.TestCase):
         cue.setup_for_build(self.args)
         self.assertTrue(cue.has_test_results, 'Target test-results not detected')
 
+    def test_ExtraMakeArgs(self):
+        os.environ['EXTRA'] = 'bla'
+        for ind in range(1,5):
+            os.environ['EXTRA{0}'.format(ind)] = 'bla {0}'.format(ind)
+        cue.setup_for_build(self.args)
+        self.assertTrue(cue.extra_makeargs[0] == 'bla', 'Extra make arg [0] not set')
+        for ind in range(1,5):
+            self.assertTrue(cue.extra_makeargs[ind] == 'bla {0}'.format(ind),
+                            'Extra make arg [{0}] not set (expected "bla {0}", found "{1}")'
+                            .format(ind, cue.extra_makeargs[ind]))
 
 if __name__ == "__main__":
     if 'VV' in os.environ and os.environ['VV'] == '1':
