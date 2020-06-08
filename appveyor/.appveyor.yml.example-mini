@@ -1,8 +1,6 @@
 # .appveyor.yml for use with EPICS Base ci-scripts
 # (see: https://github.com/epics-base/ci-scripts)
 
-# This is YAML - indentation levels are crucial
-
 cache:
   - C:\Users\appveyor\.tools
 
@@ -24,11 +22,11 @@ install:
 
 image: Visual Studio 2019
 
-# Build Configurations: dll/static, regular/debug
+# Build Configurations: shared/static, optimized/debug
 configuration:
-  - dynamic
+  - default
 #  - static
-  - dynamic-debug
+  - debug
 #  - static-debug
 
 environment:
@@ -58,15 +56,15 @@ matrix:
     CMP: vs2008
 
 build_script:
-  - cmd: python .ci/appveyor/do.py prepare
-  - cmd: python .ci/appveyor/do.py build
+  - cmd: python .ci/cue.py prepare
+  - cmd: python .ci/cue.py build
 
 test_script:
-  - cmd: python .ci/appveyor/do.py test
+  - cmd: python .ci/cue.py test
 
 on_finish:
   - ps: Get-ChildItem *.tap -Recurse -Force | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
-  - cmd: python .ci/appveyor/do.py build test-results -s
+  - cmd: python .ci/cue.py test-results
 
 notifications:
   - provider: GitHubPullRequest
