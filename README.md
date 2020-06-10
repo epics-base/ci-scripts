@@ -276,13 +276,6 @@ be advisable to clear the CI caches after updating ci-scripts. E.g.,
 a change in setting up EPICS Base will not be applied if Base is found 
 in the cache.
 
-**Why does running the scripts locally on my MacOS machine fail?**
-
-The ci-scripts for Travis-CI require Bash version 4.
-As Apple ships an older Bash for [political reasons][reddit.bash],
-you need to install a more recent Bash, e.g. using MacPorts
-or Homebrew.
-
 ## Release Numbering of this Module
 
 The module tries to apply [Semantic Versioning](https://semver.org/).
