@@ -254,9 +254,9 @@ def source_set(name):
                         setup[assign[0]] = assign[1]
             logger.debug('Done with setup file %s', set_file)
             break
-    else:
-        raise NameError("{0}Setup file {1} does not exist in SETUP_PATH search path ({2}){3}"
-                        .format(ANSI_RED, name, setup_dirs, ANSI_RESET))
+        else:
+            raise NameError("{0}Setup file {1}.set does not exist in SETUP_PATH search path ({2}){3}"
+                            .format(ANSI_RED, name, setup_dirs, ANSI_RESET))
 
 
 # update_release_local(var, location)
