@@ -514,7 +514,7 @@ def detect_epics_host_arch():
         ]
         for eha in eha_scripts:
             if os.path.exists(eha):
-                os.environ['EPICS_HOST_ARCH'] = sp.check_output(['perl', eha]).strip()
+                os.environ['EPICS_HOST_ARCH'] = sp.check_output(['perl', eha]).decode('ascii').strip()
                 logger.debug('%s returned: %s',
                              eha, os.environ['EPICS_HOST_ARCH'])
                 break
@@ -594,7 +594,7 @@ def setup_for_build(args):
                         has_test_results = True
 
     # Check make version
-    if re.match(r'^GNU Make 3', sp.check_output(['make', '-v'])):
+    if re.match(r'^GNU Make 3', sp.check_output(['make', '-v']).decode('ascii')):
         is_make3 = True
 
     # apparently %CD% is handled automagically
@@ -847,7 +847,8 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
                 stat = 'rebuilt'
             else:
                 stat = 'from cache'
-            commit = sp.check_output(['git', 'log', '-n1', '--oneline'], cwd=places[setup[mod + "_VARNAME"]]).strip()
+            commit = sp.check_output(['git', 'log', '-n1', '--oneline'], cwd=places[setup[mod + "_VARNAME"]])\
+                .decode('ascii').strip()
             print("%-10s %-12s %-11s %s" % (mod, setup[mod], stat, commit))
 
         print('{0}Contents of RELEASE.local{1}'.format(ANSI_CYAN, ANSI_RESET))

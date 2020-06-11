@@ -232,7 +232,7 @@ class TestAddDependencyUpToDateCheck(unittest.TestCase):
 
 
 def is_shallow_repo(place):
-    check = sp.check_output(['git', 'rev-parse', '--is-shallow-repository'], cwd=place).strip()
+    check = sp.check_output(['git', 'rev-parse', '--is-shallow-repository'], cwd=place).strip().decode('ascii')
     if check == '--is-shallow-repository':
         if os.path.exists(os.path.join(place, '.git', 'shallow')):
             check = 'true'
@@ -276,7 +276,7 @@ class TestAddDependencyOptions(unittest.TestCase):
         cue.setup['MCoreUtils_DEPTH'] = '3'
         cue.add_dependency('MCoreUtils')
         self.assertTrue(is_shallow_repo(self.location),
-                        'Module not checked out shallow (requested: default=5)')
+                        'Module not checked out shallow (requested: depth=3)')
 
     def test_AddMsiTo314(self):
         cue.complete_setup('BASE')
