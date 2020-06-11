@@ -74,6 +74,12 @@ jobs:
     install: python cue-test.py env
     script: python cue-test.py
 
+  - env: SET=test00 TRAVIS_COMPILER=gcc
+    language: python
+    python: "3.7"
+    install: python cue-test.py env
+    script: python cue-test.py
+
   - env: SET=test00
     os: osx
     install: python cue-test.py env
@@ -97,6 +103,10 @@ jobs:
 
   - env: SET=test01 BCFG=static-debug
     dist: trusty
+
+  - env: SET=test01 TRAVIS_COMPILER=gcc
+    language: python
+    python: "3.7"
 
   - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
   - env: SET=test01 BCFG=static
