@@ -117,6 +117,33 @@ for more details.
 
  5. Push your changes and check the CI service for your build results.
 
+## Calling the cue.py Script
+
+Independent from CI service and platform, the runner
+script is called from your main configuration as:
+
+`python .ci/cue.py <action>`
+
+where `<action>` is one of:
+
+`prepare`\
+Prepare the build by cloning Base and the configured dependency modules,
+set up the EPICS build system, then
+compile Base and these modules in the order they appear in the `MODULES`
+setting.
+
+`build`\
+Build your main module.
+
+`test`\
+Run the tests of your main module.
+
+`test-results`\
+Collect the results of your tests and print a summary.
+
+`exec`\
+Execute the remainder of the line using the default command shell.
+
 ## Setup Files
 
 Your module might depend on EPICS Base and a few other support modules.
@@ -132,19 +159,23 @@ combination of dependency releases, that do a few scans of the available
 for stable versions that many of your users have in production, one for the
 latest released versions and one for the development branches.
 
+A job uses a setup file if `SET=<setup>` (without the `.set` extension
+of the setup file) is set for the job in the main configuration file.
+
 ## Setup File Syntax
 
-Setup files are loaded by the build scripts. They are found by searching
+Setup files are loaded by the build script. They are found by searching
 the locations in `SETUP_PATH` (space or colon separated list of directories,
 relative to your module's root directory).
 
 Setup files can include other setup files by calling `include <setup>`
-(omitting the `.set` extension of the setup file). The configured
+(again omitting the `.set` extension of the setup file). The configured
 `SETUP_PATH` is searched for the include.
 
-Any `VAR=value` setting of a variable is only executed if `VAR` is unset or
-empty. That way any settings can be overridden by settings in the main
-configuration (e.g., `.travis.yml`).
+Any `VAR=value` setting of a variable in a setup file is only executed if
+`VAR` is unset or empty.
+That way any settings can be overridden by setting them in the job
+description inside the main configuration file (e.g., `.travis.yml`).
 
 Empty lines or lines starting with `#` are ignored.
 
@@ -153,8 +184,9 @@ by using their well-known slugs, separated by spaces.
 EPICS Base (slug: `base`) will always be a dependency and will be added and
 compiled first. The other dependencies are added and compiled in the order
 they are defined in `MODULES`.
+
 Modules needed only for specific jobs (e.g., on specific architectures)
-can be added in the main configuration file by setting `ADD_MODULES`
+can be added from the main configuration file by setting `ADD_MODULES`
 for the specific job(s).
 
 `REPOOWNER=<name>` sets the default GitHub owner (or organization) for all
@@ -219,30 +251,75 @@ in the service specific subdirectories:
 - [Travis-CI README](travis/README.md)
 - [AppVeyor README](appveyor/README.md)
 
-
 ## References: EPICS Modules Using ci-scripts
 
 [EPICS Base](https://github.com/epics-base/epics-base) and its submodules
 [pvData](https://github.com/epics-base/pvDataCPP),
 [pvAccess](https://github.com/epics-base/pvAccessCPP),
-[pva2pva](https://github.com/epics-base/pva2pva)
+[pva2pva](https://github.com/epics-base/pva2pva),
+[PVXS](https://github.com/mdavidsaver/pvxs)
 
 EPICS Modules:
 [ASYN](https://github.com/epics-modules/asyn),
 [devlib2](https://github.com/epics-modules/devlib2),
 [ecmc](https://github.com/epics-modules/ecmc),
+[gtest](https://github.com/epics-modules/gtest),
 [ip](https://github.com/epics-modules/ip),
 [lua](https://github.com/epics-modules/lua),
 [MCoreUtils](https://github.com/epics-modules/MCoreUtils),
 [modbus](https://github.com/epics-modules/modbus),
 [motor](https://github.com/epics-modules/motor),
+[OPCUA](https://github.com/ralphlange/opcua),
 [PCAS](https://github.com/epics-modules/pcas),
 [sscan](https://github.com/epics-modules/sscan),
 [vac](https://github.com/epics-modules/vac)
 
 ESS: [EtherCAT MC Motor Driver][ref.ethercatmc]
 
-ITER: [OPC UA Device Support](https://github.com/ralphlange/opcua)
+## Migration Hints
+
+Look for changes in the example configuration files, and check how they
+apply to your module.
+
+If comments in the example have changed, copy them to your configuration
+to always have up-to-date documentation in your file.
+
+### 2.x to 3.x Migration
+
+Update the script and test settings in your configuration to call the
+new script, following the example file.
+
+`python .ci/cue.py <action>`
+
+#### AppVeyor
+
+The `configuration:` setting options have changed; they are now
+`default`, `static`, `debug` and `static-debug`.
+
+MinGW builds are now using the `CMP: gcc` compiler setting.
+
+Adding arguments to make is supported through the `EXTRA` .. `EXTRA5`
+variables. Each variable value will be passed as one argument.
+
+#### Travis
+
+The new `BCFG` (build configuration) variable accepts the same options as
+the AppVeyor `configuration:` setting. Replace any`STATIC=YES` settings with
+`BCFG=static`.
+
+Remove `bash` in the `homebrew:` section of `addons:`. There are no more
+bash scripts.
+
+MinGW builds (cross-builds using WINE as well as native builds on Windows)
+are now using the `gcc` compiler setting.
+Since `gcc` is the default, you can simply remove `compiler: mingw` lines.
+
+For Windows, Travis offers native MinGW and Visual Studio 2017 compilers.
+Use `os: windows` and set `compiler:` to `gcc` or `vs2017`
+ for those builds.
+
+Chocolatey packages to be installed for the Windows jobs are set by adding
+them to the environment variable `CHOCO`.
 
 ## Frequently Asked Questions
 
@@ -251,7 +328,7 @@ ITER: [OPC UA Device Support](https://github.com/ralphlange/opcua)
 Set `VV=1` in the configuration line of the job you are interested in.
 This will make all builds (not just for your module) verbose.
 
-**How do I update my module to use a newer release of ci-scripts?**
+**How do I update my module to use a newer minor release of ci-scripts?**
 
 Update the submodule in `.ci` first, then change your CI configuration
 (if needed) and commit both to your module. E.g., to update your Travis
@@ -275,6 +352,11 @@ Depending on the changes contained in the ci-scripts update, it might
 be advisable to clear the CI caches after updating ci-scripts. E.g.,
 a change in setting up EPICS Base will not be applied if Base is found 
 in the cache.
+
+**How do I add a dependency module only for a specific job?**
+
+Add the additional dependency in the main configuration file by setting
+`ADD_MODULES` for the specific job(s).
 
 ## Release Numbering of this Module
 
