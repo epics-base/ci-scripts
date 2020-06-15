@@ -512,6 +512,28 @@ class TestTravisDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: shared-optimized)"
                          .format(cue.ci['configuration']))
 
+    def test_StaticGetsWarning(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'osx'
+        os.environ['TRAVIS_COMPILER'] = 'clang'
+        os.environ['STATIC'] = 'YES'
+        capturedOutput = getStringIO()
+        sys.stdout = capturedOutput
+        cue.detect_context()
+        sys.stdout = sys.__stdout__
+        self.assertRegexpMatches(capturedOutput.getvalue(), "Variable 'STATIC' not supported anymore")
+
+    def test_MisspelledBcfgGetsWarning(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'osx'
+        os.environ['TRAVIS_COMPILER'] = 'clang'
+        os.environ['BCFG'] = 'static-dubug'
+        capturedOutput = getStringIO()
+        sys.stdout = capturedOutput
+        cue.detect_context()
+        sys.stdout = sys.__stdout__
+        self.assertRegexpMatches(capturedOutput.getvalue(), "Unrecognized build configuration setting")
+
 
 @unittest.skipIf(ci_service != 'appveyor', 'Run appveyor tests only on appveyor')
 class TestAppveyorDetectContext(unittest.TestCase):
@@ -688,6 +710,28 @@ class TestAppveyorDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: shared-optimized)"
                          .format(cue.ci['configuration']))
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
+
+    def test_StaticGetsWarning(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'vs2019'
+        os.environ['STATIC'] = 'YES'
+        capturedOutput = getStringIO()
+        sys.stdout = capturedOutput
+        cue.detect_context()
+        sys.stdout = sys.__stdout__
+        self.assertRegexpMatches(capturedOutput.getvalue(), "Variable 'STATIC' not supported anymore")
+
+    def test_MisspelledConfigurationGetsWarning(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'vs2019'
+        os.environ['CONFIGURATION'] = 'static-dubug'
+        capturedOutput = getStringIO()
+        sys.stdout = capturedOutput
+        cue.detect_context()
+        sys.stdout = sys.__stdout__
+        self.assertRegexpMatches(capturedOutput.getvalue(), "Unrecognized build configuration setting")
 
 
 class TestSetupForBuild(unittest.TestCase):

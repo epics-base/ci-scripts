@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Detect the service and set up context hash accordingly
 def detect_context():
+    buildconfig = 'default'
     if 'TRAVIS' in os.environ:
         ci['service'] = 'travis'
         ci['os'] = os.environ['TRAVIS_OS_NAME']
@@ -27,10 +28,7 @@ def detect_context():
                 # Only Visual Studio 2017 available
                 ci['compiler'] = 'vs2017'
         if 'BCFG' in os.environ:
-            if re.search('static', os.environ['BCFG']):
-                ci['static'] = True
-            if re.search('debug', os.environ['BCFG']):
-                ci['debug'] = True
+            buildconfig = os.environ['BCFG'].lower()
 
     if 'APPVEYOR' in os.environ:
         ci['service'] = 'appveyor'
@@ -43,10 +41,21 @@ def detect_context():
         ci['platform'] = os.environ['PLATFORM'].lower()
         if 'CMP' in os.environ:
             ci['compiler'] = os.environ['CMP']
-        if re.search('static', os.environ['CONFIGURATION']):
-            ci['static'] = True
-        if re.search('debug', os.environ['CONFIGURATION']):
-            ci['debug'] = True
+        buildconfig = os.environ['CONFIGURATION'].lower()
+
+    if 'STATIC' in os.environ:
+        print("{0}WARNING: Variable 'STATIC' not supported anymore; use 'BCFG' instead{1}"
+              .format(ANSI_RED, ANSI_RESET))
+        sys.stdout.flush()
+    if not re.match(r'^((default|static|shared|dynamic|optimized|debug)-?)+$', buildconfig):
+        print("{0}WARNING: Unrecognized build configuration setting '{1}'{2}"
+              .format(ANSI_RED, buildconfig, ANSI_RESET))
+        sys.stdout.flush()
+
+    if re.search('static', buildconfig):
+        ci['static'] = True
+    if re.search('debug', buildconfig):
+        ci['debug'] = True
 
     if ci['static']:
         ci['configuration'] = 'static'
