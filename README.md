@@ -2,7 +2,7 @@
 <a target="_blank" href="https://travis-ci.org/epics-base/ci-scripts">![Travis status][badge.travis]</a>
 <a target="_blank" href="https://ci.appveyor.com/project/epics-base/ci-scripts">![AppVeyor status][badge.appveyor]</a>
 
-# Continuous Integration Scripts for EPICS Modules
+# Continuous Integration for EPICS Modules
 
 The scripts inside this repository are intended to provide a common,
 easy-to-use and flexible way to add Continuous Integration to EPICS
@@ -16,7 +16,7 @@ including a way to specify sets of dependent modules
 By using the submodule mechanism, your module will always use an
 explicit commit, i.e. a fixed version of the scripts.
 This ensures that any further development of the ci-scripts will
-never break existing use.
+never break your existing use.
 
 ## This Repository
 
@@ -25,20 +25,23 @@ contains service specific documentation and example configuration files
 (in the subdirectories), and a small test suite that is used to verify
 functionality and features of the ci-scripts module itself
 
-You are welcome to use the test suite as a reference, but keep in
+The example files are your best reference. They are kept up-to-date and
+show a fully-featured and a minimal setup.
+
+You are welcome to use the test suite as a secondary reference, but keep in
 mind that in your main module the path to the scripts has one level more
 (e.g., `./abc` here would be `./.ci/abc` in your
 module).
-Also, a test suite might not show the same quality and documentation levels
-as an example.
+Also, the test suite does not show the same quality and documentation
+levels as the example files.
 
 ## Features
 
  - Compile against different branches or releases of EPICS Base and
    additional dependencies (modules like asyn, std, sequencer, etc.).
 
- - Define settings files that declare sets of dependencies
-   with their versions and locations.
+ - Define setup files that declare sets of dependencies with their
+   versions and locations.
 
  - Define hooks for any dependency.
    Hooks are run on the dependency module before it is compiled, so
@@ -119,8 +122,8 @@ for more details.
 
 ## Calling the cue.py Script
 
-Independent from CI service and platform, the runner
-script is called from your main configuration as:
+Independent from CI service and platform, the runner script is called
+from your main configuration as:
 
 `python .ci/cue.py <action>`
 
@@ -326,25 +329,25 @@ them to the environment variable `CHOCO`.
 
 ## Frequently Asked Questions
 
-**How can I see what the dependency building jobs are actually doing?**
+##### How can I see what the dependency building jobs are actually doing?
 
 Set `VV=1` in the configuration line of the job you are interested in.
 This will make all builds (not just for your module) verbose.
 
-**How do I update my module to use a newer minor release of ci-scripts?**
+##### How do I update my module to use a newer minor release of ci-scripts?
 
 Update the submodule in `.ci` first, then change your CI configuration
 (if needed) and commit both to your module. E.g., to update your Travis
-setup to release 2.3.5 of ci-scripts:
+setup to release 3.0.1 of ci-scripts:
 ```bash
 cd .ci
-git pull origin v2.3.5
+git pull origin v3.0.1
 cd -
 git add .ci
   # if needed:
-  edit .travis.yml
+  edit .travis.yml      # and/or .appveyor.yml
   git add .travis.yml
-git commit -m "Update ci-scripts submodule to v2.3.5"
+git commit -m "Update ci-scripts submodule to v3.0.1"
 ```
 
 Check the example configuration files inside ci-scripts (and their
@@ -356,10 +359,16 @@ be advisable to clear the CI caches after updating ci-scripts. E.g.,
 a change in setting up EPICS Base will not be applied if Base is found 
 in the cache.
 
-**How do I add a dependency module only for a specific job?**
+##### How do I add a dependency module only for a specific job?
 
 Add the additional dependency in the main configuration file by setting
 `ADD_MODULES` for the specific job(s).
+
+##### Why the name _cue_?
+
+The noun _cue_ is defined as "_a signal (such as a word, phrase, or bit of
+stage business) to a performer to begin a specific speech or action_".
+(Merriam-Webster)
 
 ## Release Numbering of this Module
 
@@ -374,6 +383,7 @@ is created.
 
 Minor release numbers refer to additions and enhancements that do not
 require the configuration inside an existing user module to be changed.
+(Unless for using a new feature.)
 
 Again: using the git submodule mechanism to include these scripts means
 that user modules always work with a fixed, frozen version.
