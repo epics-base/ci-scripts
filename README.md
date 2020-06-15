@@ -20,58 +20,70 @@ never break existing use.
 
 ## This Repository
 
-In addition to the scripts themselves (in the subdirectories),
-this repository contains the test suite that is used to verify
-functionality and features of the ci-scripts.
+In addition to the script that runs the builds and tests, this repository
+contains service specific documentation and example configuration files
+(in the subdirectories), and a small test suite that is used to verify
+functionality and features of the ci-scripts module itself
 
 You are welcome to use the test suite as a reference, but keep in
-mind that in your module the path to the scripts has one level more
-(e.g., `./travis/abc` here would be `./.ci/travis/abc` in your
+mind that in your main module the path to the scripts has one level more
+(e.g., `./abc` here would be `./.ci/abc` in your
 module).
-Also, a test suite might not show the same level of quality as an
-example.
+Also, a test suite might not show the same quality and documentation levels
+as an example.
 
 ## Features
 
  - Compile against different branches or releases of EPICS Base and
-   additional dependencies (modules like asyn, std, etc.).
+   additional dependencies (modules like asyn, std, sequencer, etc.).
 
  - Define settings files that declare sets of dependencies
    with their versions and locations.
 
- - Define hook scripts for any dependency.
+ - Define hooks for any dependency.
    Hooks are run on the dependency module before it is compiled, so
    the module can be patched or further configured.
 
- - Define static or shared builds (executables, libraries).
+ - Define shared (default) or static builds (for executables and libraries).
+ 
+ - Define optimized (default) or debug builds.
 
- - Run tests (using the EPICS unit test suite).
+ - Run tests (using the EPICS build system, i.e., `make runtests`
+   and friends).
 
 ## Supported CI Services
 
 ### [Travis-CI](https://travis-ci.org/)
+ - Five parallel runners on Linux/Windows (one runner on MacOS)
  - Use different compilers (gcc, clang)
  - Use different gcc versions
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.16.2)
- - Compile on MacOS
- - Built dependencies are cached (for faster builds)
+ - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Compile natively on MacOS (clang)
+ - Compile natively on Windows (gcc/MinGW, Visual Studio 2017)
+ - Built dependencies are cached (for faster builds).
  
-See specific **[ci-scripts on Travis-CI README](travis/README.md)** for more details.
+See specific
+**[ci-scripts on Travis-CI README](travis/README.md)**
+for more details.
 
 ### [AppVeyor](https://www.appveyor.com/)
- - Use different compilers (Visual Studio, MinGW)
+ - One parallel runner (all builds are sequential)
+ - Use different compilers (Visual Studio, gcc/MinGW)
  - Use different Visual Studio versions: \
-  2008, 2010, 2012, 2013, 2015, 2017, 2019
+   2008, 2010, 2012, 2013, 2015, 2017, 2019
  - Compile for Windows 32bit and 64bit
+ - No useful caching available.
 
-See specific **[ci-scripts on AppVeyor README](appveyor/README.md)** for more details.
+See specific
+**[ci-scripts on AppVeyor README](appveyor/README.md)**
+for more details.
 
 ## How to Use the CI-Scripts
 
  1. Get an account on a supported CI service provider platform.
     (e.g. [Travis-CI](https://travis-ci.org/),
-    [AppVeyor](https://www.appveyor.com/), Azure Pipelines...)
+    [AppVeyor](https://www.appveyor.com/), ...)
 
     (More details in the specific README of the subdirectory.)
 
@@ -94,8 +106,8 @@ See specific **[ci-scripts on AppVeyor README](appveyor/README.md)** for more de
     ```
     will compile against the EPICS Base 3.15 branch, the Sequencer
     release 2.2.8 and release 4.34 of asyn.
-    (Any settings can be overridden from the specific job configuration
-    in e.g. `.travis.yml`.)
+    (Any settings can be overridden from the specific job line
+    in the service configuration, e.g., `.travis.yml`.)
 
  4. Create a configuration for the CI service by copying one of
     the examples provided in the service specific subdirectory
@@ -105,14 +117,41 @@ See specific **[ci-scripts on AppVeyor README](appveyor/README.md)** for more de
 
  5. Push your changes and check the CI service for your build results.
 
+## Calling the cue.py Script
+
+Independent from CI service and platform, the runner
+script is called from your main configuration as:
+
+`python .ci/cue.py <action>`
+
+where `<action>` is one of:
+
+`prepare`\
+Prepare the build by cloning Base and the configured dependency modules,
+set up the EPICS build system, then
+compile Base and these modules in the order they appear in the `MODULES`
+setting.
+
+`build`\
+Build your main module.
+
+`test`\
+Run the tests of your main module.
+
+`test-results`\
+Collect the results of your tests and print a summary.
+
+`exec`\
+Execute the remainder of the line using the default command shell.
+
 ## Setup Files
 
 Your module might depend on EPICS Base and a few other support modules.
 (E.g., a specific driver might need StreamDevice, ASYN and the Sequencer.)
 In that case, building against every possible combination of released
 versions of those dependencies is not possible:
-Base (37) x StreamDevice (50) x ASYN (40) x Sequencer (51) would produce
-more than 3.7 million different combinations, i.e. build jobs.
+Base (39) x StreamDevice (50) x ASYN (40) x Sequencer (52) would produce
+more than 4 million different combinations, i.e. build jobs.
 
 A more reasonable approach is to create a few setups, each being a
 combination of dependency releases, that do a few scans of the available
@@ -120,19 +159,23 @@ combination of dependency releases, that do a few scans of the available
 for stable versions that many of your users have in production, one for the
 latest released versions and one for the development branches.
 
+A job uses a setup file if `SET=<setup>` (without the `.set` extension
+of the setup file) is set for the job in the main configuration file.
+
 ## Setup File Syntax
 
-Setup files are loaded by the build scripts. They are found by searching
+Setup files are loaded by the build script. They are found by searching
 the locations in `SETUP_PATH` (space or colon separated list of directories,
 relative to your module's root directory).
 
 Setup files can include other setup files by calling `include <setup>`
-(omitting the `.set` extension of the setup file). The configured
+(again omitting the `.set` extension of the setup file). The configured
 `SETUP_PATH` is searched for the include.
 
-Any `VAR=value` setting of a variable is only executed if `VAR` is unset or
-empty. That way any settings can be overridden by settings in the main
-configuration (e.g., `.travis.yml`).
+Any `VAR=value` setting of a variable in a setup file is only executed if
+`VAR` is unset or empty.
+That way any settings can be overridden by setting them in the job
+description inside the main configuration file (e.g., `.travis.yml`).
 
 Empty lines or lines starting with `#` are ignored.
 
@@ -141,8 +184,9 @@ by using their well-known slugs, separated by spaces.
 EPICS Base (slug: `base`) will always be a dependency and will be added and
 compiled first. The other dependencies are added and compiled in the order
 they are defined in `MODULES`.
+
 Modules needed only for specific jobs (e.g., on specific architectures)
-can be added in the main configuration file by setting `ADD_MODULES`
+can be added from the main configuration file by setting `ADD_MODULES`
 for the specific job(s).
 
 `REPOOWNER=<name>` sets the default GitHub owner (or organization) for all
@@ -201,29 +245,84 @@ builds to higher verbosity.
 For debugging on your local machine, you may set `CACHEDIR` to change the 
 location for the dependency builds. [default is `$HOME/.cache`]
 
+Set `PARALLEL_MAKE` to the number of parallel make jobs that you want your
+build to use. [default is the number of CPUs on the runner]
+
+Service specific options are described in the README files
+in the service specific subdirectories:
+
+- [Travis-CI README](travis/README.md)
+- [AppVeyor README](appveyor/README.md)
+
 ## References: EPICS Modules Using ci-scripts
 
 [EPICS Base](https://github.com/epics-base/epics-base) and its submodules
 [pvData](https://github.com/epics-base/pvDataCPP),
 [pvAccess](https://github.com/epics-base/pvAccessCPP),
-[pva2pva](https://github.com/epics-base/pva2pva)
+[pva2pva](https://github.com/epics-base/pva2pva),
+[PVXS](https://github.com/mdavidsaver/pvxs)
 
 EPICS Modules:
 [ASYN](https://github.com/epics-modules/asyn),
 [devlib2](https://github.com/epics-modules/devlib2),
 [ecmc](https://github.com/epics-modules/ecmc),
+[gtest](https://github.com/epics-modules/gtest),
 [ip](https://github.com/epics-modules/ip),
 [lua](https://github.com/epics-modules/lua),
 [MCoreUtils](https://github.com/epics-modules/MCoreUtils),
 [modbus](https://github.com/epics-modules/modbus),
 [motor](https://github.com/epics-modules/motor),
+[OPCUA](https://github.com/ralphlange/opcua),
 [PCAS](https://github.com/epics-modules/pcas),
 [sscan](https://github.com/epics-modules/sscan),
 [vac](https://github.com/epics-modules/vac)
 
 ESS: [EtherCAT MC Motor Driver][ref.ethercatmc]
 
-ITER: [OPC UA Device Support](https://github.com/ralphlange/opcua)
+## Migration Hints
+
+Look for changes in the example configuration files, and check how they
+apply to your module.
+
+If comments in the example have changed, copy them to your configuration
+to always have up-to-date documentation in your file.
+
+### 2.x to 3.x Migration
+
+Update the script and test settings in your configuration to call the
+new script, following the example file.
+
+`python .ci/cue.py <action>`
+
+#### AppVeyor
+
+The `configuration:` setting options have changed; they are now
+`default`, `static`, `debug` and `static-debug`.
+
+MinGW builds are now using the `CMP: gcc` compiler setting.
+
+Adding arguments to make is supported through the `EXTRA` .. `EXTRA5`
+variables. Each variable value will be passed as one argument.
+
+#### Travis
+
+The new `BCFG` (build configuration) variable accepts the same options as
+the AppVeyor `configuration:` setting. Replace any`STATIC=YES` settings with
+`BCFG=static`.
+
+Remove `bash` in the `homebrew:` section of `addons:`. There are no more
+bash scripts.
+
+MinGW builds (cross-builds using WINE as well as native builds on Windows)
+are now using the `gcc` compiler setting.
+Since `gcc` is the default, you can simply remove `compiler: mingw` lines.
+
+For Windows, Travis offers native MinGW and Visual Studio 2017 compilers.
+Use `os: windows` and set `compiler:` to `gcc` or `vs2017`
+ for those builds.
+
+Chocolatey packages to be installed for the Windows jobs are set by adding
+them to the environment variable `CHOCO`.
 
 ## Frequently Asked Questions
 
@@ -232,7 +331,7 @@ ITER: [OPC UA Device Support](https://github.com/ralphlange/opcua)
 Set `VV=1` in the configuration line of the job you are interested in.
 This will make all builds (not just for your module) verbose.
 
-**How do I update my module to use a newer release of ci-scripts?**
+**How do I update my module to use a newer minor release of ci-scripts?**
 
 Update the submodule in `.ci` first, then change your CI configuration
 (if needed) and commit both to your module. E.g., to update your Travis
@@ -257,12 +356,10 @@ be advisable to clear the CI caches after updating ci-scripts. E.g.,
 a change in setting up EPICS Base will not be applied if Base is found 
 in the cache.
 
-**Why does running the scripts locally on my MacOS machine fail?**
+**How do I add a dependency module only for a specific job?**
 
-The ci-scripts for Travis-CI require Bash version 4.
-As Apple ships an older Bash for [political reasons][reddit.bash],
-you need to install a more recent Bash, e.g. using MacPorts
-or Homebrew.
+Add the additional dependency in the main configuration file by setting
+`ADD_MODULES` for the specific job(s).
 
 ## Release Numbering of this Module
 

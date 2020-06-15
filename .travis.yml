@@ -16,6 +16,9 @@ cache:
 env:
   global:
     - SETUP_PATH=.:.ci
+    - VV=1
+    - CHOCO=re2c
+    - BASE_RECURSIVE=NO
 
 addons:
   apt:
@@ -30,14 +33,15 @@ addons:
   homebrew:
     packages:
     - re2c
-    - bash
     update: true
 
 install:
-  - ./travis/prepare.sh
+  - python cue.py prepare
 
 script:
-  - ./travis-test.sh
+  - python cue.py build
+  - python cue.py test
+  - python cue.py test-results
 
 # If you need to do more during install and build,
 # add a local directory to your module and do e.g.
@@ -46,136 +50,125 @@ script:
 # Define build jobs
 
 # Well-known variables to use
-# SET      source setup file
-# EXTRA    content will be added to make command line
-# STATIC   set to YES for static build (default: NO)
-# TEST     set to NO to skip running the tests (default: YES)
-# VV       set to make build scripts verbose (default: unset)
+# SET         source setup file
+# ADD_MODULES extra modules (for a specific job)
+# EXTRA       content will be added to make command line
+# BCFG        build configuration (static/debug/static-debug;
+#             default: shared-optimized)
+# TEST        set to NO to skip running the tests (default: YES)
+# VV          set to make build scripts verbose (default: unset)
 
 # Usually from setup files, but may be specified or overridden
 #  on a job line
-# MODULES  list of dependency modules
-# BASE     branch or release tag name of the EPICS Base to use
-# <MODULE> branch or release tag for a specific module
-# ...      see README for setup file syntax description
+# MODULES     list of dependency modules
+# BASE        branch or release tag name of the EPICS Base to use
+# <MODULE>    branch or release tag for a specific module
+# ...         see README for setup file syntax description
 
 jobs:
   include:
 
-# Run unit tests on Linux and Mac
+# Run unit tests
 
   - env: SET=test00
+    install: python cue-test.py env
+    script: python cue-test.py
+
+  - env: SET=test00 TRAVIS_COMPILER=gcc
+    language: python
+    python: "3.7"
+    install: python cue-test.py env
+    script: python cue-test.py
 
   - env: SET=test00
     os: osx
+    install: python cue-test.py env
+    script: python cue-test.py
 
-# Compile the example application
-# using the build configurations from full makeBaseApp example
+  - env: SET=test00
+    os: windows
+    install: python cue-test.py env
+    script: python cue-test.py
+
+# Compile example
 
   - env: SET=test01
+    dist: bionic
 
-# On the side: test ADD_MODULES
-  - env: SET=test01 ADD_MODULES=ipac
-    compiler: clang
+  - env: SET=test01 BCFG=static-debug
+    dist: bionic
 
-  - env: VV="" SET=test01
-
-  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
-
-  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
-    compiler: clang
-
-# trusty is pretty close to RHEL7
   - env: SET=test01
     dist: trusty
 
-  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
+  - env: SET=test01 BCFG=static-debug
     dist: trusty
 
-# Cross-compilation to Windows using MinGW and WINE
+  - env: SET=test01 TRAVIS_COMPILER=gcc
+    language: python
+    python: "3.7"
 
-  - env: SET=test01 WINE=32 TEST=NO STATIC=YES
-    compiler: mingw
+  - env: SET=test01 EXTRA="CMD_CXXFLAGS=-std=c++11"
+  - env: SET=test01 BCFG=static
+  - env: SET=test01 BCFG=debug
+  - env: SET=test01 BCFG=static-debug
 
-  - env: SET=test01 WINE=64 TEST=NO STATIC=YES
-    compiler: mingw
+  - env: SET=test01
+    compiler: clang
 
-# dynamic (DLL) builds are broken on xenial
-  - env: SET=test01 WINE=32 TEST=NO STATIC=NO
-    dist: bionic
-    compiler: mingw
+  - env: SET=test01 BCFG=static-debug
+    compiler: clang
 
-  - env: SET=test01 WINE=64 TEST=NO STATIC=NO
-    dist: bionic
-    compiler: mingw
+  - os: osx
+    env:
+      - SET=test01
+      - EXTRA=CMD_CFLAGS="-mmacosx-version-min=10.7"
+      - EXTRA1=CMD_CXXFLAGS="-mmacosx-version-min=10.7 -std=c++11 -stdlib=libc++"
+      - EXTRA2=CMD_LDXFLAGS="-mmacosx-version-min=10.7 -std=c++11 -stdlib=libc++"
+    compiler: clang
 
-# Cross-compilation to RTEMS
-# (needs EPICS Base >= 3.16.2)
+  - env: SET=test01 BCFG=debug
+    os: osx
+    compiler: clang
+
+  - env: SET=test01 WINE=32 TEST=NO
+  - env: SET=test01 WINE=32 TEST=NO BCFG=static
+  - env: SET=test01 WINE=32 TEST=NO BCFG=debug
+  - env: SET=test01 WINE=32 TEST=NO BCFG=static-debug
+
+  - env: SET=test01 WINE=64 TEST=NO
+  - env: SET=test01 WINE=64 TEST=NO BCFG=static
+  - env: SET=test01 WINE=64 TEST=NO BCFG=debug
+  - env: SET=test01 WINE=64 TEST=NO BCFG=static-debug
+
+  - env: SET=test01 RTEMS=4.9 BASE=3.15 TEST=NO
+  - env: SET=test01 RTEMS=4.9 BASE=3.15 TEST=NO BCFG=static
+  - env: SET=test01 RTEMS=4.9 BASE=3.15 TEST=NO BCFG=debug
+  - env: SET=test01 RTEMS=4.9 BASE=3.15 TEST=NO BCFG=static-debug
 
   - env: SET=test01 RTEMS=4.10
-
-  - env: SET=test01 RTEMS=4.9
-
-# Other gcc versions (adding as an extra package)
-
-  - env: SET=test01
-    compiler: gcc-6
-    addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
+  - env: SET=test01 RTEMS=4.10 BCFG=static
+  - env: SET=test01 RTEMS=4.10 BCFG=debug
+  - env: SET=test01 RTEMS=4.10 BCFG=static-debug
 
   - env: SET=test01
-    compiler: gcc-7
-    addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
+    os: windows
+  - env: SET=test01 BCFG=static
+    os: windows
+  - env: SET=test01 BCFG=debug
+    os: windows
+  - env: SET=test01 BCFG=static-debug
+    os: windows
 
-# MacOS build
-
-# SNCSEQ 2.2.7 fails to build on MacOS; currently needs master
-  - env: SET=test01 SNCSEQ=master
-    os: osx
-    compiler: clang
-
-# Base 3.15 builds
-# ================
-
-  - env: BASE=R3.15.7 SET=test01
-
-  - env: BASE=R3.15.7 SET=test01 WINE=64 TEST=NO STATIC=YES
-    dist: bionic
-    compiler: mingw
-
-# The DLL build for this Base version is known to fail
-#  - env: BASE=R3.15.7 SET=test01 WINE=64 TEST=NO STATIC=NO
-#    dist: bionic
-#    compiler: mingw
-
-# Cross-compilation to RTEMS
-# (needs EPICS Base >= 3.16.2)
-
-  - env: BASE=R3.16.2 SET=test01 RTEMS=4.10
-    dist: trusty
-
-  - env: BASE=R3.16.2 SET=test01 RTEMS=4.9
-    dist: trusty
-
-# SNCSEQ 2.2.7 fails to build on MacOS; currently needs master
-  - env: BASE=R3.15.7 SET=test01 SNCSEQ=master
-    os: osx
-    compiler: clang
-
-# Base 3.14 builds
-# ================
-
-  - env: BASE=R3.14.12.8 SET=test01
-
-  - env: BASE=R3.14.12.8 SET=test01 WINE=64 TEST=NO STATIC=YES
-    dist: bionic
-    compiler: mingw
-
-# The DLL build for this Base version is known to fail
-#  - env: BASE=R3.14.12.8 SET=test01 WINE=64 TEST=NO STATIC=NO
-#    dist: bionic
-#    compiler: mingw
-
-# SNCSEQ 2.2.7 fails to build on MacOS; currently needs master
-  - env: BASE=R3.14.12.8 SET=test01 SNCSEQ=master
-    os: osx
-    compiler: clang
+  - env: SET=test01
+    compiler: vs2017
+    os: windows
+  - env: SET=test01 BCFG=static
+    compiler: vs2017
+    os: windows
+  - env: SET=test01 BCFG=debug
+    compiler: vs2017
+    os: windows
+  - env: SET=test01 BCFG=static-debug
+    compiler: vs2017
+    os: windows

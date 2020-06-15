@@ -55,11 +55,11 @@ install:
 # Default build worker image
 image: Visual Studio 2015
 
-# Build Configurations: dll/static, regular/debug
+# Build Configurations: shared/static, optimized/debug
 configuration:
-  - dynamic
+  - default
   - static
-  - dynamic-debug
+  - debug
   - static-debug
 
 # Environment variables: compiler toolchain, base version, setup file, ...
@@ -74,7 +74,7 @@ environment:
   - CMP: vs2019
     SET: test00
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  - CMP: mingw
+  - CMP: gcc
   - CMP: vs2019
     VV: 0
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
@@ -86,6 +86,9 @@ environment:
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - CMP: vs2017
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    EXTRA: EXTRA_DEF="extra"
+    EXTRA1: EXTRA1_DEF="extra 1"
+    EXTRA2: EXTRA2_DEF="extra 2"
   - CMP: vs2015
   - CMP: vs2013
   - CMP: vs2012
@@ -111,7 +114,7 @@ matrix:
     SET: test00
   - configuration: static
     SET: test00
-  - configuration: dynamic-debug
+  - configuration: debug
     SET: test00
   - configuration: static-debug
     SET: test00
@@ -130,7 +133,7 @@ for:
     only:
       - SET: test00
   build_script:
-    - cmd: python appveyor-test.py
+    - cmd: python cue-test.py
   test_script:
     - cmd: echo Tests have been run in the build phase
 
@@ -139,11 +142,12 @@ for:
 #---------------------------------#
 
 build_script:
-  - cmd: python appveyor/do.py prepare
-  - cmd: python appveyor/do.py build
+  - cmd: python cue.py prepare
+  - cmd: python cue.py build
 
 test_script:
-  - cmd: python appveyor/do.py test
+  - cmd: python cue.py test
+  - cmd: python cue.py test-results
 
 #---------------------------------#
 #         debugging               #

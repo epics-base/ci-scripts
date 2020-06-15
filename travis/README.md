@@ -2,12 +2,14 @@
 
 ## Features
 
+ - Five parallel runners on Linux/Windows (one runner on MacOS)
  - Use different compilers (gcc, clang)
  - Use different gcc versions
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10
- - Compile on MacOS
- - Released versions of dependencies are cached (for faster builds)
+ - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Compile natively on MacOS (clang)
+ - Compile natively on Windows (gcc/MinGW, Visual Studio 2017)
+ - Built dependencies are cached (for faster builds).
 
 ## How to Use these Scripts
 
@@ -34,7 +36,7 @@
     Travis to run.
 
     Build jobs are declared in the list following the `jobs: include:`
-    declaration. Each element (starting with `-` in column 3) defines the
+    declaration. Each element (starting with a dash) defines the
     settings for one build job. `env:` controls the setting of environment
     variables,`dist:` specifies the Linux distribution,
     `os:` the operating system.

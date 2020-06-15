@@ -56,23 +56,45 @@ install:
 # Default build worker image
 image: Visual Studio 2015
 
-# Build Configurations: dll/static, regular/debug
+# Build Configurations: shared/static, optimized/debug
 configuration:
-  - dynamic
+  - default
   - static
-  - dynamic-debug
+  - debug
   - static-debug
 
-# Environment variables: compiler toolchain, base version, setup file, ...
+# Environment variables
+
+# Well-known variables to use
+# CMP         compiler to use ('gcc' for native MinGW, 'vs...' for Visual Studio)
+# SET         source setup file
+# ADD_MODULES extra modules (for a specific job)
+# TEST        set to NO to skip running the tests (default: YES)
+# VV          set VV=1 to make build scripts verbose (default: unset)
+# EXTRA       content will be added to make command line
+# EXTRA1..5   more additional arguments for the make command
+#             (one argument per variable)
+
+# Usually from setup files, but may be specified or overridden
+#  on a job line
+# MODULES     list of dependency modules
+# BASE        branch or release tag name of the EPICS Base to use
+# <MODULE>    branch or release tag for a specific module
+# ...         see README for setup file syntax description
+
+# AppVeyor specific
+# APPVEYOR_BUILD_WORKER_IMAGE  run job using specified VM image
+#                              (not the one from the image: line above)
+
 environment:
   # common / default variables for all jobs
   SETUP_PATH: .ci-local:.ci
+  BASE: 7.0
 
   matrix:
   - CMP: vs2019
-    SET: test00
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  - CMP: mingw
+  - CMP: gcc
   - CMP: vs2019
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - CMP: vs2019
@@ -116,15 +138,15 @@ matrix:
 #---------------------------------#
 
 build_script:
-  - cmd: python .ci/appveyor/do.py prepare
-  - cmd: python .ci/appveyor/do.py build
+  - cmd: python .ci/cue.py prepare
+  - cmd: python .ci/cue.py build
 
 test_script:
-  - cmd: python .ci/appveyor/do.py test
+  - cmd: python .ci/cue.py test
 
 on_finish:
   - ps: Get-ChildItem *.tap -Recurse -Force | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
-  - cmd: python .ci/appveyor/do.py build test-results -s
+  - cmd: python .ci/cue.py test-results
 
 #---------------------------------#
 #         debugging               #
