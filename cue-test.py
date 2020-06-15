@@ -332,14 +332,18 @@ class TestVCVars(unittest.TestCase):
 
 @unittest.skipIf(ci_service != 'travis', 'Run travis tests only on travis')
 class TestTravisDetectContext(unittest.TestCase):
-    def tearDown(self):
-        cue.clear_lists()
-        os.environ.pop('BCFG', None)
-
-    def test_LinuxGccNone(self):
+    def setUp(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'linux'
         os.environ['TRAVIS_COMPILER'] = 'gcc'
+
+    def tearDown(self):
+        cue.clear_lists()
+        os.environ.pop('BCFG', None)
+        os.environ.pop('TEST', None)
+        os.environ.pop('STATIC', None)
+
+    def test_LinuxGccNone(self):
         cue.detect_context()
         self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
                          .format(cue.ci['service']))
@@ -356,8 +360,6 @@ class TestTravisDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_LinuxClangNone(self):
-        os.environ['TRAVIS'] = 'true'
-        os.environ['TRAVIS_OS_NAME'] = 'linux'
         os.environ['TRAVIS_COMPILER'] = 'clang'
         cue.detect_context()
         self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
@@ -375,9 +377,6 @@ class TestTravisDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_BcfgShared(self):
-        os.environ['TRAVIS'] = 'true'
-        os.environ['TRAVIS_OS_NAME'] = 'linux'
-        os.environ['TRAVIS_COMPILER'] = 'gcc'
         os.environ['BCFG'] = 'shared'
         cue.detect_context()
         self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
@@ -387,9 +386,6 @@ class TestTravisDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_BcfgStatic(self):
-        os.environ['TRAVIS'] = 'true'
-        os.environ['TRAVIS_OS_NAME'] = 'linux'
-        os.environ['TRAVIS_COMPILER'] = 'gcc'
         os.environ['BCFG'] = 'static'
         cue.detect_context()
         self.assertTrue(cue.ci['static'], "ci['static'] is False (expected: True)")
@@ -399,9 +395,6 @@ class TestTravisDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_BcfgDebug(self):
-        os.environ['TRAVIS'] = 'true'
-        os.environ['TRAVIS_OS_NAME'] = 'linux'
-        os.environ['TRAVIS_COMPILER'] = 'gcc'
         os.environ['BCFG'] = 'debug'
         cue.detect_context()
         self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
@@ -411,9 +404,6 @@ class TestTravisDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_BcfgStaticDebug(self):
-        os.environ['TRAVIS'] = 'true'
-        os.environ['TRAVIS_OS_NAME'] = 'linux'
-        os.environ['TRAVIS_COMPILER'] = 'gcc'
         os.environ['BCFG'] = 'static-debug'
         cue.detect_context()
         self.assertTrue(cue.ci['static'], "ci['static'] is False (expected: True)")
@@ -423,17 +413,12 @@ class TestTravisDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_TestNo(self):
-        os.environ['TRAVIS'] = 'true'
-        os.environ['TRAVIS_OS_NAME'] = 'linux'
-        os.environ['TRAVIS_COMPILER'] = 'gcc'
         os.environ['TEST'] = 'NO'
         cue.detect_context()
         self.assertFalse(cue.ci['test'], "ci['test'] is True (expected: False)")
 
     def test_WindowsGccNone(self):
-        os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'windows'
-        os.environ['TRAVIS_COMPILER'] = 'gcc'
         cue.detect_context()
         self.assertEqual(cue.ci['service'], 'travis', "ci['service'] is {0} (expected: travis)"
                          .format(cue.ci['service']))
@@ -452,7 +437,6 @@ class TestTravisDetectContext(unittest.TestCase):
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
     def test_WindowsVs2017None(self):
-        os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'windows'
         os.environ['TRAVIS_COMPILER'] = 'vs2017'
         cue.detect_context()
@@ -473,7 +457,6 @@ class TestTravisDetectContext(unittest.TestCase):
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
     def test_WindowsVs2019None(self):
-        os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'windows'
         os.environ['TRAVIS_COMPILER'] = 'vs2019'
         cue.detect_context()
@@ -494,7 +477,6 @@ class TestTravisDetectContext(unittest.TestCase):
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
     def test_OsxClangNone(self):
-        os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'osx'
         os.environ['TRAVIS_COMPILER'] = 'clang'
         cue.detect_context()
@@ -513,9 +495,6 @@ class TestTravisDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_StaticGetsWarning(self):
-        os.environ['TRAVIS'] = 'true'
-        os.environ['TRAVIS_OS_NAME'] = 'osx'
-        os.environ['TRAVIS_COMPILER'] = 'clang'
         os.environ['STATIC'] = 'YES'
         capturedOutput = getStringIO()
         sys.stdout = capturedOutput
@@ -524,9 +503,6 @@ class TestTravisDetectContext(unittest.TestCase):
         self.assertRegexpMatches(capturedOutput.getvalue(), "Variable 'STATIC' not supported anymore")
 
     def test_MisspelledBcfgGetsWarning(self):
-        os.environ['TRAVIS'] = 'true'
-        os.environ['TRAVIS_OS_NAME'] = 'osx'
-        os.environ['TRAVIS_COMPILER'] = 'clang'
         os.environ['BCFG'] = 'static-dubug'
         capturedOutput = getStringIO()
         sys.stdout = capturedOutput
@@ -537,15 +513,19 @@ class TestTravisDetectContext(unittest.TestCase):
 
 @unittest.skipIf(ci_service != 'appveyor', 'Run appveyor tests only on appveyor')
 class TestAppveyorDetectContext(unittest.TestCase):
-    def tearDown(self):
-        cue.clear_lists()
-        os.environ.pop('CONFIGURATION', None)
-
-    def test_Platform32(self):
+    def setUp(self):
         os.environ['APPVEYOR'] = 'True'
         os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
         os.environ['CMP'] = 'vs2019'
         os.environ['CONFIGURATION'] = 'default'
+        os.environ['PLATFORM'] = 'x64'
+
+    def tearDown(self):
+        cue.clear_lists()
+        os.environ.pop('STATIC', None)
+        os.environ.pop('TEST', None)
+
+    def test_Platform32(self):
         os.environ['PLATFORM'] = 'x86'
         cue.detect_context()
         self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
@@ -558,11 +538,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
                          .format(cue.ci['platform']))
 
     def test_Platform64(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'vs2019'
-        os.environ['CONFIGURATION'] = 'default'
-        os.environ['PLATFORM'] = 'x64'
         cue.detect_context()
         self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
         self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
@@ -574,10 +549,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
                          .format(cue.ci['platform']))
 
     def test_PlatformX64(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'vs2019'
-        os.environ['CONFIGURATION'] = 'default'
         os.environ['PLATFORM'] = 'X64'
         cue.detect_context()
         self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
@@ -590,10 +561,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
                          .format(cue.ci['platform']))
 
     def test_ConfigDefault(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'gcc'
-        os.environ['CONFIGURATION'] = 'default'
         cue.detect_context()
         self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
         self.assertFalse(cue.ci['debug'], "ci['debug'] is True (expected: False)")
@@ -602,9 +569,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_ConfigStatic(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'gcc'
         os.environ['CONFIGURATION'] = 'static'
         cue.detect_context()
         self.assertTrue(cue.ci['static'], "ci['static'] is False (expected: True)")
@@ -614,9 +578,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_ConfigDebug(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'gcc'
         os.environ['CONFIGURATION'] = 'debug'
         cue.detect_context()
         self.assertFalse(cue.ci['static'], "ci['static'] is True (expected: False)")
@@ -626,9 +587,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_ConfigStaticDebug(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'gcc'
         os.environ['CONFIGURATION'] = 'static-debug'
         cue.detect_context()
         self.assertTrue(cue.ci['static'], "ci['static'] is False (expected: True)")
@@ -638,19 +596,12 @@ class TestAppveyorDetectContext(unittest.TestCase):
                          .format(cue.ci['configuration']))
 
     def test_TestNo(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'gcc'
         os.environ['TEST'] = 'NO'
         cue.detect_context()
         self.assertFalse(cue.ci['test'], "ci['test'] is True (expected: False)")
 
     def test_WindowsGccNone(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
         os.environ['CMP'] = 'gcc'
-        os.environ['CONFIGURATION'] = 'default'
-        os.environ['PLATFORM'] = 'x64'
         cue.detect_context()
         self.assertEqual(cue.ci['service'], 'appveyor', "ci['service'] is {0} (expected: appveyor)"
                          .format(cue.ci['service']))
@@ -668,10 +619,8 @@ class TestAppveyorDetectContext(unittest.TestCase):
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
     def test_WindowsVs2017None(self):
-        os.environ['APPVEYOR'] = 'True'
         os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2017'
         os.environ['CMP'] = 'vs2017'
-        os.environ['CONFIGURATION'] = 'default'
         os.environ['PLATFORM'] = 'x86'
         cue.detect_context()
         self.assertEqual(cue.ci['service'], 'appveyor', "ci['service'] is {0} (expected: appveyor)"
@@ -690,11 +639,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
     def test_WindowsVs2019None(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'vs2019'
-        os.environ['CONFIGURATION'] = 'default'
-        os.environ['PLATFORM'] = 'x64'
         cue.detect_context()
         self.assertEqual(cue.ci['service'], 'appveyor', "ci['service'] is {0} (expected: appveyor)"
                          .format(cue.ci['service']))
@@ -712,9 +656,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
         self.assertIn('make', cue.ci['choco'], "'make' is not in ci['choco']")
 
     def test_StaticGetsWarning(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'vs2019'
         os.environ['STATIC'] = 'YES'
         capturedOutput = getStringIO()
         sys.stdout = capturedOutput
@@ -723,9 +664,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
         self.assertRegexpMatches(capturedOutput.getvalue(), "Variable 'STATIC' not supported anymore")
 
     def test_MisspelledConfigurationGetsWarning(self):
-        os.environ['APPVEYOR'] = 'True'
-        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
-        os.environ['CMP'] = 'vs2019'
         os.environ['CONFIGURATION'] = 'static-dubug'
         capturedOutput = getStringIO()
         sys.stdout = capturedOutput
