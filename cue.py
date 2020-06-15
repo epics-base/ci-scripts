@@ -75,6 +75,10 @@ def detect_context():
     if 'TEST' in os.environ and os.environ['TEST'].lower() == 'no':
         ci['test'] = False
 
+    ci['parallel_make'] = 2
+    if 'PARALLEL_MAKE' in os.environ:
+        ci['parallel_make'] = os.environ['PARALLEL_MAKE']
+
     logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s (test: %s)',
                  ci['service'], ci['compiler'], ci['os'], ci['platform'], ci['configuration'], ci['test'])
 
@@ -341,7 +345,7 @@ def call_git(args, **kws):
 
 def call_make(args=[], **kws):
     place = kws.get('cwd', os.getcwd())
-    parallel = kws.pop('parallel', 2)
+    parallel = kws.pop('parallel', ci['parallel_make'])
     silent = kws.pop('silent', False)
     use_extra = kws.pop('use_extra', False)
     # no parallel make for Base 3.14

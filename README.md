@@ -245,7 +245,10 @@ builds to higher verbosity.
 For debugging on your local machine, you may set `CACHEDIR` to change the 
 location for the dependency builds. [default is `$HOME/.cache`]
 
-Service specific debugging options are described in the README files
+Set `PARALLEL_MAKE` to the number of parallel make jobs that you want your
+build to use. [default is the number of CPUs on the runner]
+
+Service specific options are described in the README files
 in the service specific subdirectories:
 
 - [Travis-CI README](travis/README.md)
