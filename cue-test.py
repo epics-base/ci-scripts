@@ -832,5 +832,14 @@ if __name__ == "__main__":
     if sys.argv[1:] == ['env']:
         # testing with_vcvars
         [print(K, '=', V) for K, V in os.environ.items()]
+    elif ci_os == 'windows' and sys.argv[1:] == ['findvs']:
+        from fnmatch import fnmatch
+        print('Available Visual Studio versions')
+        for base in (r'C:\Program Files (x86)', r'C:\Program Files'):
+            for root, dirs, files in os.walk(base):
+                for fname in files:
+                    if fnmatch(fname, 'vcvarsall.bat'):
+                        print('Found', os.path.join(root, fname))
+        sys.stdout.flush()
     else:
         unittest.main()
