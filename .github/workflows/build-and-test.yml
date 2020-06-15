@@ -1,4 +1,4 @@
-name: ci-scripts CI build/test
+name: EPICS ci-scripts build/test
 
 on:
   push:
@@ -11,10 +11,11 @@ env:
   BASE_RECURSIVE: NO
   CMP: gcc
   APT: re2c
+  CHOCO: re2c
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: Build on gcc / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -22,16 +23,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: prepare
+    - name: Prepare dependencies
       run: python cue.py prepare
-    - name: build
+    - name: Build main module
       run: python cue.py build
-    - name: test
+    - name: Run main module tests
       run: python cue.py test
-    - name: test-results
+    - name: Collect and show test results
       run: python cue.py test-results
 
   unit-test:
+    name: Run unit tests on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -39,7 +41,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: show environment
+    - name: Show initial environment
       run: python cue-test.py env
-    - name: unit tests
+    - name: Run unit tests
       run: python cue-test.py
