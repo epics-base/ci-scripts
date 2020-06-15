@@ -422,6 +422,14 @@ class TestTravisDetectContext(unittest.TestCase):
                          "ci['configuration'] is {0} (expected: static-debug)"
                          .format(cue.ci['configuration']))
 
+    def test_TestNo(self):
+        os.environ['TRAVIS'] = 'true'
+        os.environ['TRAVIS_OS_NAME'] = 'linux'
+        os.environ['TRAVIS_COMPILER'] = 'gcc'
+        os.environ['TEST'] = 'NO'
+        cue.detect_context()
+        self.assertFalse(cue.ci['test'], "ci['test'] is True (expected: False)")
+
     def test_WindowsGccNone(self):
         os.environ['TRAVIS'] = 'true'
         os.environ['TRAVIS_OS_NAME'] = 'windows'
@@ -606,6 +614,14 @@ class TestAppveyorDetectContext(unittest.TestCase):
         self.assertEqual(cue.ci['configuration'], 'static-debug',
                          "ci['configuration'] is {0} (expected: static-debug)"
                          .format(cue.ci['configuration']))
+
+    def test_TestNo(self):
+        os.environ['APPVEYOR'] = 'True'
+        os.environ['APPVEYOR_BUILD_WORKER_IMAGE'] = 'Visual Studio 2019'
+        os.environ['CMP'] = 'gcc'
+        os.environ['TEST'] = 'NO'
+        cue.detect_context()
+        self.assertFalse(cue.ci['test'], "ci['test'] is True (expected: False)")
 
     def test_WindowsGccNone(self):
         os.environ['APPVEYOR'] = 'True'

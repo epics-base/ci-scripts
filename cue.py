@@ -62,8 +62,12 @@ def detect_context():
     if 'CHOCO' in os.environ:
         ci['choco'].extend(os.environ['CHOCO'].split())
 
-    logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s',
-                 ci['service'], ci['compiler'], ci['os'], ci['platform'], ci['configuration'])
+    ci['test'] = True
+    if 'TEST' in os.environ and os.environ['TEST'].lower() == 'no':
+        ci['test'] = False
+
+    logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s (test: %s)',
+                 ci['service'], ci['compiler'], ci['os'], ci['platform'], ci['configuration'], ci['test'])
 
 
 curdir = os.getcwd()
@@ -864,24 +868,32 @@ def build(args):
 
 
 def test(args):
-    setup_for_build(args)
-    fold_start('test.module', 'Run the main module tests')
-    if has_test_results:
-        call_make(['tapfiles'])
+    if ci['test']:
+        setup_for_build(args)
+        fold_start('test.module', 'Run the main module tests')
+        if has_test_results:
+            call_make(['tapfiles'])
+        else:
+            call_make(['runtests'])
+        fold_end('test.module', 'Run the main module tests')
     else:
-        call_make(['runtests'])
-    fold_end('test.module', 'Run the main module tests')
+        print("{0}Action 'test' skipped as per configuration{1}"
+              .format(ANSI_YELLOW, ANSI_RESET))
 
 
 def test_results(args):
-    setup_for_build(args)
-    fold_start('test.results', 'Sum up main module test results')
-    if has_test_results:
-        call_make(['test-results'], parallel=0, silent=True)
+    if ci['test']:
+        setup_for_build(args)
+        fold_start('test.results', 'Sum up main module test results')
+        if has_test_results:
+            call_make(['test-results'], parallel=0, silent=True)
+        else:
+            print("{0}Base in {1} does not implement 'test-results' target{2}"
+                  .format(ANSI_YELLOW, places['EPICS_BASE'], ANSI_RESET))
+        fold_end('test.results', 'Sum up main module test results')
     else:
-        print("{0}Base in {1} does not implement 'test-results' target{2}"
-              .format(ANSI_YELLOW, places['EPICS_BASE'], ANSI_RESET))
-    fold_end('test.results', 'Sum up main module test results')
+        print("{0}Action 'test-results' skipped as per configuration{1}"
+              .format(ANSI_YELLOW, ANSI_RESET))
 
 
 def doExec(args):
