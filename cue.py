@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CI build script for Linux/MacOS/Windows on Travis/AppVeyor
+"""CI build script for Linux/MacOS/Windows on Travis/AppVeyor/GitHub-Actions
 """
 
 from __future__ import print_function
@@ -43,6 +43,25 @@ def detect_context():
             ci['compiler'] = os.environ['CMP']
         buildconfig = os.environ['CONFIGURATION'].lower()
 
+    if 'GITHUB_ACTIONS' in os.environ:
+        ci['service'] = 'github-actions'
+        if os.environ['RUNNER_OS'] == 'macOS':
+            ci['os'] = 'osx'
+        else:
+            ci['os'] = os.environ['RUNNER_OS'].lower()
+        ci['platform'] = 'x64'
+        if 'CMP' in os.environ:
+            ci['compiler'] = os.environ['CMP']
+        if ci['os'] == 'windows':
+            ci['choco'] += ['strawberryperl']
+        if 'BCFG' in os.environ:
+            buildconfig = os.environ['BCFG'].lower()
+
+    if re.search('static', buildconfig):
+        ci['static'] = True
+    if re.search('debug', buildconfig):
+        ci['debug'] = True
+
     if 'STATIC' in os.environ:
         print("{0}WARNING: Variable 'STATIC' not supported anymore; use 'BCFG' instead{1}"
               .format(ANSI_RED, ANSI_RESET))
@@ -51,11 +70,6 @@ def detect_context():
         print("{0}WARNING: Unrecognized build configuration setting '{1}'{2}"
               .format(ANSI_RED, buildconfig, ANSI_RESET))
         sys.stdout.flush()
-
-    if re.search('static', buildconfig):
-        ci['static'] = True
-    if re.search('debug', buildconfig):
-        ci['debug'] = True
 
     if ci['static']:
         ci['configuration'] = 'static'

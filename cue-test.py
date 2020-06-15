@@ -31,6 +31,13 @@ if 'APPVEYOR' in os.environ:
     elif re.match(r'^macOS', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
         ci_os = 'osx'
 
+if 'GITHUB_ACTIONS' in os.environ:
+    ci_service = 'github-actions'
+    if os.environ['RUNNER_OS'] == 'macOS':
+        ci_os = 'osx'
+    else:
+        ci_os = os.environ['RUNNER_OS'].lower()
+
 
 def find_in_file(regex, filename):
     file = open(filename, "r")
