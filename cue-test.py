@@ -331,8 +331,11 @@ class TestDefaultModuleURLs(unittest.TestCase):
 @unittest.skipIf(ci_os != 'windows', 'VCVars test only applies to windows')
 class TestVCVars(unittest.TestCase):
     def test_vcvars(self):
-        if ci_service == 'appveyor':
+        if ci_service == 'travis':
+            os.environ['TRAVIS_COMPILER'] = 'vs2017'
+        else:
             os.environ['CONFIGURATION'] = 'default'
+            os.environ['CMP'] = 'vs2019'
         cue.detect_context()
         cue.with_vcvars('env')
 
@@ -733,10 +736,10 @@ class TestSetupForBuild(unittest.TestCase):
 
     @unittest.skipIf(ci_os != 'windows', 'HostArchPlatform test only applies to windows')
     def test_HostArchPlatform(self):
-        if ci_service == 'travis':
-            platforms = ['x64']
-        else:
+        if ci_service == 'appveyor':
             platforms = ['x86', 'x64']
+        else:
+            platforms = ['x64']
         for platform in platforms:
             for cc in ['vs2019', 'gcc']:
                 cue.ci['platform'] = platform
@@ -757,10 +760,11 @@ class TestSetupForBuild(unittest.TestCase):
                     self.assertTrue(re.search('-mingw$', os.environ['EPICS_HOST_ARCH']),
                                     'EPICS_HOST_ARCH (found {0}) is not -mingw for {1} / {2}'
                                     .format(os.environ['EPICS_HOST_ARCH'], cc, platform))
-                    pattern = {'x86': 'mingw32', 'x64': 'mingw64'}
-                    self.assertTrue(re.search(pattern[platform], os.environ['PATH']),
-                                    'Binary location for {0} not in PATH (found {1})'
-                                    .format(pattern[platform], os.environ['PATH']))
+                    if ci_service == 'appveyor':
+                        pattern = {'x86': 'mingw32', 'x64': 'mingw64'}
+                        self.assertTrue(re.search(pattern[platform], os.environ['PATH']),
+                                        'Binary location for {0} not in PATH (found PATH = {1})'
+                                        .format(pattern[platform], os.environ['PATH']))
 
     @unittest.skipIf(ci_os != 'windows', 'Strawberry perl test only applies to windows')
     def test_StrawberryInPath(self):
