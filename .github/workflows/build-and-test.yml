@@ -1,4 +1,4 @@
-name: EPICS ci-scripts build/test
+name: GH-Actions build/test
 
 on:
   push:
@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    name: Build on ${{ matrix.cmp }} / ${{ matrix.os }}
+    name: Build ${{ matrix.cmp }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
       CMP: ${{ matrix.cmp }}
@@ -29,9 +29,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Prepare dependencies
+    - name: Prepare and compile dependencies
       run: python cue.py prepare
-    - name: Build main module
+    - name: Build main module (example app)
       run: python cue.py build
     - name: Run main module tests
       run: python cue.py test
@@ -39,7 +39,7 @@ jobs:
       run: python cue.py test-results
 
   unit-test:
-    name: Run unit tests on ${{ matrix.os }}
+    name: Unit tests on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
