@@ -12,6 +12,7 @@ env:
   CMP: gcc
   APT: re2c
   CHOCO: re2c
+  BREW: re2c
 
 jobs:
   build:
