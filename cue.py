@@ -867,7 +867,7 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
 
     if ci['os'] == 'windows' and ci['choco']:
         fold_start('install.choco', 'Installing CHOCO packages')
-        sp.check_call(['choco', 'install'] + ci['choco'])
+        sp.check_call(['choco', 'install'] + ci['choco'] + ['-y', '--limitoutput', '--no-progress'])
         fold_end('install.choco', 'Installing CHOCO packages')
 
     if ci['os'] == 'linux' and ci['apt']:
