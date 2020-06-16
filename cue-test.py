@@ -335,7 +335,10 @@ class TestVCVars(unittest.TestCase):
             os.environ['TRAVIS_COMPILER'] = 'vs2017'
         else:
             os.environ['CONFIGURATION'] = 'default'
-            os.environ['CMP'] = 'vs2019'
+            if ci_service == 'github-actions' and os.environ['IMAGEOS'] == 'win16':
+                os.environ['CMP'] = 'vs2017'
+            else:
+                os.environ['CMP'] = 'vs2019'
         cue.detect_context()
         cue.with_vcvars('env')
 
