@@ -564,6 +564,8 @@ def setup_for_build(args):
     global is_base314, has_test_results, is_make3
     dllpaths = []
 
+    logger.debug('Setting up the build environment')
+
     if ci['os'] == 'windows':
         if os.path.exists(r'C:\Strawberry\perl\bin'):
             # Put strawberry perl in front of the PATH (so that Git Perl is further behind)
@@ -574,6 +576,7 @@ def setup_for_build(args):
                                                   os.environ['PATH']])
 
         if ci['service'] == 'appveyor' and ci['compiler'] == 'gcc':
+            logger.debug('Adding AppVeyor MSYS2/MinGW installation to PATH and INCLUDE')
             if 'INCLUDE' not in os.environ:
                 os.environ['INCLUDE'] = ''
             if ci['platform'] == 'x86':
@@ -600,6 +603,8 @@ def setup_for_build(args):
     else:
         places['EPICS_BASE'] = '.'
 
+    logger.debug('Using EPICS Base at %s', places['EPICS_BASE'])
+
     detect_epics_host_arch()
 
     if ci['os'] == 'windows':
@@ -623,6 +628,7 @@ def setup_for_build(args):
         with open(cfg_base_version) as myfile:
             if 'BASE_3_14=YES' in myfile.read():
                 is_base314 = True
+    logger.debug('Check if EPICS Base is a 3.14 series: %s', is_base314)
 
     if not is_base314:
         rules_build = os.path.join(places['EPICS_BASE'], 'configure', 'RULES_BUILD')
@@ -635,6 +641,7 @@ def setup_for_build(args):
     # Check make version
     if re.match(r'^GNU Make 3', sp.check_output(['make', '-v']).decode('ascii')):
         is_make3 = True
+    logger.debug('Check if make is a 3.x series: %s', is_make3)
 
     # apparently %CD% is handled automagically
     os.environ['TOP'] = os.getcwd()
