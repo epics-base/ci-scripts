@@ -86,6 +86,9 @@ def detect_context():
     if 'APT' in os.environ:
         ci['apt'].extend(os.environ['APT'].split())
 
+    if 'BREW' in os.environ:
+        ci['homebrew'].extend(os.environ['BREW'].split())
+
     ci['test'] = True
     if 'TEST' in os.environ and os.environ['TEST'].lower() == 'no':
         ci['test'] = False
@@ -142,6 +145,7 @@ def clear_lists():
     ci['scriptsdir'] = ''
     ci['choco'] = ['make']
     ci['apt'] = []
+    ci['homebrew'] = []
 
 
 clear_lists()
@@ -870,6 +874,11 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
         fold_start('install.apt', 'Installing APT packages')
         sp.check_call(['sudo', 'apt-get', '-y', 'install'] + ci['apt'])
         fold_end('install.apt', 'Installing APT packages')
+
+    if ci['os'] == 'osx' and ci['homebrew']:
+        fold_start('install.homebrew', 'Installing Homebrew packages')
+        sp.check_call(['brew', 'install'] + ci['homebrew'])
+        fold_end('install.homebrew', 'Installing Homebrew packages')
 
     if ci['os'] == 'linux' and 'RTEMS' in os.environ:
         tar_name = 'i386-rtems{0}-trusty-20171203-{0}.tar.bz2'.format(os.environ['RTEMS'])
