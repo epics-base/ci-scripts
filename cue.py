@@ -846,7 +846,10 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
         cc = ci['compiler']
         print('{0}$ {1} --version{2}'.format(ANSI_CYAN, cc, ANSI_RESET))
         sys.stdout.flush()
-        sp.check_call([cc, '--version'])
+        try:
+            sp.check_call([cc, '--version'])
+        except Exception as e:
+            print(str(e))
 
     if not building_base:
         fold_start('build.dependencies', 'Build missing/outdated dependencies')
