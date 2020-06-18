@@ -683,7 +683,7 @@ class TestSetupForBuild(unittest.TestCase):
     args = Namespace(paths=[])
     cue.building_base = True
     if ci_os == 'windows':
-        sp.check_call(['choco', 'install', 'make'])
+        sp.check_call(['choco', 'install', 'make', 'strawberryperl'])
 
     def setUp(self):
         if ci_service == 'appveyor':
@@ -763,12 +763,10 @@ class TestSetupForBuild(unittest.TestCase):
                                     .format(pattern[platform], os.environ['PATH']))
 
     @unittest.skipIf(ci_os != 'windows', 'Strawberry perl test only applies to windows')
-    def test_StrawberryInPathVS2019(self):
-        if 'APPVEYOR' in os.environ:
-            os.environ['CMP'] = 'vs2019'
+    def test_StrawberryInPath(self):
         cue.setup_for_build(self.args)
         self.assertTrue(re.search('strawberry', os.environ['PATH'], flags=re.IGNORECASE),
-                        'Strawberry Perl installed but location not in PATH (found {0})'
+                        'Strawberry Perl location not in PATH (found  PATH = {0})'
                         .format(os.environ['PATH']))
 
     def setBase314(self, yesno):

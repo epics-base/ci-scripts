@@ -22,11 +22,10 @@ def detect_context():
         ci['os'] = os.environ['TRAVIS_OS_NAME']
         ci['platform'] = 'x64'
         ci['compiler'] = os.environ['TRAVIS_COMPILER']
-        if ci['os'] == 'windows':
-            ci['choco'] += ['strawberryperl']
-            if re.match(r'^vs', ci['compiler']):
-                # Only Visual Studio 2017 available
-                ci['compiler'] = 'vs2017'
+        ci['choco'] += ['strawberryperl']
+        if re.match(r'^vs', ci['compiler']):
+            # Only Visual Studio 2017 available
+            ci['compiler'] = 'vs2017'
         if 'BCFG' in os.environ:
             buildconfig = os.environ['BCFG'].lower()
 
@@ -52,8 +51,7 @@ def detect_context():
         ci['platform'] = 'x64'
         if 'CMP' in os.environ:
             ci['compiler'] = os.environ['CMP']
-        if ci['os'] == 'windows':
-            ci['choco'] += ['strawberryperl']
+        ci['choco'] += ['strawberryperl']
         if 'BCFG' in os.environ:
             buildconfig = os.environ['BCFG'].lower()
 
@@ -566,30 +564,29 @@ def setup_for_build(args):
     dllpaths = []
 
     if ci['os'] == 'windows':
-        if ci['service'] == 'appveyor':
-            if ci['compiler'] == 'vs2019':
-                # put strawberry perl in the PATH
-                os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
-                                                      os.path.join(r'C:\Strawberry\perl\bin'),
-                                                      os.environ['PATH']])
-            if ci['compiler'] == 'gcc':
-                if 'INCLUDE' not in os.environ:
-                    os.environ['INCLUDE'] = ''
-                if ci['platform'] == 'x86':
-                    os.environ['INCLUDE'] = os.pathsep.join(
-                        [r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
-                         os.environ['INCLUDE']])
-                    os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
-                                                          os.environ['PATH']])
-                elif ci['platform'] == 'x64':
-                    os.environ['INCLUDE'] = os.pathsep.join(
-                        [r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
-                         os.environ['INCLUDE']])
-                    os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
-                                                          os.environ['PATH']])
-        if ci['service'] == 'travis':
-            os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\perl\site\bin', r'C:\Strawberry\perl\bin',
+        if os.path.exists(r'C:\Strawberry\perl\bin'):
+            # Put strawberry perl in front of the PATH (so that Git Perl is further behind)
+            logger.debug('Adding Strawberry Perl in front of the PATH')
+            os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\c\bin',
+                                                  r'C:\Strawberry\perl\site\bin',
+                                                  r'C:\Strawberry\perl\bin',
                                                   os.environ['PATH']])
+
+        if ci['service'] == 'appveyor' and ci['compiler'] == 'gcc':
+            if 'INCLUDE' not in os.environ:
+                os.environ['INCLUDE'] = ''
+            if ci['platform'] == 'x86':
+                os.environ['INCLUDE'] = os.pathsep.join(
+                    [r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+                     os.environ['INCLUDE']])
+                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+                                                      os.environ['PATH']])
+            elif ci['platform'] == 'x64':
+                os.environ['INCLUDE'] = os.pathsep.join(
+                    [r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+                     os.environ['INCLUDE']])
+                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
+                                                      os.environ['PATH']])
 
     # Find BASE location
     if not building_base:
