@@ -102,3 +102,29 @@ jobs:
       run: python cue.py test
     - name: Collect and show test results
       run: python cue.py test-results
+
+  build-rtems:
+    name: RTEMS${{ matrix.rtems }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+      RTEMS: ${{ matrix.rtems }}
+      APT: re2c g++-mingw-w64-i686 g++-mingw-w64-x86-64 qemu-system-x86
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04]
+        cmp: [gcc]
+        configuration: [default, static, debug, static-debug]
+        rtems: ["4.9", "4.10"]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module (example app)
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py test
+    - name: Collect and show test results
+      run: python cue.py test-results
