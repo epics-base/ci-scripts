@@ -43,6 +43,17 @@ def detect_context():
             ci['compiler'] = os.environ['CMP']
         buildconfig = os.environ['CONFIGURATION'].lower()
 
+    if 'GITLAB_CI' in os.environ:
+        ci['service'] = 'gitlab'
+        ci['os'] = 'linux'
+        ci['platform'] = 'x64'
+        if 'CMP' in os.environ:
+            ci['compiler'] = os.environ['CMP']
+        else:
+            ci['compiler'] = 'gcc'
+        if 'BCFG' in os.environ:
+            buildconfig = os.environ['BCFG'].lower()
+
     if 'STATIC' in os.environ:
         print("{0}WARNING: Variable 'STATIC' not supported anymore; use 'BCFG' instead{1}"
               .format(ANSI_RED, ANSI_RESET))
