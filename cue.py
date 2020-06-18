@@ -846,20 +846,24 @@ CMPLR_CLASS = clang''')
 CC          = {0}{2}
 CCC         = {1}{2}'''.format(host_ccmplr_name, host_cppcmplr_name, host_cmplr_ver_suffix))
 
-        # Add additional flags to CONFIG_SITE
-        flags_text = ''
+        # Add additional settings to CONFIG_SITE
+        extra_config = ''
         if 'USR_CPPFLAGS' in os.environ:
-            flags_text += '''
+            extra_config += '''
 USR_CPPFLAGS += {0}'''.format(os.environ['USR_CPPFLAGS'])
         if 'USR_CFLAGS' in os.environ:
-            flags_text += '''
+            extra_config += '''
 USR_CFLAGS += {0}'''.format(os.environ['USR_CFLAGS'])
         if 'USR_CXXFLAGS' in os.environ:
-            flags_text += '''
+            extra_config += '''
 USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
-        if flags_text:
+        if ci['service'] == 'github-actions' and ci['os'] == 'windows':
+            extra_config += '''
+PERL = C:/Strawberry/perl/bin/perl -CSD'''
+
+        if extra_config:
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
-                f.write(flags_text)
+                f.write(extra_config)
 
         fold_end('set.up.epics_build', 'Configuring EPICS build system')
 
