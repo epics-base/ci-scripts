@@ -19,6 +19,7 @@ jobs:
     name: Unit tests on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, ubuntu-16.04, windows-2019, windows-2016, macos-10.15]
     steps:
@@ -35,9 +36,10 @@ jobs:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, ubuntu-16.04]
-        cmp: [gcc]
+        cmp: [gcc, clang]
         configuration: [default, static, debug, static-debug]
     steps:
     - uses: actions/checkout@v2
@@ -57,6 +59,7 @@ jobs:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-10.15]
         cmp: [clang]
@@ -79,6 +82,7 @@ jobs:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-2019, windows-2016]
         cmp: [gcc, vs2019, vs2017]
