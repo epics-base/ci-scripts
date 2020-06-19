@@ -197,7 +197,7 @@ elif 'HOME' in os.environ:
     homedir = os.getenv('HOME')
 cachedir = os.path.join(homedir, '.cache')
 toolsdir = os.path.join(homedir, '.tools')
-rtemsdir = os.path.join(homedir, '.rtems')
+rtemsdir = r'/home/travis/.rtems'            # Preliminary, until the next generation of toolchain
 
 if 'CACHEDIR' in os.environ:
     cachedir = os.environ['CACHEDIR']
@@ -894,7 +894,10 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
                        'https://github.com/mdavidsaver/rsb/releases/download/20171203-{0}/{1}'
                       .format(os.environ['RTEMS'], tar_name)],
                       cwd=toolsdir)
-        sp.check_call(['tar', '-C', '/', '-xmj', '-f', os.path.join(toolsdir, tar_name)])
+        sudo_prefix = []
+        if ci['service'] == 'github-actions':
+            sudo_prefix = ['sudo']
+        sp.check_call(sudo_prefix + ['tar', '-C', '/', '-xmj', '-f', os.path.join(toolsdir, tar_name)])
         os.remove(os.path.join(toolsdir, tar_name))
 
     setup_for_build(args)
