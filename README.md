@@ -241,10 +241,11 @@ recursing into submodules. [default is including submodules: `YES`]
 be always be extended by the release or branch name as `<name>-<version>`.
 [default is the slug in lower case: `foo`]
 
-`FOO_HOOK=<script>` Set the name of a script that will be run after cloning
-the module, before compiling it. Working directory when running the script
-is the root of the targeted module (e.g. `.../.cache/foo-1.2`).
-[default: no hooks are run]
+`FOO_HOOK=<hook>` Set the name of a `.patch` file, a `.zip` or `.7z` archive
+or a script that will be applied (using `-p1`), extracted or run after cloning
+the module, before compiling it.
+Working directory is the root of the targeted module,
+e.g., `.../.cache/foo-1.2`). [default: no hook]
 
 `FOO_VARNAME=<name>` Set the name that is used for the module when creating
 the `RELEASE.local` files. [default is the slug in upper case: `FOO`]

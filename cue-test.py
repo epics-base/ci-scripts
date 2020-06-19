@@ -829,6 +829,44 @@ class TestSetupForBuild(unittest.TestCase):
                             'Extra make arg [{0}] not set (expected "bla {0}", found "{1}")'
                             .format(ind, cue.extra_makeargs[ind]))
 
+
+class TestHooks(unittest.TestCase):
+    location = os.path.join(cue.cachedir, 'hook_test')
+    bla_file = os.path.join(location, 'bla.txt')
+    new_file = os.path.join(location, 'dd', 'new.txt')
+
+    def setUp(self):
+        if os.path.exists(self.location):
+            shutil.rmtree(self.location, onerror=cue.remove_readonly)
+        try:
+            os.makedirs(self.location)
+        except:
+            pass
+        with open(self.bla_file, 'w') as f:
+            f.write('''LINE1=YES
+LINE2=NO''')
+
+    def test_patchfile(self):
+        hook = os.path.join(builddir, 'test.patch')
+        cue.apply_patch(hook, cwd=self.location)
+        line1_yes = False
+        with open(self.bla_file) as f:
+            if 'LINE1=YES' in f.read():
+                line1_yes = True
+        self.assertFalse(line1_yes, "Patch didn't change line in test file 'bla.txt'")
+        self.assertTrue(os.path.exists(self.new_file), "patch didn't add new file")
+
+    def test_archiveZip(self):
+        hook = os.path.join(builddir, 'test.zip')
+        cue.extract_archive(hook, cwd=self.location)
+        self.assertTrue(os.path.exists(self.new_file), "archive extract didn't add new file")
+
+    def test_archive7z(self):
+        hook = os.path.join(builddir, 'test.7z')
+        cue.extract_archive(hook, cwd=self.location)
+        self.assertTrue(os.path.exists(self.new_file), "archive extract didn't add new file")
+
+
 if __name__ == "__main__":
     if 'VV' in os.environ and os.environ['VV'] == '1':
         logging.basicConfig(level=logging.DEBUG)

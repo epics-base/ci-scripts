@@ -121,6 +121,7 @@ is_make3 = False
 has_test_results = False
 silent_dep_builds = True
 do_recompile = False
+installed_7z = False
 
 
 def clear_lists():
@@ -403,6 +404,24 @@ def call_make(args=[], **kws):
         sys.exit(exitcode)
 
 
+def apply_patch(file, **kws):
+    place = kws.get('cwd', os.getcwd())
+    print('Applying patch {0} in {1}'.format(file, place))
+    logger.debug("EXEC '%s' in %s", ' '.join(['patch', '-p1', '-i', file]), place)
+    sys.stdout.flush()
+    sp.check_call(['patch', '-p1', '-i', file], cwd=place)
+    logger.debug('EXEC DONE')
+
+
+def extract_archive(file, **kws):
+    place = kws.get('cwd', os.getcwd())
+    print('Extracting archive {0} in {1}'.format(file, place))
+    logger.debug("EXEC '%s' in %s", ' '.join(['7z', 'x', '-aoa', '-bd', file]), place)
+    sys.stdout.flush()
+    sp.check_call(['7z', 'x', '-aoa', '-bd', file], cwd=place)
+    logger.debug('EXEC DONE')
+
+
 def get_git_hash(place):
     logger.debug("EXEC 'git log -n1 --pretty=format:%%H' in %s", place)
     sys.stdout.flush()
@@ -515,13 +534,19 @@ def add_dependency(dep):
                 with open(release, 'w') as fout:
                     print('-include $(TOP)/../RELEASE.local', file=fout)
 
-        # run hook if defined
+        # Apply HOOK
         if dep + '_HOOK' in setup:
-            hook = os.path.join(place, setup[dep + '_HOOK'])
-            if os.path.exists(hook):
-                print('Running hook {0} in {1}'.format(setup[dep + '_HOOK'], place))
-                sys.stdout.flush()
-                sp.check_call(hook, shell=True, cwd=place)
+            hook = setup[dep + '_HOOK']
+            hook_file = os.path.join(curdir, hook)
+            if os.path.exists(hook_file):
+                if re.match(r'.+\\.patch$', hook):
+                    apply_patch(hook_file, cwd=place)
+                elif re.match(r'.+\\.(zip|7z)$', hook):
+                    extract_archive(hook_file, cwd=place)
+                else:
+                    print('Running hook {0} in {1}'.format(hook, place))
+                    sys.stdout.flush()
+                    sp.check_call(hook_file, shell=True, cwd=place)
 
         # write checked out commit hash to marker file
         head = get_git_hash(place)
@@ -685,9 +710,9 @@ def fix_etc_hosts():
     #  127.0.1.1 localhost localhost ip4-loopback
     #  127.0.0.1 localhost nettuno travis vagrant travis-job-....
 
-    logger.debug("EXEC sudo sed -ie '/^127\.0\.1\.1/ s|localhost\s*||g' /etc/hosts")
+    logger.debug("EXEC sudo sed -ie '/^127\\.0\\.1\\.1/ s|localhost\\s*||g' /etc/hosts")
     sys.stdout.flush()
-    exitcode = sp.call(['sudo', 'sed', '-ie', '/^127\.0\.1\.1/ s|localhost\s*||g', '/etc/hosts'])
+    sp.call(['sudo', 'sed', '-ie', '/^127\\.0\\.1\\.1/ s|localhost\\s*||g', '/etc/hosts'])
     logger.debug('EXEC DONE')
 
 
