@@ -169,11 +169,16 @@ ANSI_CLEAR = "\033[0K"
 
 # Travis log fold control
 # from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
+# GitHub Actions fold control
+# from https://github.com/actions/toolkit/blob/master/docs/commands.md#group-and-ungroup-log-lines
 
 def fold_start(tag, title):
     if ci['service'] == 'travis':
         print('travis_fold:start:{0}{1}{2}{3}'
               .format(tag, ANSI_YELLOW, title, ANSI_RESET))
+    elif ci['service'] == 'github-actions':
+        print('::group::{0}{1}{2}'
+              .format(ANSI_YELLOW, title, ANSI_RESET))
     elif ci['service'] == 'appveyor':
         print('{0}===== \\/ \\/ \\/ ===== START: {1} ====={2}'
               .format(ANSI_YELLOW, title, ANSI_RESET))
@@ -184,6 +189,9 @@ def fold_end(tag, title):
     if ci['service'] == 'travis':
         print('\ntravis_fold:end:{0}\r'
               .format(tag), end='')
+    elif ci['service'] == 'github-actions':
+        print('::endgroup::'
+              .format(ANSI_YELLOW, title, ANSI_RESET))
     elif ci['service'] == 'appveyor':
         print('{0}----- /\\ /\\ /\\ -----   END: {1} -----{2}'
               .format(ANSI_YELLOW, title, ANSI_RESET))
