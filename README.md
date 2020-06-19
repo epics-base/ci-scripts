@@ -1,6 +1,7 @@
 <a target="_blank" href="http://semver.org">![Version][badge.version]</a>
 <a target="_blank" href="https://travis-ci.org/epics-base/ci-scripts">![Travis status][badge.travis]</a>
 <a target="_blank" href="https://ci.appveyor.com/project/epics-base/ci-scripts">![AppVeyor status][badge.appveyor]</a>
+<a target="_blank" href="https://github.com/epics-base/ci-scripts/actions">![GitHub Actions status][badge.gh-actions]</a>
 
 # Continuous Integration for EPICS Modules
 
@@ -58,12 +59,12 @@ levels as the example files.
 
 ### [Travis-CI](https://travis-ci.org/)
  - Five parallel runners on Linux/Windows (one runner on MacOS)
- - Use different compilers (gcc, clang)
- - Use different gcc versions
- - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Ubuntu 12/14/16/18, MacOS 10.13, Windows Server v1809
+ - Compile natively on Linux (different versions of gcc, clang)
  - Compile natively on MacOS (clang)
  - Compile natively on Windows (gcc/MinGW, Visual Studio 2017)
+ - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
+ - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
  - Built dependencies are cached (for faster builds).
  
 See specific
@@ -72,8 +73,8 @@ for more details.
 
 ### [AppVeyor](https://www.appveyor.com/)
  - One parallel runner (all builds are sequential)
- - Use different compilers (Visual Studio, gcc/MinGW)
- - Use different Visual Studio versions: \
+ - Windows Server 2012/2016/2019
+ - Compile using gcc/MinGW or different Visual Studio versions: \
    2008, 2010, 2012, 2013, 2015, 2017, 2019
  - Compile for Windows 32bit and 64bit
  - No useful caching available.
@@ -82,15 +83,30 @@ See specific
 **[ci-scripts on AppVeyor README](appveyor/README.md)**
 for more details.
 
+### [GitHub Actions](https://github.com/)
+ - 20 parallel runners on Linux/Windows (5 runners on MacOS)
+ - Ubuntu 16/18/20, MacOS 10.15, Windows Server 2016/2019
+ - Compile natively on Linux (gcc, clang)
+ - Compile natively on MacOS (clang)
+ - Compile natively on Windows (gcc/MinGW, Visual Studio 2017 & 2019)
+ - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
+ - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Caching not supported by ci-scripts yet.
+
+See specific
+**[ci-scripts on GitHub Actions README](gh-actions/README.md)**
+for more details.
+
 ## How to Use the CI-Scripts
 
- 1. Get an account on a supported CI service provider platform.
+ 1. Get an account on a supported CI service provider platform
     (e.g. [Travis-CI](https://travis-ci.org/),
-    [AppVeyor](https://www.appveyor.com/), ...)
+    [AppVeyor](https://www.appveyor.com/), ...).
+    GitHub Actions does not require a separate account.
 
     (More details in the specific README of the subdirectory.)
 
- 2. In your Support Module, add this ci-scripts repository
+ 2. In your module, add this ci-scripts repository
     as a Git Submodule (name suggestion: `.ci`).
     ```bash
     git submodule add https://github.com/epics-base/ci-scripts .ci
@@ -405,6 +421,7 @@ in file LICENSE that is included with this distribution.
 [badge.version]: https://badge.fury.io/gh/epics-base%2Fci-scripts.svg
 [badge.travis]: https://travis-ci.org/epics-base/ci-scripts.svg?branch=master
 [badge.appveyor]: https://ci.appveyor.com/api/projects/status/8b578alg974axvux?svg=true
+[badge.gh-actions]: https://github.com/epics-base/ci-scripts/workflows/ci-scripts%20build/test/badge.svg
 
 [reddit.bash]: https://www.reddit.com/r/bash/comments/393oqv/why_is_the_version_of_bash_included_in_os_x_so_old/
 

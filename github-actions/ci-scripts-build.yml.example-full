@@ -1,0 +1,155 @@
+# .github/workflows/ci-scripts-build.yml for use with EPICS Base ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# This is YAML - indentation levels are crucial
+
+# Set the 'name:' properties to values that work for you (MYMODULE)
+
+name: MYMODULE ci-scripts build
+
+# Trigger on pushes and PRs to any branch
+on: [push, pull_request]
+
+env:
+  SETUP_PATH: .ci-local:.ci
+  SET: test01
+  CMP: gcc
+  # For the sequencer on Linux/Windows/MacOS
+  APT: re2c
+  CHOCO: re2c
+  BREW: re2c
+
+jobs:
+  build-linux:
+    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # Set environment variables from matrix parameters
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04, ubuntu-16.04]
+        cmp: [gcc, clang]
+        configuration: [default, static, debug, static-debug]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py test
+    - name: Collect and show test results
+      run: python cue.py test-results
+
+  build-macos:
+    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # Set environment variables from matrix parameters
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15]
+        cmp: [clang]
+        # No static builds on MacOS
+        configuration: [default, debug]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py test
+    - name: Collect and show test results
+      run: python cue.py test-results
+
+  build-windows:
+    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2019, windows-2016]
+        cmp: [gcc, vs2019, vs2017]
+        configuration: [default, static, debug, static-debug]
+        # Available: vs2017/windows-2016 and vs2019/windows-2019
+        exclude:
+          - os: windows-2019
+            cmp: vs2017
+          - os: windows-2016
+            cmp: vs2019
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py test
+    - name: Collect and show test results
+      run: python cue.py test-results
+
+  # Same setup and toolchain as on Travis.
+  # Needs Base >= 3.15 to compile, EPICS 7 to also run the tests on qemu
+  build-rtems:
+    name: RTEMS${{ matrix.rtems }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+      RTEMS: ${{ matrix.rtems }}
+      APT: re2c g++-mingw-w64-i686 g++-mingw-w64-x86-64 qemu-system-x86
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04]
+        cmp: [gcc]
+        configuration: [default, static, debug, static-debug]
+        rtems: ["4.9", "4.10"]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py test
+    - name: Collect and show test results
+      run: python cue.py test-results
+
+  # The WINE cross builds are of somewhat limited use,
+  # as there are native gcc/MinGW builds available on GitHub Actions
+  build-wine:
+    name: WINE${{ matrix.wine }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+      WINE: ${{ matrix.wine }}
+      APT: re2c g++-mingw-w64-i686 g++-mingw-w64-x86-64
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04]
+        cmp: [gcc]
+        configuration: [default, static, debug, static-debug]
+        wine: [32, 64]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py test
+    - name: Collect and show test results
+      run: python cue.py test-results
