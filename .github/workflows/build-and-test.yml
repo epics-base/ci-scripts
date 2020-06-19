@@ -1,4 +1,4 @@
-name: GH-Actions build/test
+name: ci-scripts build/test
 
 on:
   push:
@@ -15,21 +15,30 @@ env:
   BREW: re2c
 
 jobs:
-  build:
-    name: Build ${{ matrix.cmp }} / ${{ matrix.os }}
+  unit-test:
+    name: Unit tests on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    env:
-      CMP: ${{ matrix.cmp }}
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04, ubuntu-16.04, windows-2019, windows-2016, macos-10.15]
-        cmp: [gcc]
-        include:
-          - cmp: vs2019
-            os: windows-2019
-          - cmp: vs2017
-            os: windows-2016
+    steps:
+    - uses: actions/checkout@v2
+    - name: Show initial environment
+      run: python cue-test.py env
+    - name: Run unit tests
+      run: python cue-test.py
 
+  build-linux:
+    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04, ubuntu-16.04]
+        cmp: [gcc]
+        configuration: [default, static, debug, static-debug]
     steps:
     - uses: actions/checkout@v2
     - name: Prepare and compile dependencies
@@ -41,16 +50,51 @@ jobs:
     - name: Collect and show test results
       run: python cue.py test-results
 
-  unit-test:
-    name: Unit tests on ${{ matrix.os }}
+  build-macos:
+    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04, ubuntu-16.04, windows-2019, windows-2016, macos-10.15]
-
+        os: [macos-10.15]
+        cmp: [clang]
+        configuration: [default, debug]
     steps:
     - uses: actions/checkout@v2
-    - name: Show initial environment
-      run: python cue-test.py env
-    - name: Run unit tests
-      run: python cue-test.py
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module (example app)
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py test
+    - name: Collect and show test results
+      run: python cue.py test-results
+
+  build-windows:
+    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+    strategy:
+      matrix:
+        os: [windows-2019, windows-2016]
+        cmp: [gcc, vs2019, vs2017]
+        configuration: [default, static, debug, static-debug]
+        exclude:
+          - os: windows-2019
+            cmp: vs2017
+          - os: windows-2016
+            cmp: vs2019
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module (example app)
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py test
+    - name: Collect and show test results
+      run: python cue.py test-results
