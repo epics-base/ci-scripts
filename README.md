@@ -251,6 +251,10 @@ location for the dependency builds. [default is `$HOME/.cache`]
 Set `PARALLEL_MAKE` to the number of parallel make jobs that you want your
 build to use. [default is the number of CPUs on the runner]
 
+Set `CLEAN_DEPS` to `NO` if you want to leave the object file directories
+(`**/O.*`) in the cached dependencies. [default is to run `make clean`
+after building a dependency]
+
 Service specific options are described in the README files
 in the service specific subdirectories:
 

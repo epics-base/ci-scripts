@@ -79,8 +79,14 @@ def detect_context():
     if 'PARALLEL_MAKE' in os.environ:
         ci['parallel_make'] = os.environ['PARALLEL_MAKE']
 
-    logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s (test: %s)',
-                 ci['service'], ci['compiler'], ci['os'], ci['platform'], ci['configuration'], ci['test'])
+    ci['clean_deps'] = True
+    if 'CLEAN_DEPS' in os.environ and os.environ['CLEAN_DEPS'].lower() == 'no':
+        ci['clean_deps'] = False
+
+    logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s '
+                 + '(test: %s, clean_deps: %s)',
+                 ci['service'], ci['compiler'], ci['os'], ci['platform'], ci['configuration'],
+                 ci['test'], ci['clean_deps'])
 
 
 curdir = os.getcwd()
@@ -854,6 +860,8 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
             place = places[setup[mod + "_VARNAME"]]
             print('{0}Building dependency {1} in {2}{3}'.format(ANSI_YELLOW, mod, place, ANSI_RESET))
             call_make(cwd=place, silent=silent_dep_builds)
+            if ci['clean_deps']:
+                call_make(args=['clean'], cwd=place, silent=silent_dep_builds)
         fold_end('build.dependencies', 'Build missing/outdated dependencies')
 
         print('{0}Dependency module information{1}'.format(ANSI_CYAN, ANSI_RESET))
