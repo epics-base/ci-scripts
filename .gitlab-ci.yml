@@ -1,0 +1,85 @@
+# .gitlab-ci.yml for testing EPICS Base ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# Note:
+# Paths to scripts are different in this test configuration
+# (your module has one more directory level: .ci)
+
+image: ubuntu:bionic
+
+cache:
+  paths:
+  - /root/.cache
+
+variables:
+  GIT_SUBMODULE_STRATEGY: "recursive"
+  SETUP_PATH: ".:.ci"
+  BASE_RECURSIVE: "NO"
+  APT: "libreadline6-dev libncurses5-dev perl clang g++-mingw-w64-i686 g++-mingw-w64-x86-64 qemu-system-x86 re2c"
+  CMP: "gcc"
+  BGFC: "default"
+  VV: "1"
+  SET: test01
+
+# Unit tests
+unit_test:
+  stage: build
+  variables:
+    SET: test00
+  before_script:
+    - python cue-test.py env
+  script:
+    - python cue-test.py
+
+# Template job for test builds (hidden)
+.build:
+  stage: build
+  before_script:
+    - python cue.py prepare
+  script:
+    - python cue.py build
+    - python cue.py test
+    - python cue.py test-results
+
+# gcc builds using four configurations (shared/static, optimized/debug)
+gcc_default:
+  extends: .build
+
+gcc_static:
+  extends: .build
+  variables:
+    BCFG: "static"
+
+gcc_debug:
+  extends: .build
+  variables:
+    BCFG: "debug"
+
+gcc_static_debug:
+  extends: .build
+  variables:
+    BCFG: "static-debug"
+
+# clang builds using four configurations (shared/static, optimized/debug)
+clang_default:
+  extends: .build
+  variables:
+    CMP: "clang"
+
+clang_static:
+  extends: .build
+  variables:
+    CMP: "clang"
+    BCFG: "static"
+
+clang_debug:
+  extends: .build
+  variables:
+    CMP: "clang"
+    BCFG: "debug"
+
+clang_static_debug:
+  extends: .build
+  variables:
+    CMP: "clang"
+    BCFG: "static-debug"
