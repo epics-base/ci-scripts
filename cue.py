@@ -33,6 +33,7 @@ def detect_context():
         ci['service'] = 'gitlab'
         ci['os'] = 'linux'
         ci['platform'] = 'x64'
+        ci['sudo'] = []                    # No sudo in GitLab Docker containers
         if 'CMP' in os.environ:
             ci['compiler'] = os.environ['CMP']
         if 'BCFG' in os.environ:
@@ -156,6 +157,7 @@ def clear_lists():
     ci['choco'] = ['make']
     ci['apt'] = []
     ci['homebrew'] = []
+    ci['sudo'] = ['sudo']
 
 
 clear_lists()
@@ -918,8 +920,8 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
 
     if ci['os'] == 'linux' and ci['apt']:
         fold_start('install.apt', 'Installing APT packages')
-        sp.check_call(['sudo', 'apt-get', '-y', 'update'])
-        sp.check_call(['sudo', 'apt-get', '-y', 'install'] + ci['apt'])
+        sp.check_call(ci['sudo'] + ['apt-get', '-y', 'update'])
+        sp.check_call(ci['sudo'] + ['apt-get', 'install', '-y', '-qq'] + ci['apt'])
         fold_end('install.apt', 'Installing APT packages')
 
     if ci['os'] == 'osx' and ci['homebrew']:
