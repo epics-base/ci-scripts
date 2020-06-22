@@ -29,6 +29,15 @@ def detect_context():
         if 'BCFG' in os.environ:
             buildconfig = os.environ['BCFG'].lower()
 
+    if 'GITLAB_CI' in os.environ:
+        ci['service'] = 'gitlab'
+        ci['os'] = 'linux'
+        ci['platform'] = 'x64'
+        if 'CMP' in os.environ:
+            ci['compiler'] = os.environ['CMP']
+        if 'BCFG' in os.environ:
+            buildconfig = os.environ['BCFG'].lower()
+
     if 'APPVEYOR' in os.environ:
         ci['service'] = 'appveyor'
         if re.match(r'^Visual', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):

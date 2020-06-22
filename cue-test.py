@@ -22,6 +22,10 @@ if 'TRAVIS' in os.environ:
     ci_service = 'travis'
     ci_os = os.environ['TRAVIS_OS_NAME']
 
+if 'GITLAB_CI' in os.environ:
+    ci_service = 'gitlab'
+    ci_os = 'linux'
+
 if 'APPVEYOR' in os.environ:
     ci_service = 'appveyor'
     if re.match(r'^Visual', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
