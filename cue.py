@@ -911,7 +911,7 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
 def build(args):
     setup_for_build(args)
     fold_start('build.module', 'Build the main module')
-    call_make(args.makeargs)
+    call_make(args.makeargs, use_extra=True)
     fold_end('build.module', 'Build the main module')
 
 
