@@ -644,6 +644,21 @@ def setup_for_build(args):
             extra_makeargs.append(os.environ[tag])
 
 
+def fix_etc_hosts():
+    # Several travis-ci images throw us a curveball in /etc/hosts
+    # by including two entries for localhost.  The first for 127.0.1.1
+    # causes epicsSockResolveTest to fail.
+    #  cat /etc/hosts
+    #  ...
+    #  127.0.1.1 localhost localhost ip4-loopback
+    #  127.0.0.1 localhost nettuno travis vagrant travis-job-....
+
+    logger.debug("EXEC sudo sed -ie '/^127\.0\.1\.1/ s|localhost\s*||g' /etc/hosts")
+    sys.stdout.flush()
+    exitcode = sp.call(['sudo', 'sed', '-ie', '/^127\.0\.1\.1/ s|localhost\s*||g', '/etc/hosts'])
+    logger.debug('EXEC DONE')
+
+
 def prepare(args):
     host_info()
 
@@ -663,6 +678,9 @@ def prepare(args):
     [logger.debug(' %s = "%s"', *kv) for kv in kvs]
 
     logger.debug('Effective module list: %s', modlist())
+
+    if ci['service'] == 'travis' and ci['os'] == 'linux':
+        fix_etc_hosts()
 
     # we're working with tags (detached heads) a lot: suppress advice
     call_git(['config', '--global', 'advice.detachedHead', 'false'])
