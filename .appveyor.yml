@@ -37,6 +37,7 @@ skip_commits:
     - '**/*.html'
     - '**/*.md'
     - '.travis.yml'
+    - '.github/workflows/*'
 
 #---------------------------------#
 #       additional packages       #

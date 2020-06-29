@@ -3,8 +3,8 @@
 ## Features
 
  - One parallel runner (all builds are sequential)
- - Use different compilers (Visual Studio, gcc/MinGW)
- - Use different Visual Studio versions: \
+ - Windows Server 2012/2016/2019
+ - Compile using gcc/MinGW or different Visual Studio versions: \
    2008, 2010, 2012, 2013, 2015, 2017, 2019
  - Compile for Windows 32bit and 64bit
  - No useful caching available.

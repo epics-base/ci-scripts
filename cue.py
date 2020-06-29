@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CI build script for Linux/MacOS/Windows on Travis/AppVeyor
+"""CI build script for Linux/MacOS/Windows on Travis/AppVeyor/GitHub-Actions
 """
 
 from __future__ import print_function
@@ -22,11 +22,10 @@ def detect_context():
         ci['os'] = os.environ['TRAVIS_OS_NAME']
         ci['platform'] = 'x64'
         ci['compiler'] = os.environ['TRAVIS_COMPILER']
-        if ci['os'] == 'windows':
-            ci['choco'] += ['strawberryperl']
-            if re.match(r'^vs', ci['compiler']):
-                # Only Visual Studio 2017 available
-                ci['compiler'] = 'vs2017'
+        ci['choco'] += ['strawberryperl']
+        if re.match(r'^vs', ci['compiler']):
+            # Only Visual Studio 2017 available
+            ci['compiler'] = 'vs2017'
         if 'BCFG' in os.environ:
             buildconfig = os.environ['BCFG'].lower()
 
@@ -43,6 +42,24 @@ def detect_context():
             ci['compiler'] = os.environ['CMP']
         buildconfig = os.environ['CONFIGURATION'].lower()
 
+    if 'GITHUB_ACTIONS' in os.environ:
+        ci['service'] = 'github-actions'
+        if os.environ['RUNNER_OS'] == 'macOS':
+            ci['os'] = 'osx'
+        else:
+            ci['os'] = os.environ['RUNNER_OS'].lower()
+        ci['platform'] = 'x64'
+        if 'CMP' in os.environ:
+            ci['compiler'] = os.environ['CMP']
+        ci['choco'] += ['strawberryperl']
+        if 'BCFG' in os.environ:
+            buildconfig = os.environ['BCFG'].lower()
+
+    if re.search('static', buildconfig):
+        ci['static'] = True
+    if re.search('debug', buildconfig):
+        ci['debug'] = True
+
     if 'STATIC' in os.environ:
         print("{0}WARNING: Variable 'STATIC' not supported anymore; use 'BCFG' instead{1}"
               .format(ANSI_RED, ANSI_RESET))
@@ -51,11 +68,6 @@ def detect_context():
         print("{0}WARNING: Unrecognized build configuration setting '{1}'{2}"
               .format(ANSI_RED, buildconfig, ANSI_RESET))
         sys.stdout.flush()
-
-    if re.search('static', buildconfig):
-        ci['static'] = True
-    if re.search('debug', buildconfig):
-        ci['debug'] = True
 
     if ci['static']:
         ci['configuration'] = 'static'
@@ -73,6 +85,9 @@ def detect_context():
 
     if 'APT' in os.environ:
         ci['apt'].extend(os.environ['APT'].split())
+
+    if 'BREW' in os.environ:
+        ci['homebrew'].extend(os.environ['BREW'].split())
 
     ci['test'] = True
     if 'TEST' in os.environ and os.environ['TEST'].lower() == 'no':
@@ -130,6 +145,7 @@ def clear_lists():
     ci['scriptsdir'] = ''
     ci['choco'] = ['make']
     ci['apt'] = []
+    ci['homebrew'] = []
 
 
 clear_lists()
@@ -153,11 +169,16 @@ ANSI_CLEAR = "\033[0K"
 
 # Travis log fold control
 # from https://github.com/travis-ci/travis-rubies/blob/build/build.sh
+# GitHub Actions fold control
+# from https://github.com/actions/toolkit/blob/master/docs/commands.md#group-and-ungroup-log-lines
 
 def fold_start(tag, title):
     if ci['service'] == 'travis':
         print('travis_fold:start:{0}{1}{2}{3}'
               .format(tag, ANSI_YELLOW, title, ANSI_RESET))
+    elif ci['service'] == 'github-actions':
+        print('::group::{0}{1}{2}'
+              .format(ANSI_YELLOW, title, ANSI_RESET))
     elif ci['service'] == 'appveyor':
         print('{0}===== \\/ \\/ \\/ ===== START: {1} ====={2}'
               .format(ANSI_YELLOW, title, ANSI_RESET))
@@ -168,6 +189,9 @@ def fold_end(tag, title):
     if ci['service'] == 'travis':
         print('\ntravis_fold:end:{0}\r'
               .format(tag), end='')
+    elif ci['service'] == 'github-actions':
+        print('::endgroup::'
+              .format(ANSI_YELLOW, title, ANSI_RESET))
     elif ci['service'] == 'appveyor':
         print('{0}----- /\\ /\\ /\\ -----   END: {1} -----{2}'
               .format(ANSI_YELLOW, title, ANSI_RESET))
@@ -181,7 +205,7 @@ elif 'HOME' in os.environ:
     homedir = os.getenv('HOME')
 cachedir = os.path.join(homedir, '.cache')
 toolsdir = os.path.join(homedir, '.tools')
-rtemsdir = os.path.join(homedir, '.rtems')
+rtemsdir = r'/home/travis/.rtems'            # Preliminary, until the next generation of toolchain
 
 if 'CACHEDIR' in os.environ:
     cachedir = os.environ['CACHEDIR']
@@ -189,8 +213,10 @@ if 'CACHEDIR' in os.environ:
 
 vcvars_table = {
     # https://en.wikipedia.org/wiki/Microsoft_Visual_Studio#History
-    'vs2019': [r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat'],
+    'vs2019': [r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat',
+               r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'],
     'vs2017': [r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat',
+               r'C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat',
                r'C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat'],
     'vs2015': [r'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat'],
     'vs2013': [r'C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat'],
@@ -551,31 +577,33 @@ def setup_for_build(args):
     global is_base314, has_test_results, is_make3
     dllpaths = []
 
+    logger.debug('Setting up the build environment')
+
     if ci['os'] == 'windows':
-        if ci['service'] == 'appveyor':
-            if ci['compiler'] == 'vs2019':
-                # put strawberry perl in the PATH
-                os.environ['PATH'] = os.pathsep.join([os.path.join(r'C:\Strawberry\perl\site\bin'),
-                                                      os.path.join(r'C:\Strawberry\perl\bin'),
-                                                      os.environ['PATH']])
-            if ci['compiler'] == 'gcc':
-                if 'INCLUDE' not in os.environ:
-                    os.environ['INCLUDE'] = ''
-                if ci['platform'] == 'x86':
-                    os.environ['INCLUDE'] = os.pathsep.join(
-                        [r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
-                         os.environ['INCLUDE']])
-                    os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
-                                                          os.environ['PATH']])
-                elif ci['platform'] == 'x64':
-                    os.environ['INCLUDE'] = os.pathsep.join(
-                        [r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
-                         os.environ['INCLUDE']])
-                    os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
-                                                          os.environ['PATH']])
-        if ci['service'] == 'travis':
-            os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\perl\site\bin', r'C:\Strawberry\perl\bin',
+        if os.path.exists(r'C:\Strawberry\perl\bin'):
+            # Put strawberry perl in front of the PATH (so that Git Perl is further behind)
+            logger.debug('Adding Strawberry Perl in front of the PATH')
+            os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\c\bin',
+                                                  r'C:\Strawberry\perl\site\bin',
+                                                  r'C:\Strawberry\perl\bin',
                                                   os.environ['PATH']])
+
+        if ci['service'] == 'appveyor' and ci['compiler'] == 'gcc':
+            logger.debug('Adding AppVeyor MSYS2/MinGW installation to PATH and INCLUDE')
+            if 'INCLUDE' not in os.environ:
+                os.environ['INCLUDE'] = ''
+            if ci['platform'] == 'x86':
+                os.environ['INCLUDE'] = os.pathsep.join(
+                    [r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+                     os.environ['INCLUDE']])
+                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+                                                      os.environ['PATH']])
+            elif ci['platform'] == 'x64':
+                os.environ['INCLUDE'] = os.pathsep.join(
+                    [r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+                     os.environ['INCLUDE']])
+                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
+                                                      os.environ['PATH']])
 
     # Find BASE location
     if not building_base:
@@ -587,6 +615,8 @@ def setup_for_build(args):
                     places['EPICS_BASE'] = place
     else:
         places['EPICS_BASE'] = '.'
+
+    logger.debug('Using EPICS Base at %s', places['EPICS_BASE'])
 
     detect_epics_host_arch()
 
@@ -611,6 +641,7 @@ def setup_for_build(args):
         with open(cfg_base_version) as myfile:
             if 'BASE_3_14=YES' in myfile.read():
                 is_base314 = True
+    logger.debug('Check if EPICS Base is a 3.14 series: %s', is_base314)
 
     if not is_base314:
         rules_build = os.path.join(places['EPICS_BASE'], 'configure', 'RULES_BUILD')
@@ -623,6 +654,7 @@ def setup_for_build(args):
     # Check make version
     if re.match(r'^GNU Make 3', sp.check_output(['make', '-v']).decode('ascii')):
         is_make3 = True
+    logger.debug('Check if make is a 3.x series: %s', is_make3)
 
     # apparently %CD% is handled automagically
     os.environ['TOP'] = os.getcwd()
@@ -781,14 +813,17 @@ CROSS_COMPILER_TARGET_ARCHS += windows-x64-mingw''')
 RTEMS_VERSION={0}
 RTEMS_BASE={1}'''.format(os.environ['RTEMS'], rtemsdir))
 
-                # Base 3.15 doesn't have -qemu target architecture
-                qemu_suffix = ''
-                if os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                # Patch Base 3.15 that doesn't have -qemu target architecture
+                if not os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                                'CONFIG.Common.RTEMS-pc386-qemu')):
-                    qemu_suffix = '-qemu'
+                    print('Adding RTEMS-pc386-qemu target to Base in {0}'.format(places['EPICS_BASE']))
+                    sys.stdout.flush()
+                    sp.check_call(['patch', '-p1', '-i',
+                                   os.path.join(ci['scriptsdir'], 'add-RTEMS-pc368-qemu-target.patch')],
+                                  cwd=places['EPICS_BASE'])
                 with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
                     f.write('''
-CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386{0}'''.format(qemu_suffix))
+CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386-qemu''')
 
         host_ccmplr_name = re.sub(r'^([a-zA-Z][^-]*(-[a-zA-Z][^-]*)*)+(-[0-9.]|)$', r'\1', ci['compiler'])
         host_cmplr_ver_suffix = re.sub(r'^([a-zA-Z][^-]*(-[a-zA-Z][^-]*)*)+(-[0-9.]|)$', r'\3', ci['compiler'])
@@ -819,20 +854,24 @@ CMPLR_CLASS = clang''')
 CC          = {0}{2}
 CCC         = {1}{2}'''.format(host_ccmplr_name, host_cppcmplr_name, host_cmplr_ver_suffix))
 
-        # Add additional flags to CONFIG_SITE
-        flags_text = ''
+        # Add additional settings to CONFIG_SITE
+        extra_config = ''
         if 'USR_CPPFLAGS' in os.environ:
-            flags_text += '''
+            extra_config += '''
 USR_CPPFLAGS += {0}'''.format(os.environ['USR_CPPFLAGS'])
         if 'USR_CFLAGS' in os.environ:
-            flags_text += '''
+            extra_config += '''
 USR_CFLAGS += {0}'''.format(os.environ['USR_CFLAGS'])
         if 'USR_CXXFLAGS' in os.environ:
-            flags_text += '''
+            extra_config += '''
 USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
-        if flags_text:
+        if ci['service'] == 'github-actions' and ci['os'] == 'windows':
+            extra_config += '''
+PERL = C:/Strawberry/perl/bin/perl -CSD'''
+
+        if extra_config:
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
-                f.write(flags_text)
+                f.write(extra_config)
 
         fold_end('set.up.epics_build', 'Configuring EPICS build system')
 
@@ -841,13 +880,18 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
 
     if ci['os'] == 'windows' and ci['choco']:
         fold_start('install.choco', 'Installing CHOCO packages')
-        sp.check_call(['choco', 'install'] + ci['choco'])
+        sp.check_call(['choco', 'install'] + ci['choco'] + ['-y', '--limitoutput', '--no-progress'])
         fold_end('install.choco', 'Installing CHOCO packages')
 
     if ci['os'] == 'linux' and ci['apt']:
         fold_start('install.apt', 'Installing APT packages')
         sp.check_call(['sudo', 'apt-get', '-y', 'install'] + ci['apt'])
         fold_end('install.apt', 'Installing APT packages')
+
+    if ci['os'] == 'osx' and ci['homebrew']:
+        fold_start('install.homebrew', 'Installing Homebrew packages')
+        sp.check_call(['brew', 'install'] + ci['homebrew'])
+        fold_end('install.homebrew', 'Installing Homebrew packages')
 
     if ci['os'] == 'linux' and 'RTEMS' in os.environ:
         tar_name = 'i386-rtems{0}-trusty-20171203-{0}.tar.bz2'.format(os.environ['RTEMS'])
@@ -858,7 +902,10 @@ USR_CXXFLAGS += {0}'''.format(os.environ['USR_CXXFLAGS'])
                        'https://github.com/mdavidsaver/rsb/releases/download/20171203-{0}/{1}'
                       .format(os.environ['RTEMS'], tar_name)],
                       cwd=toolsdir)
-        sp.check_call(['tar', '-C', '/', '-xmj', '-f', os.path.join(toolsdir, tar_name)])
+        sudo_prefix = []
+        if ci['service'] == 'github-actions':
+            sudo_prefix = ['sudo']
+        sp.check_call(sudo_prefix + ['tar', '-C', '/', '-xmj', '-f', os.path.join(toolsdir, tar_name)])
         os.remove(os.path.join(toolsdir, tar_name))
 
     setup_for_build(args)
