@@ -1,8 +1,6 @@
 name: ci-scripts build/test
 
-on:
-  push:
-    branches: [ devel/gh-actions ]
+on: [push, pull_request]
 
 env:
   SETUP_PATH: .:.ci
