@@ -288,6 +288,8 @@ in the service specific subdirectories:
 
 EPICS Modules:
 [ASYN](https://github.com/epics-modules/asyn),
+[autosave](https://github.com/epics-modules/autosave),
+[busy](https://github.com/epics-modules/busy),
 [devlib2](https://github.com/epics-modules/devlib2),
 [ecmc](https://github.com/epics-modules/ecmc),
 [gtest](https://github.com/epics-modules/gtest),
@@ -296,10 +298,14 @@ EPICS Modules:
 [MCoreUtils](https://github.com/epics-modules/MCoreUtils),
 [modbus](https://github.com/epics-modules/modbus),
 [motor](https://github.com/epics-modules/motor),
+[mrfioc2](https://github.com/epics-modules/mrfioc2),
 [OPCUA](https://github.com/ralphlange/opcua),
 [PCAS](https://github.com/epics-modules/pcas),
+[softGlueZync](https://github.com/epics-modules/softGlueZynq),
 [sscan](https://github.com/epics-modules/sscan),
-[vac](https://github.com/epics-modules/vac)
+[std](https://github.com/epics-modules/std),
+[vac](https://github.com/epics-modules/vac),
+[xxx](https://github.com/epics-modules/xxx)
 
 ESS: [EtherCAT MC Motor Driver][ref.ethercatmc]
 
@@ -359,16 +365,16 @@ This will make all builds (not just for your module) verbose.
 
 Update the submodule in `.ci` first, then change your CI configuration
 (if needed) and commit both to your module. E.g., to update your Travis
-setup to release 3.0.1 of ci-scripts:
+setup to release 3.1.0 of ci-scripts:
 ```bash
 cd .ci
-git pull origin v3.0.1
+git pull origin v3.1.0
 cd -
 git add .ci
   # if needed:
-  edit .travis.yml      # and/or .appveyor.yml
+  edit .travis.yml     # and/or AppVeyor/GitHub Actions configuration
   git add .travis.yml
-git commit -m "Update ci-scripts submodule to v3.0.1"
+git commit -m "Update ci-scripts submodule to v3.1.0"
 ```
 
 Check the example configuration files inside ci-scripts (and their
