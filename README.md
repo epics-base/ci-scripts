@@ -94,7 +94,7 @@ for more details.
  - Caching not supported by ci-scripts yet.
 
 See specific
-**[ci-scripts on GitHub Actions README](gh-actions/README.md)**
+**[ci-scripts on GitHub Actions README](github-actions/README.md)**
 for more details.
 
 ## How to Use the CI-Scripts
