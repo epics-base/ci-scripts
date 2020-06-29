@@ -60,3 +60,9 @@ configuration.)
 
 Caches are automatically removed after approx. four weeks.
 Your jobs will have to rebuild them once in a while.
+
+## Miscellanea
+
+To use the feature to extract `.zip`/`.7z` archives by setting
+`*_HOOK` variables, the Linux and MacOS runners need the APT package
+`p7zip-full` resp. the Homebrew package `p7zip` installed.

@@ -31,10 +31,14 @@ addons:
     - g++-mingw-w64-x86-64
     # for RTEMS cross builds
     - qemu-system-x86
+    # for .zip/.7z archive hooks
+    - p7zip-full
   homebrew:
     packages:
     # for the sequencer
     - re2c
+    # for .zip/.7z archive hooks
+    - p7zip
     update: true
 
 install:

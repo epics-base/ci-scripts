@@ -30,9 +30,11 @@ addons:
     - g++-mingw-w64-i686
     - g++-mingw-w64-x86-64
     - qemu-system-x86
+    - p7zip-full
   homebrew:
     packages:
     - re2c
+    - p7zip
     update: true
 
 install:
