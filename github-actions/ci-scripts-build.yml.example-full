@@ -12,7 +12,6 @@ on: [push, pull_request]
 
 env:
   SETUP_PATH: .ci-local:.ci
-  SET: test01
   CMP: gcc
   # For the sequencer on Linux/Windows/MacOS
   APT: re2c
@@ -35,14 +34,16 @@ jobs:
         configuration: [default, static, debug, static-debug]
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Prepare and compile dependencies
-      run: python cue.py prepare
+      run: python .ci/cue.py prepare
     - name: Build main module
-      run: python cue.py build
+      run: python .ci/cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python .ci/cue.py test
     - name: Collect and show test results
-      run: python cue.py test-results
+      run: python .ci/cue.py test-results
 
   build-macos:
     name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
@@ -61,13 +62,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Prepare and compile dependencies
-      run: python cue.py prepare
+      run: python .ci/cue.py prepare
     - name: Build main module
-      run: python cue.py build
+      run: python .ci/cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python .ci/cue.py test
     - name: Collect and show test results
-      run: python cue.py test-results
+      run: python .ci/cue.py test-results
 
   build-windows:
     name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
@@ -89,14 +90,16 @@ jobs:
             cmp: vs2019
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Prepare and compile dependencies
-      run: python cue.py prepare
+      run: python .ci/cue.py prepare
     - name: Build main module
-      run: python cue.py build
+      run: python .ci/cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python .ci/cue.py test
     - name: Collect and show test results
-      run: python cue.py test-results
+      run: python .ci/cue.py test-results
 
   # Same setup and toolchain as on Travis.
   # Needs Base >= 3.15 to compile, EPICS 7 to also run the tests on qemu
@@ -113,18 +116,20 @@ jobs:
       matrix:
         os: [ubuntu-18.04]
         cmp: [gcc]
-        configuration: [default, static, debug, static-debug]
+        configuration: [default]
         rtems: ["4.9", "4.10"]
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Prepare and compile dependencies
-      run: python cue.py prepare
+      run: python .ci/cue.py prepare
     - name: Build main module
-      run: python cue.py build
+      run: python .ci/cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python .ci/cue.py test
     - name: Collect and show test results
-      run: python cue.py test-results
+      run: python .ci/cue.py test-results
 
   # The WINE cross builds are of somewhat limited use,
   # as there are native gcc/MinGW builds available on GitHub Actions
@@ -145,11 +150,13 @@ jobs:
         wine: [32, 64]
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Prepare and compile dependencies
-      run: python cue.py prepare
+      run: python .ci/cue.py prepare
     - name: Build main module
-      run: python cue.py build
+      run: python .ci/cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python .ci/cue.py test
     - name: Collect and show test results
-      run: python cue.py test-results
+      run: python .ci/cue.py test-results

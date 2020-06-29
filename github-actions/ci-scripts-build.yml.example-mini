@@ -12,7 +12,6 @@ on: [push, pull_request]
 
 env:
   SETUP_PATH: .ci-local:.ci
-  SET: test01
   CMP: gcc
 
 jobs:
@@ -33,11 +32,13 @@ jobs:
         base: ["7.0", "3.15"]
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Prepare and compile dependencies
-      run: python cue.py prepare
+      run: python .ci/cue.py prepare
     - name: Build main module
-      run: python cue.py build
+      run: python .ci/cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python .ci/cue.py test
     - name: Collect and show test results
-      run: python cue.py test-results
+      run: python .ci/cue.py test-results
