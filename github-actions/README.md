@@ -48,6 +48,18 @@
  5. Push your changes and click on the `Actions` tab of your GitHub repository
     page to see your build results.
 
+## Specifics
+
+#### Quote Environment Variable Values
+
+Variable settings distinguish between numerical and string values.
+Better quote all branch and tag names. E.g.,
+```yaml
+env:
+  BASE: "7.0"
+```
+to avoid ci-scripts trying to `git clone` with `--branch 7`.
+
 ## Caches
 
 GitHub Actions provides caching of dependencies.
