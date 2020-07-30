@@ -539,9 +539,9 @@ def add_dependency(dep):
             hook = setup[dep + '_HOOK']
             hook_file = os.path.join(curdir, hook)
             if os.path.exists(hook_file):
-                if re.match(r'.+\\.patch$', hook):
+                if re.match(r'.+\.patch$', hook):
                     apply_patch(hook_file, cwd=place)
-                elif re.match(r'.+\\.(zip|7z)$', hook):
+                elif re.match(r'.+\.(zip|7z)$', hook):
                     extract_archive(hook_file, cwd=place)
                 else:
                     print('Running hook {0} in {1}'.format(hook, place))
