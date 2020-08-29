@@ -143,7 +143,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04]
+        os: [ubuntu-20.04]
         cmp: [gcc]
         configuration: [default, debug]
         rtems: ["4.9", "4.10"]
