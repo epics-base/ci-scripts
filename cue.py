@@ -380,7 +380,9 @@ def call_git(args, **kws):
     return exitcode
 
 
-def call_make(args=[], **kws):
+def call_make(args=None, **kws):
+    if args is None:
+        args = []
     place = kws.get('cwd', os.getcwd())
     parallel = kws.pop('parallel', ci['parallel_make'])
     silent = kws.pop('silent', False)
