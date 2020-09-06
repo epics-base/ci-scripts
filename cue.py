@@ -16,7 +16,11 @@ logger = logging.getLogger(__name__)
 
 # Detect the service and set up context hash accordingly
 def detect_context():
+    global homedir
+
     buildconfig = 'default'
+    ci['cachedir'] = os.path.join(homedir, '.cache')
+
     if 'TRAVIS' in os.environ:
         ci['service'] = 'travis'
         ci['os'] = os.environ['TRAVIS_OS_NAME']
@@ -33,7 +37,8 @@ def detect_context():
         ci['service'] = 'gitlab'
         ci['os'] = 'linux'
         ci['platform'] = 'x64'
-        ci['sudo'] = []                    # No sudo in GitLab Docker containers
+        ci['sudo'] = []                                      # No sudo in GitLab Docker containers
+        ci['cachedir'] = os.path.join(curdir, '.cache')    # No caches outside project directory
         if 'CMP' in os.environ:
             ci['compiler'] = os.environ['CMP']
         if 'BCFG' in os.environ:
@@ -89,6 +94,9 @@ def detect_context():
         ci['configuration'] += '-optimized'
 
     ci['scriptsdir'] = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+    if 'CACHEDIR' in os.environ:
+        ci['cachedir'] = os.environ['CACHEDIR']
 
     if 'CHOCO' in os.environ:
         ci['choco'].extend(os.environ['CHOCO'].split())
@@ -154,6 +162,7 @@ def clear_lists():
     ci['debug'] = False
     ci['configuration'] = '<unknown>'
     ci['scriptsdir'] = ''
+    ci['cachedir'] = ''
     ci['choco'] = ['make']
     ci['apt'] = []
     ci['homebrew'] = []
@@ -215,12 +224,8 @@ if 'HomeDrive' in os.environ:
     homedir = os.path.join(os.getenv('HomeDrive'), os.getenv('HomePath'))
 elif 'HOME' in os.environ:
     homedir = os.getenv('HOME')
-cachedir = os.path.join(homedir, '.cache')
 toolsdir = os.path.join(homedir, '.tools')
 rtemsdir = r'/home/travis/.rtems'            # Preliminary, until the next generation of toolchain
-
-if 'CACHEDIR' in os.environ:
-    cachedir = os.environ['CACHEDIR']
 
 
 vcvars_table = {
@@ -333,14 +338,14 @@ def source_set(name):
 # - otherwise add "$var=$location" line and possibly move EPICS_BASE=... line to the end
 # Set places[var] = location
 def update_release_local(var, location):
-    release_local = os.path.join(cachedir, 'RELEASE.local')
+    release_local = os.path.join(ci['cachedir'], 'RELEASE.local')
     updated_line = '{0}={1}'.format(var, location.replace('\\', '/'))
     places[var] = location
 
     if not os.path.exists(release_local):
         logger.debug('RELEASE.local does not exist, creating it')
         try:
-            os.makedirs(cachedir)
+            os.makedirs(ci['cachedir'])
         except:
             pass
         touch = open(release_local, 'w')
@@ -495,7 +500,7 @@ def add_dependency(dep):
                            .format(ANSI_RED, tag, dep, setup[dep + '_REPOURL'], ANSI_RESET))
 
     dirname = setup[dep + '_DIRNAME'] + '-{0}'.format(tag)
-    place = os.path.join(cachedir, dirname)
+    place = os.path.join(ci['cachedir'], dirname)
     checked_file = os.path.join(place, "checked_out")
 
     if os.path.isdir(place):
@@ -517,14 +522,14 @@ def add_dependency(dep):
             sys.stdout.flush()
 
     if not os.path.isdir(place):
-        if not os.path.isdir(cachedir):
-            os.makedirs(cachedir)
+        if not os.path.isdir(ci['cachedir']):
+            os.makedirs(ci['cachedir'])
         # clone dependency
         print('Cloning {0} of dependency {1} into {2}'
               .format(tag, dep, place))
         sys.stdout.flush()
         call_git(['clone', '--quiet'] + deptharg + recursearg + ['--branch', tag, setup[dep + '_REPOURL'], dirname],
-                 cwd=cachedir)
+                 cwd=ci['cachedir'])
 
         sp.check_call(['git', 'log', '-n1'], cwd=place)
         logger.debug('Setting do_recompile = True (all following modules will be recompiled')
@@ -645,7 +650,7 @@ def setup_for_build(args):
 
     # Find BASE location
     if not building_base:
-        with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
+        with open(os.path.join(ci['cachedir'], 'RELEASE.local'), 'r') as f:
             lines = f.readlines()
             for line in lines:
                 (mod, place) = line.strip().split('=')
@@ -660,7 +665,7 @@ def setup_for_build(args):
 
     if ci['os'] == 'windows':
         if not building_base:
-            with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
+            with open(os.path.join(ci['cachedir'], 'RELEASE.local'), 'r') as f:
                 lines = f.readlines()
                 for line in lines:
                     (mod, place) = line.strip().split('=')
@@ -764,7 +769,7 @@ def prepare(args):
             targetdir = 'configure'
         else:
             targetdir = '.'
-        shutil.copy(os.path.join(cachedir, 'RELEASE.local'), targetdir)
+        shutil.copy(os.path.join(ci['cachedir'], 'RELEASE.local'), targetdir)
 
     fold_end('check.out.dependencies', 'Checking/cloning dependencies')
 
@@ -987,7 +992,7 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
             print("%-10s %-12s %-11s %s" % (mod, setup[mod], stat, commit))
 
         print('{0}Contents of RELEASE.local{1}'.format(ANSI_CYAN, ANSI_RESET))
-        with open(os.path.join(cachedir, 'RELEASE.local'), 'r') as f:
+        with open(os.path.join(ci['cachedir'], 'RELEASE.local'), 'r') as f:
             print(f.read().strip())
 
 
