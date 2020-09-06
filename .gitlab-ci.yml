@@ -85,3 +85,75 @@ clang_static_debug:
   variables:
     CMP: "clang"
     BCFG: "static-debug"
+
+# WINE based cross-builds to Windows 32bit and 64bit
+wine32_default:
+  extends: .build
+  variables:
+    WINE: "32"
+
+wine32_static:
+  extends: .build
+  variables:
+    WINE: "32"
+    BCFG: "static"
+
+wine32_debug:
+  extends: .build
+  variables:
+    WINE: "32"
+    BCFG: "debug"
+
+wine32_static_debug:
+  extends: .build
+  variables:
+    WINE: "32"
+    BCFG: "static-debug"
+
+wine64_default:
+  extends: .build
+  variables:
+    WINE: "64"
+
+wine64_static:
+  extends: .build
+  variables:
+    WINE: "64"
+    BCFG: "static"
+
+wine64_debug:
+  extends: .build
+  variables:
+    WINE: "64"
+    BCFG: "debug"
+
+wine64_static_debug:
+  extends: .build
+  variables:
+    WINE: "64"
+    BCFG: "static-debug"
+
+# Cross-builds to RTEMS 4.9 and 4.10
+rtems4.9_default:
+  extends: .build
+  variables:
+    RTEMS: "4.9"
+    BASE: "3.15"
+
+rtems4.9_debug:
+  extends: .build
+  variables:
+    RTEMS: "4.9"
+    BASE: "3.15"
+    BCFG: "debug"
+
+rtems4.10_default:
+  extends: .build
+  variables:
+    RTEMS: "4.10"
+
+rtems4.10_debug:
+  extends: .build
+  variables:
+    RTEMS: "4.10"
+    BCFG: "debug"
