@@ -28,7 +28,7 @@ unit_test:
   variables:
     SET: test00
   before_script:
-    - apt-get update -qq && apt-get install -y -qq make git python
+    - apt-get update -qq && apt-get install -y -qq make git python curl p7zip-full
     - python cue-test.py env
   script:
     - python cue-test.py
@@ -37,7 +37,7 @@ unit_test:
 .build:
   stage: build
   before_script:
-    - apt-get update -qq && apt-get install -y -qq build-essential git python curl
+    - apt-get update -qq && apt-get install -y -qq build-essential git python curl p7zip-full
     - python cue.py prepare
   script:
     - python cue.py build
