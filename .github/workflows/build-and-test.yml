@@ -114,7 +114,7 @@ jobs:
       matrix:
         os: [ubuntu-18.04]
         cmp: [gcc]
-        configuration: [default, static, debug, static-debug]
+        configuration: [default, debug]
         rtems: ["4.9", "4.10"]
     steps:
     - uses: actions/checkout@v2
