@@ -909,6 +909,7 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
 
     if ci['os'] == 'linux' and ci['apt']:
         fold_start('install.apt', 'Installing APT packages')
+        sp.check_call(['sudo', 'apt-get', '-y', 'update'])
         sp.check_call(['sudo', 'apt-get', '-y', 'install'] + ci['apt'])
         fold_end('install.apt', 'Installing APT packages')
 
