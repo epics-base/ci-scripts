@@ -689,7 +689,10 @@ class TestSetupForBuild(unittest.TestCase):
     args = Namespace(paths=[])
     cue.building_base = True
     if ci_os == 'windows':
-        sp.check_call(['choco', 'install', 'make', 'strawberryperl', '-ry'])
+        choco_installs = ['make']
+        if ci_service != 'appveyor':
+            choco_installs.append('strawberryperl')
+        sp.check_call(['choco', 'install', '-ry'] + choco_installs)
 
     def setUp(self):
         if ci_service == 'appveyor':
