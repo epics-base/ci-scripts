@@ -97,6 +97,20 @@ See specific
 **[ci-scripts on GitHub Actions README](github-actions/README.md)**
 for more details.
 
+### [GitLab CI/CD](https://gitlab.com/)
+
+ - Docker-based runners on Linux (one VM instance per job)
+ - Can use any Docker image from Dockerhub (the examples use
+  `ubuntu:bionic`)
+ - Compile natively using different compilers (gcc, clang)
+ - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
+ - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Built dependencies are cached (for faster builds).
+
+See specific
+**[ci-scripts on GitLab CI/CD README](gitlab/README.md)**
+for more details.
+
 ## How to Use the CI-Scripts
 
  1. Get an account on a supported CI service provider platform
