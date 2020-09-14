@@ -25,12 +25,12 @@ variables:
 
 # Build on Linux using default gcc for Base branches 7.0 and 3.15
 
-gcc_7_0:
+gcc_base_7_0:
   extends: .build
   variables:
     BASE: "7.0"
 
-gcc_3_15:
+gcc_base_3_15:
   extends: .build
   variables:
     BASE: "3.15"
