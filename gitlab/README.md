@@ -16,6 +16,10 @@
     for your support module and have it mirror your upstream GitHub
     repository. For more details, please refer to the
     [GitLab CI/CD documentation](https://docs.gitlab.com/ee/README.html).
+    
+    (This applies when using the free tier offered to open source
+    projects. Things will be different using an "Enterprise"
+    installation on customer hardware.)
 
  2. Add the ci-scripts respository as a Git Submodule
     (see [README](../README.md) one level above).
