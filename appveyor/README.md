@@ -15,6 +15,10 @@
     it to your GitHub account and activate your support module's
     repository. For more details, please see below and refer to the
     [AppVeyor documentation](https://www.appveyor.com/docs/).
+    
+    (This applies when using the free tier offered to open source
+    projects. Things will be different using an "Enterprise"
+    installation on customer hardware.)
 
  2. Add the ci-scripts respository as a Git Submodule
     (see [README](../README.md) one level above).

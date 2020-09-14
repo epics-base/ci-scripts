@@ -18,6 +18,10 @@
     repository. For more details, please refer to the
     [Travis-CI Tutorial](https://docs.travis-ci.com/user/tutorial/).
     Make sure to use `travis-ci.org` and not their `.com` site.
+    
+    (This applies when using the free tier offered to open source
+    projects. Things will be different using an "Enterprise"
+    installation on customer hardware.)
 
  2. Add the ci-scripts respository as a Git Submodule
     (see [README](../README.md) one level above).

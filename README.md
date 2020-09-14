@@ -57,6 +57,14 @@ levels as the example files.
 
 ## Supported CI Services
 
+The listed properties and instructions for the CI services apply to
+their free tiers for open source projects, hosted in the cloud on
+their infrastructure.
+
+The companies behind these services also offer "enterprise" installations
+on customer infrastructure, which will have different performance
+and limitations.
+
 ### [Travis-CI](https://travis-ci.org/)
  - Five parallel runners on Linux/Windows (one runner on MacOS)
  - Ubuntu 12/14/16/18, MacOS 10.13, Windows Server v1809
