@@ -1,0 +1,160 @@
+# .gitlab-ci.yml for testing EPICS Base ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# Note:
+# Paths to scripts are different in this test configuration
+# (your module has one more directory level: .ci)
+
+image: ubuntu:bionic
+
+cache:
+  key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+  paths:
+    - .cache/
+
+variables:
+  GIT_SUBMODULE_STRATEGY: "recursive"
+  SETUP_PATH: ".:.ci"
+  BASE_RECURSIVE: "NO"
+  APT: "libreadline6-dev libncurses5-dev perl clang g++-mingw-w64-i686 g++-mingw-w64-x86-64 qemu-system-x86 re2c"
+  CMP: "gcc"
+  BGFC: "default"
+  VV: "1"
+  SET: test01
+
+# Unit tests
+unit_test:
+  stage: build
+  variables:
+    SET: test00
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq make git python curl p7zip-full
+    - python cue-test.py env
+  script:
+    - python cue-test.py
+
+# Template job for test builds (hidden)
+.build:
+  stage: build
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq build-essential git python curl p7zip-full
+    - python cue.py prepare
+  script:
+    - python cue.py build
+    - python cue.py test
+    - python cue.py test-results
+
+# gcc builds using four configurations (shared/static, optimized/debug)
+gcc_default:
+  extends: .build
+
+gcc_static:
+  extends: .build
+  variables:
+    BCFG: "static"
+
+gcc_debug:
+  extends: .build
+  variables:
+    BCFG: "debug"
+
+gcc_static_debug:
+  extends: .build
+  variables:
+    BCFG: "static-debug"
+
+# clang builds using four configurations (shared/static, optimized/debug)
+clang_default:
+  extends: .build
+  variables:
+    CMP: "clang"
+
+clang_static:
+  extends: .build
+  variables:
+    CMP: "clang"
+    BCFG: "static"
+
+clang_debug:
+  extends: .build
+  variables:
+    CMP: "clang"
+    BCFG: "debug"
+
+clang_static_debug:
+  extends: .build
+  variables:
+    CMP: "clang"
+    BCFG: "static-debug"
+
+# WINE based cross-builds to Windows 32bit and 64bit
+wine32_default:
+  extends: .build
+  variables:
+    WINE: "32"
+
+wine32_static:
+  extends: .build
+  variables:
+    WINE: "32"
+    BCFG: "static"
+
+wine32_debug:
+  extends: .build
+  variables:
+    WINE: "32"
+    BCFG: "debug"
+
+wine32_static_debug:
+  extends: .build
+  variables:
+    WINE: "32"
+    BCFG: "static-debug"
+
+wine64_default:
+  extends: .build
+  variables:
+    WINE: "64"
+
+wine64_static:
+  extends: .build
+  variables:
+    WINE: "64"
+    BCFG: "static"
+
+wine64_debug:
+  extends: .build
+  variables:
+    WINE: "64"
+    BCFG: "debug"
+
+wine64_static_debug:
+  extends: .build
+  variables:
+    WINE: "64"
+    BCFG: "static-debug"
+
+# Cross-builds to RTEMS 4.9 and 4.10
+rtems4.9_default:
+  extends: .build
+  variables:
+    RTEMS: "4.9"
+    BASE: "3.15"
+
+rtems4.9_debug:
+  extends: .build
+  variables:
+    RTEMS: "4.9"
+    BASE: "3.15"
+    BCFG: "debug"
+
+rtems4.10_default:
+  extends: .build
+  variables:
+    RTEMS: "4.10"
+
+rtems4.10_debug:
+  extends: .build
+  variables:
+    RTEMS: "4.10"
+    BCFG: "debug"

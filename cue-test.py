@@ -22,6 +22,10 @@ if 'TRAVIS' in os.environ:
     ci_service = 'travis'
     ci_os = os.environ['TRAVIS_OS_NAME']
 
+if 'GITLAB_CI' in os.environ:
+    ci_service = 'gitlab'
+    ci_os = 'linux'
+
 if 'APPVEYOR' in os.environ:
     ci_service = 'appveyor'
     if re.match(r'^Visual', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
@@ -118,7 +122,7 @@ class TestSourceSet(unittest.TestCase):
 
 
 class TestUpdateReleaseLocal(unittest.TestCase):
-    release_local = os.path.join(cue.cachedir, 'RELEASE.local')
+    release_local = os.path.join(cue.ci['cachedir'], 'RELEASE.local')
 
     def setUp(self):
         if os.path.exists(self.release_local):
@@ -186,16 +190,21 @@ class TestUpdateReleaseLocal(unittest.TestCase):
 
 class TestAddDependencyUpToDateCheck(unittest.TestCase):
     hash_3_15_6 = "ce7943fb44beb22b453ddcc0bda5398fadf72096"
-    location = os.path.join(cue.cachedir, 'base-R3.15.6')
-    licensefile = os.path.join(location, 'LICENSE')
-    checked_file = os.path.join(location, 'checked_out')
-    release_file = os.path.join(location, 'configure', 'RELEASE')
+    location = ''
+    licensefile = ''
+    checked_file = ''
+    release_file = ''
 
     def setUp(self):
         os.environ['SETUP_PATH'] = '.:appveyor'
+        cue.clear_lists()
+        cue.detect_context()
+        self.location = os.path.join(cue.ci['cachedir'], 'base-R3.15.6')
+        self.licensefile = os.path.join(self.location, 'LICENSE')
+        self.checked_file = os.path.join(self.location, 'checked_out')
+        self.release_file = os.path.join(self.location, 'configure', 'RELEASE')
         if os.path.exists(self.location):
             shutil.rmtree(self.location, onerror=cue.remove_readonly)
-        cue.clear_lists()
         os.chdir(builddir)
         cue.source_set('defaults')
         cue.complete_setup('BASE')
@@ -249,15 +258,18 @@ def is_shallow_repo(place):
 
 
 class TestAddDependencyOptions(unittest.TestCase):
-    location = os.path.join(cue.cachedir, 'mcoreutils-master')
-    testfile = os.path.join(location, '.ci', 'LICENSE')
+    location = ''
+    testfile = ''
 
     def setUp(self):
         os.environ['SETUP_PATH'] = '.'
-        if os.path.exists(cue.cachedir):
-            shutil.rmtree(cue.cachedir, onerror=cue.remove_readonly)
         cue.clear_lists()
         cue.detect_context()
+        if os.path.exists(cue.ci['cachedir']):
+            shutil.rmtree(cue.ci['cachedir'], onerror=cue.remove_readonly)
+        self.location = os.path.join(cue.ci['cachedir'], 'mcoreutils-master')
+        self.testfile = os.path.join(self.location, '.ci', 'LICENSE')
+        os.path.join(cue.ci['cachedir'], 'mcoreutils-master')
         cue.source_set('defaults')
         cue.complete_setup('MCoreUtils')
         cue.setup['MCoreUtils'] = 'master'
@@ -288,7 +300,7 @@ class TestAddDependencyOptions(unittest.TestCase):
     def test_AddMsiTo314(self):
         cue.complete_setup('BASE')
         cue.setup['BASE'] = 'R3.14.12.1'
-        msifile = os.path.join(cue.cachedir, 'base-R3.14.12.1', 'src', 'dbtools', 'msi.c')
+        msifile = os.path.join(cue.ci['cachedir'], 'base-R3.14.12.1', 'src', 'dbtools', 'msi.c')
         cue.add_dependency('BASE')
         self.assertTrue(os.path.exists(msifile), 'MSI was not added to Base 3.14')
 
@@ -834,7 +846,7 @@ class TestSetupForBuild(unittest.TestCase):
 
 
 class TestHooks(unittest.TestCase):
-    location = os.path.join(cue.cachedir, 'hook_test')
+    location = os.path.join(cue.ci['cachedir'], 'hook_test')
     bla_file = os.path.join(location, 'bla.txt')
     new_file = os.path.join(location, 'dd', 'new.txt')
 

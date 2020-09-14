@@ -1,0 +1,36 @@
+# .gitlab-ci.yml for testing EPICS Base ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+image: ubuntu:bionic
+
+variables:
+  GIT_SUBMODULE_STRATEGY: "recursive"
+  SETUP_PATH: ".ci-local:.ci"
+  BASE_RECURSIVE: "NO"
+  # Minimal set of packages needed to compile EPICS Base
+  APT: "libreadline6-dev libncurses5-dev perl"
+  CMP: "gcc"
+  BGFC: "default"
+
+# Template for build jobs (hidden)
+.build:
+  stage: build
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq build-essential git python curl p7zip-full
+    - python .ci/cue.py prepare
+  script:
+    - python .ci/cue.py build
+    - python .ci/cue.py test
+    - python .ci/cue.py test-results
+
+# Build on Linux using default gcc for Base branches 7.0 and 3.15
+
+gcc_base_7_0:
+  extends: .build
+  variables:
+    BASE: "7.0"
+
+gcc_base_3_15:
+  extends: .build
+  variables:
+    BASE: "3.15"
