@@ -1090,7 +1090,7 @@ def getargs():
     p.add_argument('--no-vcvars', dest='vcvars', default=True, action='store_false',
                    help='Assume vcvarsall.bat has already been run')
     p.add_argument('--add-path', dest='paths', default=[], action='append',
-                   help='Append directory to %PATH%.  Expands {ENVVAR}')
+                   help='Append directory to $PATH or %%PATH%%.  Expands {ENVVAR}')
     subp = p.add_subparsers()
 
     cmd = subp.add_parser('prepare')
