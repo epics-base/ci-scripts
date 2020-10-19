@@ -2,6 +2,7 @@
 <a target="_blank" href="https://travis-ci.org/epics-base/ci-scripts">![Travis status][badge.travis]</a>
 <a target="_blank" href="https://ci.appveyor.com/project/epics-base/ci-scripts">![AppVeyor status][badge.appveyor]</a>
 <a target="_blank" href="https://github.com/epics-base/ci-scripts/actions">![GitHub Actions status][badge.gh-actions]</a>
+<a target="_blank" href="https://gitlab.com/epics-base/ci-scripts/-/pipelines">![GitLab CI/CD status][badge.gitlab]</a>
 
 # Continuous Integration for EPICS Modules
 
@@ -451,6 +452,7 @@ in file LICENSE that is included with this distribution.
 [badge.travis]: https://travis-ci.org/epics-base/ci-scripts.svg?branch=master
 [badge.appveyor]: https://ci.appveyor.com/api/projects/status/8b578alg974axvux?svg=true
 [badge.gh-actions]: https://github.com/epics-base/ci-scripts/workflows/ci-scripts%20build/test/badge.svg
+[badge.gitlab]: https://gitlab.com/epics-base/ci-scripts/badges/master/pipeline.svg
 
 [reddit.bash]: https://www.reddit.com/r/bash/comments/393oqv/why_is_the_version_of_bash_included_in_os_x_so_old/
 
