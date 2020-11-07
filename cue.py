@@ -715,8 +715,9 @@ def setup_for_build(args):
 
     # Add EXTRA make arguments
     for tag in ['EXTRA', 'EXTRA1', 'EXTRA2', 'EXTRA3', 'EXTRA4', 'EXTRA5']:
-        if tag in os.environ:
-            extra_makeargs.append(os.environ[tag])
+        val = os.environ.get(tag, "")
+        if len(val)>0:
+            extra_makeargs.append(val)
 
 
 def fix_etc_hosts():
