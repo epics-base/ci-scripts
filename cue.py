@@ -13,6 +13,18 @@ import distutils.util
 
 logger = logging.getLogger(__name__)
 
+def prepare_env():
+    '''HACK
+    github actions yaml configuration doesn't allow
+    conditional (un)setting of environments, only values.
+    Currently this script treats unset and empty environment
+    variables differently.
+    While this is the case, we unset any empty environment variables.
+    '''
+    toclear = tuple(k for k,v in os.environ.items() if len(v.strip())==0)
+    for var in toclear:
+        print('{0}Clearing empty environment variable {1}{2}'.format(ANSI_CYAN, var, ANSI_RESET))
+        del os.environ[var]
 
 # Detect the service and set up context hash accordingly
 def detect_context():
@@ -1121,6 +1133,7 @@ def main(raw):
         logging.basicConfig(level=logging.DEBUG)
         silent_dep_builds = False
 
+    prepare_env()
     detect_context()
 
     if args.vcvars and ci['compiler'].startswith('vs'):
