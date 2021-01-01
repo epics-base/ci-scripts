@@ -125,7 +125,7 @@ def detect_context():
 
     ci['parallel_make'] = 2
     if 'PARALLEL_MAKE' in os.environ:
-        ci['parallel_make'] = os.environ['PARALLEL_MAKE']
+        ci['parallel_make'] = int(os.environ['PARALLEL_MAKE'])
 
     ci['clean_deps'] = True
     if 'CLEAN_DEPS' in os.environ and os.environ['CLEAN_DEPS'].lower() == 'no':
