@@ -13,6 +13,22 @@ import distutils.util
 
 logger = logging.getLogger(__name__)
 
+# Keep track of all files we write/append for later logging
+_realopen = open
+_modified_files = set()
+def open(fname, mode='r'):
+    F = _realopen(fname, mode)
+    if 'w' in mode or 'a' in mode:
+        _modified_files.add(os.path.normpath(os.path.abspath(fname)))
+    return F
+
+def log_modified():
+    for fname in _modified_files:
+        with Folded(os.path.basename(fname), 'Contents of '+fname):
+            with open(fname, 'r') as F:
+                sys.stdout.write(F.read())
+            sys.stdout.write(os.linesep)
+
 def prepare_env():
     '''HACK
     github actions yaml configuration doesn't allow
@@ -230,6 +246,13 @@ def fold_end(tag, title):
               .format(ANSI_YELLOW, title, ANSI_RESET))
     sys.stdout.flush()
 
+class Folded(object):
+    def __init__(self, tag, title):
+        self.tag, self.title = tag, title
+    def __enter__(self):
+        fold_start(self.tag, self.title)
+    def __exit__(self,A,B,C):
+        fold_end(self.tag, self.title)
 
 homedir = curdir
 if 'HomeDrive' in os.environ:
@@ -983,6 +1006,9 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
         sys.stdout.flush()
         sp.check_call([cc, '--version'])
 
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
+        log_modified()
+
     if not building_base:
         fold_start('build.dependencies', 'Build missing/outdated dependencies')
         for mod in modules_to_compile:
@@ -1008,7 +1034,6 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
         print('{0}Contents of RELEASE.local{1}'.format(ANSI_CYAN, ANSI_RESET))
         with open(os.path.join(ci['cachedir'], 'RELEASE.local'), 'r') as f:
             print(f.read().strip())
-
 
 def build(args):
     setup_for_build(args)
