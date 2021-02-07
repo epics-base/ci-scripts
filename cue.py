@@ -878,34 +878,35 @@ RTEMS_BASE={1}'''.format(os.environ['RTEMS'], rtemsdir))
                     f.write('''
 CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386{0}'''.format(qemu_suffix))
 
-        host_ccmplr_name = re.sub(r'^([a-zA-Z][^-]*(-[a-zA-Z][^-]*)*)+(-[0-9.]|)$', r'\1', ci['compiler'])
-        host_cmplr_ver_suffix = re.sub(r'^([a-zA-Z][^-]*(-[a-zA-Z][^-]*)*)+(-[0-9.]|)$', r'\3', ci['compiler'])
-        host_cmpl_ver = host_cmplr_ver_suffix[1:]
+        print('Host compiler', ci['compiler'])
 
-        if host_ccmplr_name == 'clang':
-            print('Host compiler clang')
-            host_cppcmplr_name = re.sub(r'clang', r'clang++', host_ccmplr_name)
+        if ci['compiler'].startswith('clang'):
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                    'CONFIG_SITE.Common.'+os.environ['EPICS_HOST_ARCH']), 'a') as f:
                 f.write('''
 GNU         = NO
 CMPLR_CLASS = clang
-CC          = {0}{2}
-CCC         = {1}{2}'''.format(host_ccmplr_name, host_cppcmplr_name, host_cmplr_ver_suffix))
+CC          = {0}
+CCC         = {1}'''.format(ci['compiler'],
+                               re.sub(r'clang', r'clang++', ci['compiler'])))
 
             # hack
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG.gnuCommon'), 'a') as f:
                 f.write('''
 CMPLR_CLASS = clang''')
 
-        if host_ccmplr_name == 'gcc':
-            print('Host compiler gcc')
-            host_cppcmplr_name = re.sub(r'gcc', r'g++', host_ccmplr_name)
+        elif ci['compiler'].startswith('gcc'):
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                    'CONFIG_SITE.Common.' + os.environ['EPICS_HOST_ARCH']), 'a') as f:
                 f.write('''
-CC          = {0}{2}
-CCC         = {1}{2}'''.format(host_ccmplr_name, host_cppcmplr_name, host_cmplr_ver_suffix))
+CC          = {0}
+CCC         = {1}'''.format(ci['compiler'], re.sub(r'gcc', r'g++', ci['compiler'])))
+
+        elif ci['compiler'].startswith('vs'):
+            pass # nothing special
+
+        else:
+            raise ValueError('Unknown compiler name {0}.  valid forms include: gcc, gcc-4.8, clang, vs2019'.format(ci['compiler']))
 
         # Add additional settings to CONFIG_SITE
         extra_config = ''
