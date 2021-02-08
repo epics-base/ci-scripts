@@ -448,7 +448,7 @@ This module is distributed subject to a Software License Agreement found
 in file LICENSE that is included with this distribution.
 
 <!-- Links -->
-[badge.version]: https://badge.fury.io/gh/epics-base%2Fci-scripts.svg
+[badge.version]: https://img.shields.io/github/v/release/epics-base/ci-scripts?sort=semver
 [badge.travis]: https://travis-ci.org/epics-base/ci-scripts.svg?branch=master
 [badge.appveyor]: https://ci.appveyor.com/api/projects/status/8b578alg974axvux?svg=true
 [badge.gh-actions]: https://github.com/epics-base/ci-scripts/workflows/ci-scripts%20build/test/badge.svg
