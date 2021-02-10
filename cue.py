@@ -903,15 +903,16 @@ CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386{0}'''.format(qemu_suffix))
 
         print('Host compiler', ci['compiler'])
 
+        cxx = None
         if ci['compiler'].startswith('clang'):
+            cxx = re.sub(r'clang', r'clang++', ci['compiler'])
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                    'CONFIG_SITE.Common.'+os.environ['EPICS_HOST_ARCH']), 'a') as f:
                 f.write('''
 GNU         = NO
 CMPLR_CLASS = clang
 CC          = {0}
-CCC         = {1}'''.format(ci['compiler'],
-                               re.sub(r'clang', r'clang++', ci['compiler'])))
+CCC         = {1}'''.format(ci['compiler'], cxx))
 
             # hack
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG.gnuCommon'), 'a') as f:
@@ -919,11 +920,12 @@ CCC         = {1}'''.format(ci['compiler'],
 CMPLR_CLASS = clang''')
 
         elif ci['compiler'].startswith('gcc'):
+            cxx = re.sub(r'gcc', r'g++', ci['compiler'])
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                    'CONFIG_SITE.Common.' + os.environ['EPICS_HOST_ARCH']), 'a') as f:
                 f.write('''
 CC          = {0}
-CCC         = {1}'''.format(ci['compiler'], re.sub(r'gcc', r'g++', ci['compiler'])))
+CCC         = {1}'''.format(ci['compiler'], cxx))
 
         elif ci['compiler'].startswith('vs'):
             pass # nothing special
@@ -1005,6 +1007,10 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
         print('{0}$ {1} --version{2}'.format(ANSI_CYAN, cc, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call([cc, '--version'])
+        if cxx:
+            print('{0}$ {1} --version{2}'.format(ANSI_CYAN, cxx, ANSI_RESET))
+            sys.stdout.flush()
+            sp.check_call([cxx, '--version'])
 
     if logging.getLogger().isEnabledFor(logging.DEBUG):
         log_modified()
