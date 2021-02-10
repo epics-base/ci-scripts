@@ -98,9 +98,6 @@ def detect_context():
         if 'BCFG' in os.environ:
             buildconfig = os.environ['BCFG'].lower()
 
-    ci['compiler-suffix'] = re.sub(r'^.*?(-[0-9.]+|)$', r'\1', ci['compiler'])
-    ci['compiler-class'] = re.sub(r'^([^0-9.-]*).*?$', r'\1', ci['compiler'])
-
     if re.search('static', buildconfig):
         ci['static'] = True
     if re.search('debug', buildconfig):
@@ -618,7 +615,7 @@ def add_dependency(dep):
 
 def detect_epics_host_arch():
     if ci['os'] == 'windows':
-        if ci['compiler-class'] == 'vs':
+        if re.match(r'^vs', ci['compiler']):
             # there is no combined static and debug EPICS_HOST_ARCH target,
             # so a combined debug and static target will appear to be just static
             # but debug will have been specified in CONFIG_SITE by prepare()
@@ -633,7 +630,7 @@ def detect_epics_host_arch():
             elif ci['platform'] == 'x64':
                 os.environ['EPICS_HOST_ARCH'] = 'windows-x64' + hostarchsuffix
 
-        elif ci['compiler-class'] == 'gcc':
+        elif ci['compiler'] == 'gcc':
             if ci['platform'] == 'x86':
                 os.environ['EPICS_HOST_ARCH'] = 'win32-x86-mingw'
             elif ci['platform'] == 'x64':
@@ -669,7 +666,7 @@ def setup_for_build(args):
                                                   r'C:\Strawberry\perl\bin',
                                                   os.environ['PATH']])
 
-        if ci['service'] == 'appveyor' and ci['compiler-class'] == 'gcc':
+        if ci['service'] == 'appveyor' and ci['compiler'] == 'gcc':
             logger.debug('Adding AppVeyor MSYS2/MinGW installation to PATH and INCLUDE')
             if 'INCLUDE' not in os.environ:
                 os.environ['INCLUDE'] = ''
@@ -835,7 +832,7 @@ def prepare(args):
                   .format(optitype, linktype))
 
         # Enable/fix parallel build for VisualStudio compiler on older Base versions
-        if ci['os'] == 'windows' and ci['compiler-class'] == 'vs':
+        if ci['os'] == 'windows' and re.match(r'^vs', ci['compiler']):
             add_vs_fix = True
             config_win = os.path.join(places['EPICS_BASE'], 'configure', 'os', 'CONFIG.win32-x86.win32-x86')
             with open(config_win) as f:
@@ -906,32 +903,33 @@ CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386{0}'''.format(qemu_suffix))
 
         print('Host compiler', ci['compiler'])
 
-        if ci['compiler-class'] == 'clang':
+        if ci['compiler'].startswith('clang'):
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                   'CONFIG_SITE.{0}.{0}'.format(os.environ['EPICS_HOST_ARCH'])), 'a') as f:
+                                   'CONFIG_SITE.Common.'+os.environ['EPICS_HOST_ARCH']), 'a') as f:
                 f.write('''
-GNU          = NO
-CMPLR_CLASS  = clang
-CC           = clang
-CCC          = clang++''')
-                if ci['compiler-suffix']:
-                    f.write('''
-CMPLR_SUFFIX = {0}'''.format(ci['compiler-suffix']))
+GNU         = NO
+CMPLR_CLASS = clang
+CC          = {0}
+CCC         = {1}'''.format(ci['compiler'],
+                               re.sub(r'clang', r'clang++', ci['compiler'])))
 
-        elif ci['compiler-class'] == 'gcc':
+            # hack
+            with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG.gnuCommon'), 'a') as f:
+                f.write('''
+CMPLR_CLASS = clang''')
+
+        elif ci['compiler'].startswith('gcc'):
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                   'CONFIG_SITE.{0}.{0}'.format(os.environ['EPICS_HOST_ARCH'])), 'a') as f:
+                                   'CONFIG_SITE.Common.' + os.environ['EPICS_HOST_ARCH']), 'a') as f:
                 f.write('''
-CMPLR_CLASS  = gcc''')
-                if ci['compiler-suffix']:
-                    f.write('''
-CMPLR_SUFFIX = {0}'''.format(ci['compiler-suffix']))
+CC          = {0}
+CCC         = {1}'''.format(ci['compiler'], re.sub(r'gcc', r'g++', ci['compiler'])))
 
-        elif ci['compiler-class'] =='vs':
+        elif ci['compiler'].startswith('vs'):
             pass # nothing special
 
         else:
-            raise ValueError('Unknown compiler name {0}. Valid forms include: gcc, gcc-4.8, clang, vs2019'.format(ci['compiler']))
+            raise ValueError('Unknown compiler name {0}.  valid forms include: gcc, gcc-4.8, clang, vs2019'.format(ci['compiler']))
 
         # Add additional settings to CONFIG_SITE
         extra_config = ''
@@ -998,7 +996,7 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
 
-    if ci['compiler-class'] == 'vs':
+    if re.match(r'^vs', ci['compiler']):
         print('{0}$ cl{1}'.format(ANSI_CYAN, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call(['cl'])
@@ -1164,7 +1162,7 @@ def main(raw):
     prepare_env()
     detect_context()
 
-    if args.vcvars and ci['compiler-class'] == 'vs':
+    if args.vcvars and ci['compiler'].startswith('vs'):
         # re-exec with MSVC in PATH
         with_vcvars(' '.join(['--no-vcvars'] + raw))
     else:
