@@ -725,11 +725,7 @@ class TestSetupForBuild(unittest.TestCase):
 
     @unittest.skipIf(ci_os != 'windows', 'HostArchConfiguration test only applies to windows')
     def test_HostArchConfiguration(self):
-        # there is no combined static and debug EPICS_HOST_ARCH target,
-        # so a combined debug and static target will appear to be just static
-        # but debug will have been specified in CONFIG_SITE by prepare()
         cue.ci['compiler'] = 'vs2017'
-        cue.ci['compiler-class'] = 'vs'
         for cue.ci['debug'] in [True, False]:
             for cue.ci['static'] in [True, False]:
                 config_st = {True: 'static', False: 'shared'}
@@ -739,15 +735,11 @@ class TestSetupForBuild(unittest.TestCase):
                 self.assertTrue('EPICS_HOST_ARCH' in os.environ,
                                 'EPICS_HOST_ARCH is not set for Configuration={0}'.format(config))
                 if cue.ci['static']:
-                    # static plus anything must be *-static and not *-debug
                     self.assertTrue(re.search('-static$', os.environ['EPICS_HOST_ARCH']),
-                                    'EPICS_HOST_ARCH (found {0}) is not -static for Configuration={1}'
-                                    .format(os.environ['EPICS_HOST_ARCH'], config))
+                                    'EPICS_HOST_ARCH is not -static for Configuration={0}'.format(config))
                     self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
-                                     'EPICS_HOST_ARCH (found {0}) is -debug for Configuration={1}'
-                                     .format(os.environ['EPICS_HOST_ARCH'], config))
+                                     'EPICS_HOST_ARCH is -debug for Configuration={0}'.format(config))
                 elif cue.ci['debug']:
-                    # debug (and not static) must be *-debug and not *-static
                     self.assertFalse(re.search('static', os.environ['EPICS_HOST_ARCH']),
                                      'EPICS_HOST_ARCH (found {0}) is -static for Configuration={1}'
                                      .format(os.environ['EPICS_HOST_ARCH'], config))
@@ -755,7 +747,6 @@ class TestSetupForBuild(unittest.TestCase):
                                     'EPICS_HOST_ARCH (found {0}) is not -debug for Configuration={1}'
                                     .format(os.environ['EPICS_HOST_ARCH'], config))
                 else:
-                    # not debug and not static
                     self.assertFalse(re.search('static', os.environ['EPICS_HOST_ARCH']),
                                      'EPICS_HOST_ARCH is -static for Configuration={0}'.format(config))
                     self.assertFalse(re.search('debug', os.environ['EPICS_HOST_ARCH']),
