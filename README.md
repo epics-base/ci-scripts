@@ -388,16 +388,16 @@ This will make all builds (not just for your module) verbose.
 
 Update the submodule in `.ci` first, then change your CI configuration
 (if needed) and commit both to your module. E.g., to update your Travis
-setup to release 3.2.0 of ci-scripts:
+setup to release 3.2.1 of ci-scripts:
 ```bash
 cd .ci
-git pull origin v3.2.0
+git pull origin v3.2.1
 cd -
 git add .ci
   # if needed:
   edit .travis.yml     # and/or other CI service configurations
   git add .travis.yml
-git commit -m "Update ci-scripts submodule to v3.2.0"
+git commit -m "Update ci-scripts submodule to v3.2.1"
 ```
 
 Check the example configuration files inside ci-scripts (and their

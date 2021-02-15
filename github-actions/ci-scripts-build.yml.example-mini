@@ -5,18 +5,23 @@
 
 # Set the 'name:' properties to values that work for you
 
-name: MYMODULE ci-scripts build
+name: MYMODULE
 
 # Trigger on pushes and PRs to any branch
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - 'documentation/*'
+      - '**/*.html'
+      - '**/*.md'
+  pull_request:
 
 env:
   SETUP_PATH: .ci-local:.ci
-  CMP: gcc
 
 jobs:
   build-linux:
-    name: ${{ matrix.base }} / ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     # Set environment variables from matrix parameters
     env:
@@ -26,10 +31,42 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04]
-        cmp: [gcc]
-        configuration: [default, static]
-        base: ["7.0", "3.15"]
+        - os: ubuntu-18.04
+          cmp: gcc
+          configuration: default
+          base: "7.0"
+          name: "7.0 Ub-18 gcc-7"
+
+        - os: ubuntu-18.04
+          cmp: gcc
+          configuration: static
+          base: "7.0"
+          name: "7.0 Ub-18 gcc-7 static"
+
+        - os: ubuntu-20.04
+          cmp: gcc
+          configuration: default
+          base: "3.15"
+          name: "3.15 Ub-20 gcc-9"
+
+        - os: ubuntu-20.04
+          cmp: gcc
+          configuration: static
+          base: "3.15"
+          name: "3.15 Ub-20 gcc-9 static"
+
+        - os: ubuntu-20.04
+          cmp: gcc
+          configuration: debug
+          base: "3.15"
+          name: "3.15 Ub-20 gcc-9 debug"
+
+        - os: ubuntu-20.04
+          cmp: clang
+          configuration: default
+          base: "3.15"
+          name: "3.15 Ub-20 clang-10"
+
     steps:
     - uses: actions/checkout@v2
       with:

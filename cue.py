@@ -809,6 +809,12 @@ def prepare(args):
 
     fold_end('check.out.dependencies', 'Checking/cloning dependencies')
 
+    cxx = None
+    if ci['compiler'].startswith('clang'):
+        cxx = re.sub(r'clang', r'clang++', ci['compiler'])
+    elif ci['compiler'].startswith('gcc'):
+        cxx = re.sub(r'gcc', r'g++', ci['compiler'])
+
     if 'BASE' in modules_to_compile or building_base:
         fold_start('set.up.epics_build', 'Configuring EPICS build system')
 
@@ -903,9 +909,7 @@ CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386{0}'''.format(qemu_suffix))
 
         print('Host compiler', ci['compiler'])
 
-        cxx = None
         if ci['compiler'].startswith('clang'):
-            cxx = re.sub(r'clang', r'clang++', ci['compiler'])
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                    'CONFIG_SITE.Common.'+os.environ['EPICS_HOST_ARCH']), 'a') as f:
                 f.write('''
@@ -920,7 +924,6 @@ CCC         = {1}'''.format(ci['compiler'], cxx))
 CMPLR_CLASS = clang''')
 
         elif ci['compiler'].startswith('gcc'):
-            cxx = re.sub(r'gcc', r'g++', ci['compiler'])
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                    'CONFIG_SITE.Common.' + os.environ['EPICS_HOST_ARCH']), 'a') as f:
                 f.write('''
