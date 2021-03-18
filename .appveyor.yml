@@ -148,7 +148,7 @@ build_script:
   - cmd: python cue.py build
 
 test_script:
-  - cmd: python cue.py test
+  - cmd: python cue.py -T 15M test
   - cmd: python cue.py test-results
 
 #---------------------------------#
