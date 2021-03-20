@@ -672,15 +672,15 @@ def setup_for_build(args):
                 os.environ['INCLUDE'] = ''
             if ci['platform'] == 'x86':
                 os.environ['INCLUDE'] = os.pathsep.join(
-                    [r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\include',
+                    [r'C:\msys64\mingw32\include',
                      os.environ['INCLUDE']])
-                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin',
+                os.environ['PATH'] = os.pathsep.join([r'C:\msys64\mingw32\bin',
                                                       os.environ['PATH']])
             elif ci['platform'] == 'x64':
                 os.environ['INCLUDE'] = os.pathsep.join(
-                    [r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\include',
+                    [r'C:\msys64\mingw64\include',
                      os.environ['INCLUDE']])
-                os.environ['PATH'] = os.pathsep.join([r'C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin',
+                os.environ['PATH'] = os.pathsep.join([r'C:\msys64\mingw64\bin',
                                                       os.environ['PATH']])
 
     # Find BASE location
