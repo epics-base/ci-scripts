@@ -46,7 +46,7 @@ jobs:
     - name: Build main module (example app)
       run: python cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python cue.py -T 15M test
     - name: Collect and show test results
       run: python cue.py test-results
 
@@ -77,7 +77,7 @@ jobs:
     - name: Build main module (example app)
       run: python cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python cue.py -T 15M test
     - name: Collect and show test results
       run: python cue.py test-results
 
@@ -100,7 +100,7 @@ jobs:
     - name: Build main module (example app)
       run: python cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python cue.py -T 15M test
     - name: Collect and show test results
       run: python cue.py test-results
 
@@ -128,7 +128,7 @@ jobs:
     - name: Build main module (example app)
       run: python cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python cue.py -T 15M test
     - name: Collect and show test results
       run: python cue.py test-results
 
@@ -154,7 +154,7 @@ jobs:
     - name: Build main module (example app)
       run: python cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python cue.py -T 15M test
     - name: Collect and show test results
       run: python cue.py test-results
 
@@ -180,6 +180,6 @@ jobs:
     - name: Build main module (example app)
       run: python cue.py build
     - name: Run main module tests
-      run: python cue.py test
+      run: python cue.py -T 15M test
     - name: Collect and show test results
       run: python cue.py test-results

@@ -8,6 +8,7 @@ import sys, os, stat, shutil
 import fileinput
 import logging
 import re
+import threading
 import subprocess as sp
 import distutils.util
 
@@ -432,6 +433,7 @@ def call_git(args, **kws):
 
 
 def call_make(args=None, **kws):
+    global make_timeout
     if args is None:
         args = []
     place = kws.get('cwd', os.getcwd())
@@ -451,7 +453,19 @@ def call_make(args=None, **kws):
         makeargs += extra_makeargs
     logger.debug("EXEC '%s' in %s", ' '.join(['make'] + makeargs + args), place)
     sys.stdout.flush()
-    exitcode = sp.call(['make'] + makeargs + args, **kws)
+    sys.stderr.flush()
+
+    child = sp.Popen(['make'] + makeargs + args, **kws)
+    if make_timeout:
+        def expire(child):
+            logger.error('Timeout')
+            child.terminate()
+        timer = threading.Timer(make_timeout, expire, args=(child,))
+        timer.start()
+
+    exitcode = child.wait()
+    if make_timeout:
+        timer.cancel()
     logger.debug('EXEC DONE')
     if exitcode != 0:
         sys.exit(exitcode)
@@ -1133,12 +1147,30 @@ call "{vcvars}" {arch}
 
 
 def getargs():
-    from argparse import ArgumentParser, REMAINDER
+    from argparse import ArgumentParser, ArgumentError, REMAINDER
+    def timespec(s):
+        M = re.match(r'^\s*(\d+)\s*([A-Za-z]*)', s)
+        if not M:
+            raise ArgumentError('Expected timespec not {!r}'.format(s))
+        val = float(M.group(1))
+        try:
+            mult = {
+                '':1.0,
+                'S':1.0,
+                'M':60.0,
+                'H':60.0*60.0,
+            }[M.group(2).upper()]
+        except KeyError:
+            raise ArgumentError('Expect suffix S, M, or H.  not {!r}'.format(s))
+        return val*mult
+
     p = ArgumentParser()
     p.add_argument('--no-vcvars', dest='vcvars', default=True, action='store_false',
                    help='Assume vcvarsall.bat has already been run')
     p.add_argument('--add-path', dest='paths', default=[], action='append',
                    help='Append directory to $PATH or %%PATH%%.  Expands {ENVVAR}')
+    p.add_argument('-T', '--timeout', type=timespec, metavar='DLY',
+                   help='Terminate make after delay.  DLY interpreted as second, or may be qualified with "S", "M", or "H".  (default no timeout)')
     subp = p.add_subparsers()
 
     cmd = subp.add_parser('prepare')
@@ -1163,10 +1195,15 @@ def getargs():
 
 def main(raw):
     global silent_dep_builds
+    global make_timeout
     args = getargs().parse_args(raw)
     if 'VV' in os.environ and os.environ['VV'] == '1':
         logging.basicConfig(level=logging.DEBUG)
         silent_dep_builds = False
+
+    make_timeout = args.timeout
+    if make_timeout:
+        logger.info('Will timeout after %.1f seconds', make_timeout)
 
     prepare_env()
     detect_context()
