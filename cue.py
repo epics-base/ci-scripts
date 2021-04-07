@@ -9,6 +9,7 @@ import fileinput
 import logging
 import re
 import threading
+from glob import glob
 import subprocess as sp
 import distutils.util
 
@@ -261,7 +262,6 @@ if 'HomeDrive' in os.environ:
 elif 'HOME' in os.environ:
     homedir = os.getenv('HOME')
 toolsdir = os.path.join(homedir, '.tools')
-rtemsdir = r'/home/travis/.rtems'            # Preliminary, until the next generation of toolchain
 
 
 vcvars_table = {
@@ -829,6 +829,21 @@ def prepare(args):
     elif ci['compiler'].startswith('gcc'):
         cxx = re.sub(r'gcc', r'g++', ci['compiler'])
 
+    # Cross compilation on Linux to RTEMS  (set RTEMS to version "4.9", "4.10")
+    # requires qemu, bison, flex, texinfo, install-info
+    # rtems_bsp is needed also if Base is from cache
+    if 'RTEMS' in os.environ:
+        if 'RTEMS_TARGET' in os.environ:
+            rtems_target = os.environ['RTEMS_TARGET']
+        elif os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                         'CONFIG.Common.RTEMS-pc386-qemu')):
+            # Base 3.15 doesn't have -qemu target architecture
+            rtems_target = 'RTEMS-pc386-qemu'
+        else:
+            rtems_target = 'RTEMS-pc386'
+        # eg. "RTEMS-pc386" or "RTEMS-pc386-qemu" -> "pc386"
+        rtems_bsp = re.match('^RTEMS-([^-]*)(?:-qemu)?$', rtems_target).group(1)
+
     if 'BASE' in modules_to_compile or building_base:
         fold_start('set.up.epics_build', 'Configuring EPICS build system')
 
@@ -905,21 +920,17 @@ CROSS_COMPILER_TARGET_ARCHS += windows-x64-mingw''')
             # Cross compilation on Linux to RTEMS  (set RTEMS to version "4.9", "4.10")
             # requires qemu, bison, flex, texinfo, install-info
             if 'RTEMS' in os.environ:
-                print('Cross compiler RTEMS{0} @ pc386',format(os.environ['RTEMS']))
+                print('Cross compiler RTEMS{0} @ {1}'.format(os.environ['RTEMS'], rtems_target))
                 with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                        'CONFIG_SITE.Common.RTEMS'), 'a') as f:
                     f.write('''
 RTEMS_VERSION={0}
-RTEMS_BASE={1}'''.format(os.environ['RTEMS'], rtemsdir))
+RTEMS_BASE=/opt/rtems/{0}'''.format(os.environ['RTEMS']))
 
-                # Base 3.15 doesn't have -qemu target architecture
-                qemu_suffix = ''
-                if os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                               'CONFIG.Common.RTEMS-pc386-qemu')):
-                    qemu_suffix = '-qemu'
                 with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
                     f.write('''
-CROSS_COMPILER_TARGET_ARCHS += RTEMS-pc386{0}'''.format(qemu_suffix))
+CROSS_COMPILER_TARGET_ARCHS += {0}
+'''.format(rtems_target))
 
         print('Host compiler', ci['compiler'])
 
@@ -991,19 +1002,24 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
         fold_end('install.homebrew', 'Installing Homebrew packages')
 
     if ci['os'] == 'linux' and 'RTEMS' in os.environ:
-        tar_name = 'i386-rtems{0}-trusty-20171203-{0}.tar.bz2'.format(os.environ['RTEMS'])
+        rsb_release = os.environ.get('RSB_BUILD', '20210306')
+        tar_name = '{0}-rtems{1}.tar.xz'.format(rtems_bsp, os.environ['RTEMS'])
         print('Downloading RTEMS {0} cross compiler: {1}'
               .format(os.environ['RTEMS'], tar_name))
         sys.stdout.flush()
         sp.check_call(['curl', '-fsSL', '--retry', '3', '-o', tar_name,
-                       'https://github.com/mdavidsaver/rsb/releases/download/20171203-{0}/{1}'
-                      .format(os.environ['RTEMS'], tar_name)],
+                       'https://github.com/mdavidsaver/rsb/releases/download/{0}%2F{1}/{2}'
+                      .format(os.environ['RTEMS'], rsb_release, tar_name)],
                       cwd=toolsdir)
         sudo_prefix = []
         if ci['service'] == 'github-actions':
             sudo_prefix = ['sudo']
-        sp.check_call(sudo_prefix + ['tar', '-C', '/', '-xmj', '-f', os.path.join(toolsdir, tar_name)])
+        sp.check_call(sudo_prefix + ['tar', '-C', '/', '-xmJ', '-f', os.path.join(toolsdir, tar_name)])
         os.remove(os.path.join(toolsdir, tar_name))
+        for rtems_cc in glob('/opt/rtems/*/bin/*-gcc'):
+            print('{0}{1} --version{2}'.format(ANSI_CYAN, rtems_cc, ANSI_RESET))
+            sys.stdout.flush()
+            sp.check_call([rtems_cc, '--version'])
 
     setup_for_build(args)
 
