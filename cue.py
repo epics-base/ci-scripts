@@ -815,6 +815,21 @@ def prepare(args):
     elif ci['compiler'].startswith('gcc'):
         cxx = re.sub(r'gcc', r'g++', ci['compiler'])
 
+    # Cross compilation on Linux to RTEMS  (set RTEMS to version "4.9", "4.10")
+    # requires qemu, bison, flex, texinfo, install-info
+    # rtems_bsp is needed also if Base is from cache
+    if 'RTEMS' in os.environ:
+        if 'RTEMS_TARGET' in os.environ:
+            rtems_target = os.environ['RTEMS_TARGET']
+        elif os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                         'CONFIG.Common.RTEMS-pc386-qemu')):
+            # Base 3.15 doesn't have -qemu target architecture
+            rtems_target = 'RTEMS-pc386-qemu'
+        else:
+            rtems_target = 'RTEMS-pc386'
+        # eg. "RTEMS-pc386" or "RTEMS-pc386-qemu" -> "pc386"
+        rtems_bsp = re.match('^RTEMS-([^-]*)(?:-qemu)?$', rtems_target).group(1)
+
     if 'BASE' in modules_to_compile or building_base:
         fold_start('set.up.epics_build', 'Configuring EPICS build system')
 
@@ -891,17 +906,6 @@ CROSS_COMPILER_TARGET_ARCHS += windows-x64-mingw''')
             # Cross compilation on Linux to RTEMS  (set RTEMS to version "4.9", "4.10")
             # requires qemu, bison, flex, texinfo, install-info
             if 'RTEMS' in os.environ:
-                if 'RTEMS_TARGET' in os.environ:
-                    rtems_target = os.environ['RTEMS_TARGET']
-                elif os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                               'CONFIG.Common.RTEMS-pc386-qemu')):
-                    # Base 3.15 doesn't have -qemu target architecture
-                    rtems_target = 'RTEMS-pc386-qemu'
-                else:
-                    rtems_target = 'RTEMS-pc386'
-                # eg. "RTEMS-pc386" or "RTEMS-pc386-qemu" -> "pc386"
-                rtems_bsp = re.match('^RTEMS-([^-]*)(?:-qemu)?$', rtems_target).group(1)
-
                 print('Cross compiler RTEMS{0} @ {1}'.format(os.environ['RTEMS'], rtems_target))
                 with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
                                        'CONFIG_SITE.Common.RTEMS'), 'a') as f:
