@@ -17,6 +17,7 @@ variables:
   SETUP_PATH: ".:.ci"
   BASE_RECURSIVE: "NO"
   APT: "libreadline6-dev libncurses5-dev perl clang g++-mingw-w64-i686 g++-mingw-w64-x86-64 qemu-system-x86 re2c"
+  DEBIAN_FRONTEND: "noninteractive"
   CMP: "gcc"
   BGFC: "default"
   VV: "1"
