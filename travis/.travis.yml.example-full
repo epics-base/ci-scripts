@@ -39,7 +39,6 @@ addons:
     - re2c
     # for .zip/.7z archive hooks
     - p7zip
-    update: true
 
 install:
   - python .ci/cue.py prepare
@@ -122,6 +121,7 @@ jobs:
 
   - env: BASE=7.0
     os: osx
+    osx_image: xcode11.3
     compiler: clang
 
 # Windows builds
