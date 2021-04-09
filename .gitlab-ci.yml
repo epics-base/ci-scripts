@@ -137,12 +137,14 @@ wine64_static_debug:
 # Cross-builds to RTEMS 4.9 and 4.10
 rtems4.9_default:
   extends: .build
+  image: ubuntu:focal
   variables:
     RTEMS: "4.9"
     BASE: "3.15"
 
 rtems4.9_debug:
   extends: .build
+  image: ubuntu:focal
   variables:
     RTEMS: "4.9"
     BASE: "3.15"
@@ -150,11 +152,13 @@ rtems4.9_debug:
 
 rtems4.10_default:
   extends: .build
+  image: ubuntu:focal
   variables:
     RTEMS: "4.10"
 
 rtems4.10_debug:
   extends: .build
+  image: ubuntu:focal
   variables:
     RTEMS: "4.10"
     BCFG: "debug"

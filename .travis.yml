@@ -143,11 +143,11 @@ jobs:
   - env: SET=test01 WINE=64 TEST=NO BCFG=debug
   - env: SET=test01 WINE=64 TEST=NO BCFG=static-debug
 
-  - env: SET=test01 RTEMS=4.9 BASE=3.15 TEST=NO
-  - env: SET=test01 RTEMS=4.9 BASE=3.15 TEST=NO BCFG=debug
+  - env: SET=test01 RTEMS=4.9 BASE=3.15 TEST=NO APT=usrmerge
+  - env: SET=test01 RTEMS=4.9 BASE=3.15 TEST=NO BCFG=debug APT=usrmerge
 
-  - env: SET=test01 RTEMS=4.10
-  - env: SET=test01 RTEMS=4.10 BCFG=debug
+  - env: SET=test01 RTEMS=4.10 APT=usrmerge
+  - env: SET=test01 RTEMS=4.10 BCFG=debug APT=usrmerge
 
   - env: SET=test01
     os: windows

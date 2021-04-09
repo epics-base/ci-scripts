@@ -104,9 +104,9 @@ jobs:
 
 # Cross-compilation to RTEMS
 
-  - env: BASE=7.0 RTEMS=4.10
+  - env: BASE=7.0 RTEMS=4.10 APT=usrmerge
 
-  - env: BASE=7.0 RTEMS=4.9
+  - env: BASE=7.0 RTEMS=4.9 APT=usrmerge
 
 # Other gcc versions (added as an extra package)
 
