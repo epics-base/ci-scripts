@@ -67,8 +67,8 @@ on customer infrastructure, which will have different performance
 and limitations.
 
 ### [Travis-CI](https://travis-ci.org/)
- - Five parallel runners on Linux/Windows (one runner on MacOS)
- - Ubuntu 12/14/16/18, MacOS 10.13, Windows Server v1809
+ - Two parallel runners on Linux/Windows (two runners on MacOS)
+ - Ubuntu 14/16/18/20, MacOS 10.13/14/15, Windows Server v1809
  - Compile natively on Linux (different versions of gcc, clang)
  - Compile natively on MacOS (clang)
  - Compile natively on Windows (gcc/MinGW, Visual Studio 2017)

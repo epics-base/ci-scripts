@@ -2,7 +2,8 @@
 
 ## Features
 
- - Five parallel runners on Linux/Windows (one runner on MacOS)
+ - Two parallel runners on Linux/Windows (two runners on MacOS)
+ - Ubuntu 14/16/18/20, MacOS 10.13/14/15, Windows Server v1809
  - Use different compilers (gcc, clang)
  - Use different gcc versions
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
