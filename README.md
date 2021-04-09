@@ -73,7 +73,8 @@ and limitations.
  - Compile natively on MacOS (clang)
  - Compile natively on Windows (gcc/MinGW, Visual Studio 2017)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
+ - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)
  - Built dependencies are cached (for faster builds).
  
 See specific
@@ -99,7 +100,8 @@ for more details.
  - Compile natively on MacOS (clang)
  - Compile natively on Windows (gcc/MinGW, Visual Studio 2017 & 2019)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
+ - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)
  - Caching not supported by ci-scripts yet.
 
 See specific
@@ -113,7 +115,8 @@ for more details.
   `ubuntu:bionic`)
  - Compile natively using different compilers (gcc, clang)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
+ - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)
  - Built dependencies are cached (for faster builds).
 
 See specific
@@ -277,6 +280,35 @@ The ci-scripts module contains default settings for widely used modules, so
 that usually it is sufficient to set `FOO=<version>`.
 You can find the list of supported (and tested) modules in `defaults.set`.
 Feel free to suggest more default settings using a Pull Request.
+
+## RTEMS
+
+Setting `RTEMS` to the RTEMS version number (`4.9`, `4.10` or `5`)
+enables cross-compiling to RTEMS on supported CI services.
+Tests can also be run cross-platform, using `qemu`.
+
+The RTEMS 5 builds now include most of the BSPs with configuration in Base:
+
+- beatnik
+- gen68360
+- mcp750
+- mvme167
+- mvme2100
+- mvme3100
+- pc686 w/ libbsd
+- qoriq_e500 w/ libbsd
+- uC5282
+- xilinx_zynq_a9_qemu w/ libbsd
+
+Build configuration [can be found here][ref.rtems5build].
+Set `RTEMS_TARGET` to configure the EPICS target architecture and
+`RSB_BUILD` to select the RTEMS toolchain release name/data from
+https://github.com/mdavidsaver/rsb/releases.
+
+RTEMS 5 builds need to be switched to a newer ubuntu version
+(aka. **os: ubuntu-20.04** with GitHub Actions,
+**dist: focal** with Travis-CI or
+**image: ubuntu:focal** with GitLab CI/CD).
 
 ## Debugging
 
@@ -457,3 +489,4 @@ in file LICENSE that is included with this distribution.
 [reddit.bash]: https://www.reddit.com/r/bash/comments/393oqv/why_is_the_version_of_bash_included_in_os_x_so_old/
 
 [ref.ethercatmc]: https://github.com/EuropeanSpallationSource/m-epics-ethercatmc
+[ref.rtems5build]: https://github.com/mdavidsaver/rsb/blob/3911854462e74838e3e5f33a9e8f936fd0f1d95d/.github/workflows/build-5.yml#L98-L137

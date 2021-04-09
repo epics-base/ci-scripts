@@ -8,7 +8,8 @@
  - Compile natively on MacOS (clang)
  - Compile natively on Windows (gcc/MinGW, Visual Studio 2017 & 2019)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
+ - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)
  - Caching not supported yet.
 
 ## How to Use these Scripts

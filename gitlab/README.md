@@ -7,7 +7,8 @@
   `ubuntu:bionic`)
  - Compile natively using different compilers (gcc, clang)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
- - Cross-compile for RTEMS 4.9 and 4.10 (Base >= 3.15)
+ - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
+ - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)
  - Built dependencies are cached (for faster builds).
 
 ## How to Use these Scripts
