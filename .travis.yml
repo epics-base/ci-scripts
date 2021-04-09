@@ -7,7 +7,7 @@
 
 language: cpp
 compiler: gcc
-dist: xenial
+dist: bionic
 
 cache:
   directories:
@@ -95,10 +95,10 @@ jobs:
 # Compile example
 
   - env: SET=test01
-    dist: bionic
+    dist: focal
 
   - env: SET=test01 BCFG=static-debug
-    dist: bionic
+    dist: focal
 
   - env: SET=test01 CLEAN_DEPS=NO
     dist: trusty

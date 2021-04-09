@@ -3,7 +3,7 @@
 
 language: cpp
 compiler: gcc
-dist: xenial
+dist: bionic
 
 # Minimal set of packages needed to compile EPICS Base
 
