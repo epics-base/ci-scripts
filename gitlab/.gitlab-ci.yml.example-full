@@ -99,7 +99,7 @@ wine64_debug:
     BCFG: "debug"
     WINE: "64"
 
-# Cross-builds to RTEMS 4.9 and 4.10
+# Cross-builds to RTEMS 4.9, 4.10 and 5
 rtems4.9_default:
   extends: .build
   variables:
@@ -112,3 +112,10 @@ rtems4.10_debug:
     RTEMS: "4.10"
     BASE: "7.0"
     BCFG: "debug"
+
+rtems5_default:
+  extends: .build
+  image: ubuntu:focal
+  variables:
+    RTEMS: "5"
+    RTEMS_TARGET: "RTEMS-pc686-qemu"

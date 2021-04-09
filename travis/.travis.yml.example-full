@@ -107,6 +107,9 @@ jobs:
 
   - env: BASE=7.0 RTEMS=4.9 APT=usrmerge
 
+  - env: BASE=7.0 RTEMS=5 RTEMS_TARGET=RTEMS-pc686-qemu
+    dist: focal
+
 # Other gcc versions (added as an extra package)
 
   - env: BASE=7.0

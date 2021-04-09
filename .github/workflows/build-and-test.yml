@@ -139,6 +139,7 @@ jobs:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
       RTEMS: ${{ matrix.rtems }}
+      RTEMS_TARGET: RTEMS-pc686-qemu
       APT: re2c g++-mingw-w64-i686 g++-mingw-w64-x86-64 qemu-system-x86
     strategy:
       fail-fast: false
@@ -146,7 +147,7 @@ jobs:
         os: [ubuntu-20.04]
         cmp: [gcc]
         configuration: [default, debug]
-        rtems: ["4.9", "4.10"]
+        rtems: ["4.9", "4.10", "5"]
     steps:
     - uses: actions/checkout@v2
     - name: Prepare and compile dependencies

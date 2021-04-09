@@ -162,3 +162,18 @@ rtems4.10_debug:
   variables:
     RTEMS: "4.10"
     BCFG: "debug"
+
+rtems5_default:
+  extends: .build
+  image: ubuntu:focal
+  variables:
+    RTEMS: "5"
+    RTEMS_TARGET: "RTEMS-pc686-qemu"
+
+rtems5_debug:
+  extends: .build
+  image: ubuntu:focal
+  variables:
+    RTEMS: "5"
+    RTEMS_TARGET: "RTEMS-pc686-qemu"
+    BCFG: "debug"

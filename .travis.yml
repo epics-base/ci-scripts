@@ -151,6 +151,11 @@ jobs:
   - env: SET=test01 RTEMS=4.10 APT=usrmerge
   - env: SET=test01 RTEMS=4.10 BCFG=debug APT=usrmerge
 
+  - env: SET=test01 RTEMS=5 RTEMS_TARGET=RTEMS-pc686-qemu
+    dist: focal
+  - env: SET=test01 RTEMS=5 RTEMS_TARGET=RTEMS-pc686-qemu BCFG=debug
+    dist: focal
+
   - env: SET=test01
     os: windows
   - env: SET=test01 BCFG=static
