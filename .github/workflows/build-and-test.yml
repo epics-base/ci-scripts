@@ -133,21 +133,26 @@ jobs:
       run: python cue.py test-results
 
   build-rtems:
-    name: RTEMS${{ matrix.rtems }} / ${{ matrix.configuration }} / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: RTEMS${{ matrix.rtems }} / ${{ matrix.rtems_target }}
+    runs-on: ubuntu-20.04
     env:
-      CMP: ${{ matrix.cmp }}
-      BCFG: ${{ matrix.configuration }}
+      CMP: gcc
+      BCFG: default
       RTEMS: ${{ matrix.rtems }}
-      RTEMS_TARGET: RTEMS-pc686-qemu
+      RTEMS_TARGET: ${{ matrix.rtems_target }}
       APT: re2c g++-mingw-w64-i686 g++-mingw-w64-x86-64 qemu-system-x86
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
-        cmp: [gcc]
-        configuration: [default, debug]
-        rtems: ["4.9", "4.10", "5"]
+        include:
+          - rtems: "4.9"
+            rtems_target: RTEMS-pc386-qemu
+
+          - rtems: "4.10"
+            rtems_target: RTEMS-pc386-qemu
+
+          - rtems: "5"
+            rtems_target: RTEMS-pc686-qemu
     steps:
     - uses: actions/checkout@v2
     - name: Prepare and compile dependencies
