@@ -1216,6 +1216,8 @@ def main(raw):
     if 'VV' in os.environ and os.environ['VV'] == '1':
         logging.basicConfig(level=logging.DEBUG)
         silent_dep_builds = False
+    else:
+        logging.basicConfig(level=logging.CRITICAL)
 
     make_timeout = args.timeout
     if make_timeout:
