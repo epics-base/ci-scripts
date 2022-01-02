@@ -95,7 +95,6 @@ environment:
   - CMP: vs2013
   - CMP: vs2012
   - CMP: vs2010
-  - CMP: vs2008
 
 # Platform: architecture
 platform:
@@ -125,8 +124,6 @@ matrix:
     CMP: vs2012
   - platform: x64
     CMP: vs2010
-  - platform: x64
-    CMP: vs2008
 
 # Run test script for unit tests (SET = test00)
 for:

@@ -52,8 +52,6 @@ matrix:
     CMP: vs2012
   - platform: x64
     CMP: vs2010
-  - platform: x64
-    CMP: vs2008
 
 build_script:
   - cmd: python .ci/cue.py prepare

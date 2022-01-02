@@ -109,7 +109,6 @@ environment:
   - CMP: vs2013
   - CMP: vs2012
   - CMP: vs2010
-  - CMP: vs2008
 
 # Platform: processor architecture
 platform:
@@ -124,8 +123,6 @@ matrix:
     CMP: vs2012
   - platform: x64
     CMP: vs2010
-  - platform: x64
-    CMP: vs2008
   # Exclude more jobs to reduce build time
   # E.g., skip 32-bit for newer compilers
   #- platform: x86
