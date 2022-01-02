@@ -1114,6 +1114,7 @@ def doExec(args):
     'exec user command with vcvars'
     setup_for_build(args)
     os.environ['MAKE'] = 'make'
+    os.environ['EPICS_BASE'] = places['EPICS_BASE']
     fold_start('exec.command', 'Execute command {}'.format(args.cmd))
     sp.check_call(' '.join(args.cmd), shell=True)
     fold_end('exec.command', 'Execute command {}'.format(args.cmd))
