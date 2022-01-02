@@ -166,6 +166,16 @@ jobs:
             configuration: static
             name: "Win2019 MSC-19, static"
 
+          - os: windows-2022
+            cmp: vs2022
+            configuration: default
+            name: "Win2022 MSC-22"
+
+          - os: windows-2022
+            cmp: vs2022
+            configuration: static
+            name: "Win2022 MSC-22, static"
+
     steps:
     - uses: actions/checkout@v2
       with:
