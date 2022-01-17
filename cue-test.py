@@ -111,7 +111,7 @@ class TestSourceSet(unittest.TestCase):
         self.assertEqual(cue.setup['FOO'], 'bar', 'Setting of single word does not work')
         self.assertEqual(cue.setup['FOO2'], 'bar bar2', 'Setting of multiple words does not work')
         self.assertEqual(cue.setup['FOO3'], 'bar bar2', 'Indented setting of multiple words does not work')
-        self.assertEqual(cue.setup['SNCSEQ'], 'R2-2-8', 'Setup test01 was not included')
+        self.assertEqual(cue.setup['SNCSEQ'], 'R2-2-9', 'Setup test01 was not included')
 
     def test_DoubleIncludeGetsIgnored(self):
         capturedOutput = getStringIO()
