@@ -784,6 +784,243 @@ def fix_etc_hosts():
     logger.debug('EXEC DONE')
 
 
+def edit_make_file(mode, path, values):
+    """Edit an EPICS Make file.
+
+    mode should be either "a" or "w", as for the open function.
+
+    path should be a list, e.g. ["configure", "CONFIG_SITE"]
+
+    values should be a dictionnary of values to edit. If the value starts with
+    a "+" the value will be appended.
+
+    Example usage:
+
+        edit_make_file("a", ["configure", "CONFIG_SITE"], {
+            "VARIABLE": "value",
+            "APPENDED_VARIABLE": "+value",
+        })
+    """
+    with open(os.path.join(places["EPICS_BASE"], *path), mode) as f:
+        for variable, value in values.items():
+            if value.startswith("+"):
+                op = "+="
+                value = value[1:]
+            else:
+                op = "="
+
+            f.write(variable + op + value + "\n")
+
+
+def handle_old_cross_variables():
+    if "CI_CROSS_TARGETS" not in os.environ:
+        os.environ["CI_CROSS_TARGETS"] = ""
+
+    if "RTEMS" in os.environ:
+        print(
+            "{0}WARNING: deprecated RTEMS environment variable was specified, please use CI_CROSS_TARGETS{1}".format(
+                ANSI_RED, ANSI_RESET
+            )
+        )
+        os.environ["CI_CROSS_TARGETS"] += ":RTEMS@" + os.environ["RTEMS"]
+
+    if "WINE" in os.environ:
+        print(
+            "{0}WARNING: deprecated WINE environment variable was specified, please use CI_CROSS_TARGETS{1}".format(
+                ANSI_RED, ANSI_RESET
+            )
+        )
+        os.environ["CI_CROSS_TARGETS"] += ":WINE@" + os.environ["WINE"]
+
+
+def prepare_cross_compilation(cross_target_info):
+    """Prepare the configuration for a single value of the CI_CROSS_TARGETS
+    variable.
+
+    See the README.md file for more information on this variable."""
+    cross_target_info = cross_target_info.split("@")
+    if len(cross_target_info) == 2:
+        target_param = cross_target_info[1]
+    else:
+        target_param = None
+
+    target = cross_target_info[0]
+
+    if target.startswith("RTEMS-"):
+        prepare_rtems_cross(target, target_param)
+    elif target.endswith("-mingw"):
+        prepare_wine_cross(target)
+    elif target.startswith("linux-"):
+        prepare_linux_cross(target, target_param)
+    else:
+        raise ValueError(
+            "Unknown CI_CROSS_TARGETS {0}. "
+            "Please see the ci-scripts README for available values.".format(target)
+        )
+
+
+def prepare_rtems_cross(epics_arch, version):
+    """Prepare the configuration for RTEMS cross-compilation for the given
+    RTEMS version.
+
+    If version is None, it defaults to version 5 for RTEMS-pc686-*, 4.10
+    otherwise."""
+    if version is None:
+        if epics_arch.startswith("RTEMS-pc686"):
+            version = "5"
+        else:
+            version = "4.10"
+
+    # eg. "RTEMS-pc386" or "RTEMS-pc386-qemu" -> "pc386"
+    rtems_bsp = re.match("^RTEMS-([^-]*)(?:-qemu)?$", epics_arch).group(1)
+
+    print("Cross compiler RTEMS{0} @ {1}".format(version, epics_arch))
+
+    if ci["os"] == "linux":
+        download_rtems(version, rtems_bsp)
+
+    edit_make_file(
+        "a",
+        ["configure", "os", "CONFIG_SITE.Common.RTEMS"],
+        {
+            "RTEMS_VERSION": version,
+            "RTEMS_BASE": "/opt/rtems/" + version,
+        },
+    )
+
+    edit_make_file(
+        "a",
+        ["configure", "CONFIG_SITE"],
+        {"CROSS_COMPILER_TARGET_ARCHS": epics_arch},
+    )
+
+    ci["apt"].extend(
+        ["re2c", "g++-mingw-w64-i686", "g++-mingw-w64-x86-64", "qemu-system-x86"]
+    )
+
+def download_rtems(version, rtems_bsp):
+    rsb_release = os.environ.get("RSB_BUILD", "20210306")
+    tar_name = "{0}-rtems{1}.tar.xz".format(rtems_bsp, version)
+    print("Downloading RTEMS {0} cross compiler: {1}".format(version, tar_name))
+    sys.stdout.flush()
+    sp.check_call(
+        [
+            "curl",
+            "-fsSL",
+            "--retry",
+            "3",
+            "-o",
+            tar_name,
+            "https://github.com/mdavidsaver/rsb/releases/download/{0}%2F{1}/{2}".format(
+                version, rsb_release, tar_name
+            ),
+        ],
+        cwd=toolsdir,
+    )
+    sudo_prefix = []
+    if ci["service"] == "github-actions":
+        sudo_prefix = ["sudo"]
+    sp.check_call(
+        sudo_prefix + ["tar", "-C", "/", "-xmJ", "-f", os.path.join(toolsdir, tar_name)]
+    )
+    os.remove(os.path.join(toolsdir, tar_name))
+    for rtems_cc in glob("/opt/rtems/*/bin/*-gcc"):
+        print("{0}{1} --version{2}".format(ANSI_CYAN, rtems_cc, ANSI_RESET))
+        sys.stdout.flush()
+        sp.check_call([rtems_cc, "--version"])
+
+
+def prepare_wine_cross(epics_arch):
+    """Prepare the configuration for Wine cross-compilation for the given mingw
+    architecture."""
+
+    if epics_arch == "win32-x86-mingw":
+        gnu_arch = "i686-w64-mingw32"
+        deb_arch = "mingw-w64-i686"
+        bits = "32"
+    elif epics_arch == "windows-x64-mingw":
+        gnu_arch = "x86_64-w64-mingw32"
+        deb_arch = "mingw-w64-x86-64"
+        bits = "64"
+    else:
+        raise ValueError(
+            "Unknown architecture '{0}' for WINE target. "
+            "Please see the ci-scripts README for available values.".format(epics_arch)
+        )
+
+    print("Cross compiler mingw{} / Wine".format(bits))
+
+    edit_make_file(
+        "a",
+        ["configure", "os", "CONFIG.linux-x86." + epics_arch],
+        {"CMPLR_PREFIX": gnu_arch + "-"},
+    )
+
+    edit_make_file(
+        "a",
+        ["configure", "CONFIG_SITE"],
+        {"CROSS_COMPILER_TARGET_ARCHS": "+" + epics_arch},
+    )
+
+    ci['apt'].extend(["re2c", "g++-" + deb_arch])
+
+
+def prepare_linux_cross(epics_arch, gnu_arch):
+    """Prepare the configuration for Linux cross-compilation for the given
+    architecture.
+
+    If gnu_arch is None, this function will try to guess it using the
+    epics_arch value.
+
+    linux-arm architecture defaults to arm-linux-gnueabi (soft floats)."""
+    # This list is kind of an intersection between the set of cross-compilers
+    # provided by Ubuntu[1] and the list of architectures found in
+    # `epics-base/configure/os`
+    #
+    # [1]: https://packages.ubuntu.com/source/focal/gcc-10-cross
+    if gnu_arch is None:
+        if epics_arch == "linux-x86":
+            gnu_arch = "i686-linux-gnu"
+        elif epics_arch == "linux-arm":
+            gnu_arch = "arm-linux-gnueabi"
+        elif epics_arch == "linux-aarch64":
+            gnu_arch = "aarch64-linux-gnu"
+        elif epics_arch == "linux-ppc":
+            gnu_arch = "powerpc-linux-gnu"
+        elif epics_arch == "linux-ppc64":
+            gnu_arch = "powerpc64le-linux-gnu"
+        else:
+            raise ValueError(
+                "Could not guess the GNU architecture for EPICS arch: {}. "
+                "Please use the '@' syntax of the 'CI_CROSS_TARGETS' variable".format(
+                    epics_arch
+                )
+            )
+
+    print(
+        "Setting up Linux cross-compiling arch {0} with GNU arch {1}".format(
+            epics_arch, gnu_arch
+        )
+    )
+
+    edit_make_file(
+        "w",
+        ["configure", "os", "CONFIG_SITE.linux-x86_64." + epics_arch],
+        {
+            "GNU_TARGET": gnu_arch,
+            "COMMANDLINE_LIBRARY": "EPICS",
+        },
+    )
+
+    edit_make_file(
+        "a",
+        ["configure", "CONFIG_SITE"],
+        {"CROSS_COMPILER_TARGET_ARCHS": "+" + epics_arch},
+    )
+
+    ci["apt"].extend(["re2c", "g++-" + gnu_arch])
+
+
 def prepare(args):
     host_info()
 
@@ -829,20 +1066,8 @@ def prepare(args):
     elif ci['compiler'].startswith('gcc'):
         cxx = re.sub(r'gcc', r'g++', ci['compiler'])
 
-    # Cross compilation on Linux to RTEMS  (set RTEMS to version "4.9", "4.10")
-    # requires qemu, bison, flex, texinfo, install-info
-    # rtems_bsp is needed also if Base is from cache
-    if 'RTEMS' in os.environ:
-        if 'RTEMS_TARGET' in os.environ:
-            rtems_target = os.environ['RTEMS_TARGET']
-        elif os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                         'CONFIG.Common.RTEMS-pc386-qemu')):
-            # Base 3.15 doesn't have -qemu target architecture
-            rtems_target = 'RTEMS-pc386-qemu'
-        else:
-            rtems_target = 'RTEMS-pc386'
-        # eg. "RTEMS-pc386" or "RTEMS-pc386-qemu" -> "pc386"
-        rtems_bsp = re.match('^RTEMS-([^-]*)(?:-qemu)?$', rtems_target).group(1)
+    if not os.path.isdir(toolsdir):
+        os.makedirs(toolsdir)
 
     if 'BASE' in modules_to_compile or building_base:
         fold_start('set.up.epics_build', 'Configuring EPICS build system')
@@ -893,44 +1118,12 @@ endif''')
 
         # Cross-compilations from Linux platform
         if ci['os'] == 'linux':
+            handle_old_cross_variables()
 
-            # Cross compilation to Windows/Wine (set WINE to architecture "32", "64")
-            # requires wine and g++-mingw-w64-i686 / g++-mingw-w64-x86-64
-            if 'WINE' in os.environ:
-                if os.environ['WINE'] == '32':
-                    print('Cross compiler mingw32 / Wine')
-                    with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                                 'CONFIG.linux-x86.win32-x86-mingw'), 'a') as f:
-                        f.write('''
-CMPLR_PREFIX=i686-w64-mingw32-''')
-                    with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
-                        f.write('''
-CROSS_COMPILER_TARGET_ARCHS+=win32-x86-mingw''')
-
-                if os.environ['WINE'] == '64':
-                    print('Cross compiler mingw64 / Wine')
-                    with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                           'CONFIG.linux-x86.windows-x64-mingw'), 'a') as f:
-                        f.write('''
-CMPLR_PREFIX=x86_64-w64-mingw32-''')
-                    with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
-                        f.write('''
-CROSS_COMPILER_TARGET_ARCHS += windows-x64-mingw''')
-
-            # Cross compilation on Linux to RTEMS  (set RTEMS to version "4.9", "4.10")
-            # requires qemu, bison, flex, texinfo, install-info
-            if 'RTEMS' in os.environ:
-                print('Cross compiler RTEMS{0} @ {1}'.format(os.environ['RTEMS'], rtems_target))
-                with open(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                       'CONFIG_SITE.Common.RTEMS'), 'a') as f:
-                    f.write('''
-RTEMS_VERSION={0}
-RTEMS_BASE=/opt/rtems/{0}'''.format(os.environ['RTEMS']))
-
-                with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
-                    f.write('''
-CROSS_COMPILER_TARGET_ARCHS += {0}
-'''.format(rtems_target))
+            for cross_target_info in os.environ.get("CI_CROSS_TARGETS", "").split(":"):
+                if cross_target_info == "":
+                    continue
+                prepare_cross_compilation(cross_target_info)
 
         print('Host compiler', ci['compiler'])
 
@@ -982,9 +1175,6 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
 
         fold_end('set.up.epics_build', 'Configuring EPICS build system')
 
-    if not os.path.isdir(toolsdir):
-        os.makedirs(toolsdir)
-
     if ci['os'] == 'windows' and ci['choco']:
         fold_start('install.choco', 'Installing CHOCO packages')
         sp.check_call(['choco', 'install'] + ci['choco'] + ['-y', '--limitoutput', '--no-progress'])
@@ -1000,26 +1190,6 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
         fold_start('install.homebrew', 'Installing Homebrew packages')
         sp.check_call(['brew', 'install'] + ci['homebrew'])
         fold_end('install.homebrew', 'Installing Homebrew packages')
-
-    if ci['os'] == 'linux' and 'RTEMS' in os.environ:
-        rsb_release = os.environ.get('RSB_BUILD', '20210306')
-        tar_name = '{0}-rtems{1}.tar.xz'.format(rtems_bsp, os.environ['RTEMS'])
-        print('Downloading RTEMS {0} cross compiler: {1}'
-              .format(os.environ['RTEMS'], tar_name))
-        sys.stdout.flush()
-        sp.check_call(['curl', '-fsSL', '--retry', '3', '-o', tar_name,
-                       'https://github.com/mdavidsaver/rsb/releases/download/{0}%2F{1}/{2}'
-                      .format(os.environ['RTEMS'], rsb_release, tar_name)],
-                      cwd=toolsdir)
-        sudo_prefix = []
-        if ci['service'] == 'github-actions':
-            sudo_prefix = ['sudo']
-        sp.check_call(sudo_prefix + ['tar', '-C', '/', '-xmJ', '-f', os.path.join(toolsdir, tar_name)])
-        os.remove(os.path.join(toolsdir, tar_name))
-        for rtems_cc in glob('/opt/rtems/*/bin/*-gcc'):
-            print('{0}{1} --version{2}'.format(ANSI_CYAN, rtems_cc, ANSI_RESET))
-            sys.stdout.flush()
-            sp.check_call([rtems_cc, '--version'])
 
     setup_for_build(args)
 
