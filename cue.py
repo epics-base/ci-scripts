@@ -605,15 +605,21 @@ def add_dependency(dep):
         if dep + '_HOOK' in setup:
             hook = setup[dep + '_HOOK']
             hook_file = os.path.join(curdir, hook)
+            hook_ext = os.path.splitext(hook_file)[1]
             if os.path.exists(hook_file):
-                if re.match(r'.+\.patch$', hook):
+                if hook_ext == '.patch':
                     apply_patch(hook_file, cwd=place)
-                elif re.match(r'.+\.(zip|7z)$', hook):
+                elif hook_ext in ('.zip', '.7z'):
                     extract_archive(hook_file, cwd=place)
+                elif hook_ext == '.py':
+                    print('Running py hook {0} in {1}'.format(hook, place))
+                    sp.check_call([sys.executable, hook_file], cwd=place)
                 else:
                     print('Running hook {0} in {1}'.format(hook, place))
                     sys.stdout.flush()
                     sp.check_call(hook_file, shell=True, cwd=place)
+            else:
+                print('Skipping invalid hook {0} in {1}'.format(hook, place))
 
         # write checked out commit hash to marker file
         head = get_git_hash(place)
