@@ -92,8 +92,8 @@ environment:
   BASE: 7.0
 
   matrix:
-  - CMP: vs2019
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - CMP: vs2022
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
   - CMP: gcc
   - CMP: vs2019
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019

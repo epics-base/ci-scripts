@@ -5,7 +5,7 @@
  - One parallel runner (all builds are sequential)
  - Windows Server 2012/2016/2019
  - Compile using gcc/MinGW or different Visual Studio versions: \
-   2010, 2012, 2013, 2015, 2017, 2019
+   2010, 2012, 2013, 2015, 2017, 2019, 2022
  - Compile for Windows 32bit and 64bit
  - No useful caching available.
 
@@ -46,7 +46,7 @@
     List of environment variable settings. Each list element (starting with
     a dash) is one step on the axis of the build matrix. \
     Set `CMP` to select the compiler: `gcc` for the native
-    [MinGW](http://mingw-w64.org/) GNU compiler, `vs2010` ...`vs2019` 
+    [MinGW](http://mingw-w64.org/) GNU compiler, `vs2010` ...`vs2022`
     (options listed above) for the Microsoft Visual Studio compilers.
 
     Your builds will take long. \

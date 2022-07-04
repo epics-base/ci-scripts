@@ -50,7 +50,7 @@ levels as the example files.
    the module can be patched or further configured.
 
  - Define shared (default) or static builds (for executables and libraries).
- 
+
  - Define optimized (default) or debug builds.
 
  - Run tests (using the EPICS build system, i.e., `make runtests`
@@ -76,7 +76,7 @@ and limitations.
  - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
  - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)
  - Built dependencies are cached (for faster builds).
- 
+
 See specific
 **[ci-scripts on Travis-CI README](travis/README.md)**
 for more details.
@@ -85,7 +85,7 @@ for more details.
  - One parallel runner (all builds are sequential)
  - Windows Server 2012/2016/2019
  - Compile using gcc/MinGW or different Visual Studio versions: \
-   2010, 2012, 2013, 2015, 2017, 2019
+   2010, 2012, 2013, 2015, 2017, 2019, 2022
  - Compile for Windows 32bit and 64bit
  - No useful caching available.
 
@@ -95,10 +95,10 @@ for more details.
 
 ### [GitHub Actions](https://github.com/)
  - 20 parallel runners on Linux/Windows (5 runners on MacOS)
- - Ubuntu 16/18/20, MacOS 10.15, Windows Server 2016/2019
+ - Ubuntu 16/18/20, MacOS 10.15, Windows Server 2016/2019/2022
  - Compile natively on Linux (gcc, clang)
  - Compile natively on MacOS (clang)
- - Compile natively on Windows (gcc/MinGW, Visual Studio 2017 & 2019)
+ - Compile natively on Windows (gcc/MinGW, Visual Studio 2017/2019/2022)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
  - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
  - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)
@@ -112,7 +112,7 @@ for more details.
 
  - Docker-based runners on Linux (one VM instance per job)
  - Can use any Docker image from Dockerhub (the examples use
-  `ubuntu:bionic`)
+    `ubuntu:bionic`)
  - Compile natively using different compilers (gcc, clang)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
  - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
