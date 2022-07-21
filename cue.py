@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CI build script for Linux/MacOS/Windows on Travis/AppVeyor/GitHub-Actions
+"""EPICS CI build script for Linux/MacOS/Windows on Travis/GitLab/AppVeyor/GitHub-Actions
 """
 
 from __future__ import print_function
@@ -793,7 +793,7 @@ def edit_make_file(mode, path, values):
 
     path should be a list, e.g. ["configure", "CONFIG_SITE"]
 
-    values should be a dictionnary of values to edit. If the value starts with
+    values should be a dictionary of values to edit. If the value starts with
     a "+" the value will be appended.
 
     Example usage:
@@ -819,20 +819,40 @@ def handle_old_cross_variables():
         os.environ["CI_CROSS_TARGETS"] = ""
 
     if "RTEMS" in os.environ:
+        if 'RTEMS_TARGET' in os.environ:
+            rtems_target = os.environ['RTEMS_TARGET']
+        elif os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                         'CONFIG.Common.RTEMS-pc386-qemu')):
+            # Base 3.15 doesn't have -qemu target architecture
+            rtems_target = 'RTEMS-pc386-qemu'
+        else:
+            rtems_target = 'RTEMS-pc386'
+
+        new_cross_target = ":" + rtems_target + "@" + os.environ["RTEMS"]
+        os.environ["CI_CROSS_TARGETS"] += new_cross_target
+
         print(
-            "{0}WARNING: deprecated RTEMS environment variable was specified, please use CI_CROSS_TARGETS{1}".format(
-                ANSI_RED, ANSI_RESET
+            "{0}WARNING: deprecated RTEMS environment variable was specified." \
+            " Please add '{1}' to CI_CROSS_TARGETS instead.{2}".format(
+                ANSI_RED, new_cross_target, ANSI_RESET
             )
         )
-        os.environ["CI_CROSS_TARGETS"] += ":RTEMS@" + os.environ["RTEMS"]
+        logger.debug('Replaced deprecated RTEMS target with new entry in CI_CROSS_TARGETS: %s', new_cross_target)
 
     if "WINE" in os.environ:
+        if os.environ['WINE'] == '32':
+            new_cross_target = ":win32-x86-mingw"
+        else:
+            new_cross_target = ":windows-x64-mingw"
+        os.environ["CI_CROSS_TARGETS"] += new_cross_target
+
         print(
-            "{0}WARNING: deprecated WINE environment variable was specified, please use CI_CROSS_TARGETS{1}".format(
-                ANSI_RED, ANSI_RESET
+            "{0}WARNING: deprecated WINE environment variable was specified." \
+            " Please add '{1}' to CI_CROSS_TARGETS instead.{2}".format(
+                ANSI_RED, new_cross_target, ANSI_RESET
             )
         )
-        os.environ["CI_CROSS_TARGETS"] += ":WINE@" + os.environ["WINE"]
+        logger.debug('Replaced deprecated WINE target with new entry in CI_CROSS_TARGETS: %s', new_cross_target)
 
 
 def prepare_cross_compilation(cross_target_info):
