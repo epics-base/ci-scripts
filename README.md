@@ -310,6 +310,18 @@ RTEMS 5 builds need to be switched to a newer ubuntu version
 **dist: focal** with Travis-CI or
 **image: ubuntu:focal** with GitLab CI/CD).
 
+## LINUX_CROSS
+
+Setting the `LINUX_CROSS_<name>` environment variable enables cross-compiling
+to Linux for the provided target. The value of the environment variable should
+be the compiler prefix to be used.
+
+For example, to cross-compile for linux-arm with hard floating points
+
+- ensure you have the `g++-arm-linux-gnueabihf` package installed, if your CI
+  is on Ubuntu or Debian
+- set the environment variable `LINUX_CROSS_arm=arm-linux-gnueabihf`
+
 ## Debugging
 
 Setting `VV=1` in your service configuration (e.g., `.travis.yml`) for a

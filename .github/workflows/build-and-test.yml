@@ -103,53 +103,30 @@ jobs:
     - name: Collect and show test results
       run: python cue.py test-results
 
-  build-rtems:
-    name: RTEMS${{ matrix.rtems }} / ${{ matrix.rtems_target }}
+  build-cross:
+    name: cross ${{ matrix.cross }} / ${{ matrix.cmp }} / ${{ matrix.configuration }}
     runs-on: ubuntu-20.04
     env:
       CMP: gcc
       BCFG: default
-      RTEMS: ${{ matrix.rtems }}
-      RTEMS_TARGET: ${{ matrix.rtems_target }}
-      APT: re2c g++-mingw-w64-i686 g++-mingw-w64-x86-64 qemu-system-x86
+      CI_CROSS_TARGETS: ${{ matrix.cross }}
+      APT: re2c
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - rtems: "4.9"
-            rtems_target: RTEMS-pc386-qemu
-
-          - rtems: "4.10"
-            rtems_target: RTEMS-pc386-qemu
-
-          - rtems: "5"
-            rtems_target: RTEMS-pc686-qemu
-    steps:
-    - uses: actions/checkout@v2
-    - name: Prepare and compile dependencies
-      run: python cue.py prepare
-    - name: Build main module (example app)
-      run: python cue.py build
-    - name: Run main module tests
-      run: python cue.py -T 15M test
-    - name: Collect and show test results
-      run: python cue.py test-results
-
-  build-wine:
-    name: WINE${{ matrix.wine }} / ${{ matrix.configuration }} / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    env:
-      CMP: ${{ matrix.cmp }}
-      BCFG: ${{ matrix.configuration }}
-      WINE: ${{ matrix.wine }}
-      APT: re2c g++-mingw-w64-i686 g++-mingw-w64-x86-64
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-18.04]
-        cmp: [gcc]
-        configuration: [default, static, debug, static-debug]
-        wine: [32, 64]
+        # configuration: [default, static, debug, static-debug]
+        configuration: [default]
+        cross: 
+        - linux-aarch64
+        - linux-arm@arm-linux-gnueabi
+        - linux-arm@arm-linux-gnueabihf
+        - linux-ppc
+        - linux-ppc64
+        - win32-x86-mingw
+        - windows-x64-mingw
+        - RTEMS-pc386-qemu@4.9
+        - RTEMS-pc386-qemu@4.10
+        - RTEMS-pc686-qemu@5
     steps:
     - uses: actions/checkout@v2
     - name: Prepare and compile dependencies
