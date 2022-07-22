@@ -163,6 +163,7 @@ modules_to_compile = []
 setup = {}
 places = {}
 extra_makeargs = []
+make_timeout = 0.
 
 is_base314 = False
 is_make3 = False
@@ -185,6 +186,8 @@ def clear_lists():
     has_test_results = False
     silent_dep_builds = True
     do_recompile = False
+    building_base = False
+    _modified_files = set()
     ci['service'] = '<none>'
     ci['os'] = '<unknown>'
     ci['platform'] = '<unknown>'
@@ -205,8 +208,6 @@ clear_lists()
 if 'BASE' in os.environ and os.environ['BASE'] == 'SELF':
     building_base = True
     places['EPICS_BASE'] = curdir
-else:
-    building_base = False
 
 # Setup ANSI Colors
 ANSI_RED = "\033[31;1m"

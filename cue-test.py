@@ -702,7 +702,6 @@ class TestAppveyorDetectContext(unittest.TestCase):
 
 class TestSetupForBuild(unittest.TestCase):
     args = Namespace(paths=[])
-    cue.building_base = True
     if ci_os == 'windows':
         choco_installs = ['make']
         if ci_service != 'appveyor':
@@ -710,6 +709,7 @@ class TestSetupForBuild(unittest.TestCase):
         sp.check_call(['choco', 'install', '-ry'] + choco_installs)
 
     def setUp(self):
+        cue.building_base = True
         if ci_service == 'appveyor':
             os.environ['CONFIGURATION'] = 'default'
         cue.detect_context()
