@@ -67,6 +67,8 @@ import cue
 # we're working with tags (detached heads) a lot: suppress advice
 cue.call_git(['config', '--global', 'advice.detachedHead', 'false'])
 
+# Don't build dependencies when running unit tests
+cue.skip_dep_builds = True
 
 class TestSourceSet(unittest.TestCase):
 

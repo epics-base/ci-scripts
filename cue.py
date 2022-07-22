@@ -169,6 +169,7 @@ is_base314 = False
 is_make3 = False
 has_test_results = False
 silent_dep_builds = True
+skip_dep_builds = False
 do_recompile = False
 installed_7z = False
 
@@ -207,6 +208,7 @@ clear_lists()
 
 if 'BASE' in os.environ and os.environ['BASE'] == 'SELF':
     building_base = True
+    skip_dep_builds = True
     places['EPICS_BASE'] = curdir
 
 # Setup ANSI Colors
@@ -1245,7 +1247,7 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
     if logging.getLogger().isEnabledFor(logging.DEBUG):
         log_modified()
 
-    if not building_base:
+    if not skip_dep_builds:
         fold_start('build.dependencies', 'Build missing/outdated dependencies')
         for mod in modules_to_compile:
             place = places[setup[mod + "_VARNAME"]]
