@@ -119,20 +119,15 @@ jobs:
             configuration: default
             name: "Ub-20 clang-10"
 
-          - os: macos-latest
+          - os: macos-11
             cmp: clang
             configuration: default
-            name: "MacOS clang-12"
+            name: "MacOS clang-13"
 
-          - os: windows-2016
-            cmp: vs2017
+          - os: macos-12
+            cmp: clang
             configuration: default
-            name: "Win2016 MSC-17"
-
-          - os: windows-2016
-            cmp: vs2017
-            configuration: static
-            name: "Win2016 MSC-17, static"
+            name: "MacOS clang-13"
 
           - os: windows-2019
             cmp: gcc
@@ -187,7 +182,7 @@ jobs:
     - name: Build main module
       run: python .ci/cue.py build
     - name: Run main module tests
-      run: python .ci/cue.py test
+      run: python .ci/cue.py -T 15M test
     - name: Upload tapfiles Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -195,3 +190,38 @@ jobs:
         path: '**/O.*/*.tap'
     - name: Collect and show test results
       run: python .ci/cue.py test-results
+
+  build-cross:
+    name: cross ${{ matrix.cross }} / ${{ matrix.cmp }} / ${{ matrix.configuration }}
+    runs-on: ubuntu-20.04
+    env:
+      CMP: gcc
+      BCFG: default
+      CI_CROSS_TARGETS: ${{ matrix.cross }}
+      APT: re2c
+    strategy:
+      fail-fast: false
+      matrix:
+        # configuration: [default, static, debug, static-debug]
+        configuration: [default]
+        cross:
+        - linux-aarch64
+        - linux-arm@arm-linux-gnueabi
+        - linux-arm@arm-linux-gnueabihf
+        - linux-ppc
+        - linux-ppc64
+        - win32-x86-mingw
+        - windows-x64-mingw
+        - RTEMS-pc386-qemu@4.9
+        - RTEMS-pc386-qemu@4.10
+        - RTEMS-pc686-qemu@5
+    steps:
+    - uses: actions/checkout@v2
+    - name: Prepare and compile dependencies
+      run: python cue.py prepare
+    - name: Build main module
+      run: python cue.py build
+    - name: Run main module tests
+      run: python cue.py -T 15M test
+    - name: Collect and show test results
+      run: python cue.py test-results

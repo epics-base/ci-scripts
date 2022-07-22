@@ -3,10 +3,10 @@
 ## Features
 
  - 20 parallel runners on Linux/Windows (5 runners on MacOS)
- - Ubuntu 16/18/20, MacOS 10.15, Windows Server 2016/2019
+ - Ubuntu 18/20/22, MacOS 11/12, Windows Server 2019/2022
  - Compile natively on Linux (gcc, clang)
  - Compile natively on MacOS (clang)
- - Compile natively on Windows (gcc/MinGW, Visual Studio 2017/2019/2022)
+ - Compile natively on Windows (gcc/MinGW, Visual Studio 2019/2022)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
  - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
  - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)

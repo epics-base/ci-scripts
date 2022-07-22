@@ -95,10 +95,10 @@ for more details.
 
 ### [GitHub Actions](https://github.com/)
  - 20 parallel runners on Linux/Windows (5 runners on MacOS)
- - Ubuntu 16/18/20, MacOS 10.15, Windows Server 2016/2019/2022
+ - Ubuntu 18/20/22, MacOS 11/12, Windows Server 2019/2022
  - Compile natively on Linux (gcc, clang)
  - Compile natively on MacOS (clang)
- - Compile natively on Windows (gcc/MinGW, Visual Studio 2017/2019/2022)
+ - Compile natively on Windows (gcc/MinGW, Visual Studio 2019/2022)
  - Cross-compile for Windows 32bit and 64bit using MinGW and WINE
  - Cross-compile for RTEMS 4.9 and 4.10 (pc386, Base >= 3.15)
  - Cross-compile for RTEMS 5 (10 BSPs, Base >= 7.0.5.1)
@@ -283,8 +283,8 @@ Feel free to suggest more default settings using a Pull Request.
 
 ## RTEMS
 
-Setting `RTEMS` to the RTEMS version number (`4.9`, `4.10` or `5`)
-enables cross-compiling to RTEMS on supported CI services.
+Cross-compiling to RTEMS versions 4.9, 4.10 or 5 is supported
+on supported CI services. For configuration see below.
 Tests can also be run cross-platform, using `qemu`.
 
 The RTEMS 5 builds now include most of the BSPs with configuration in Base:
@@ -301,26 +301,37 @@ The RTEMS 5 builds now include most of the BSPs with configuration in Base:
 - xilinx_zynq_a9_qemu w/ libbsd
 
 Build configuration [can be found here][ref.rtems5build].
-Set `RTEMS_TARGET` to configure the EPICS target architecture and
-`RSB_BUILD` to select the RTEMS toolchain release name/data from
+Set `RSB_BUILD` to select the RTEMS toolchain release name/data from
 https://github.com/mdavidsaver/rsb/releases.
 
-RTEMS 5 builds need to be switched to a newer ubuntu version
+RTEMS 5 builds need to be switched to ubuntu version >= 20
 (aka. **os: ubuntu-20.04** with GitHub Actions,
 **dist: focal** with Travis-CI or
 **image: ubuntu:focal** with GitLab CI/CD).
 
-## LINUX_CROSS
+## Cross Compilation
 
-Setting the `LINUX_CROSS_<name>` environment variable enables cross-compiling
-to Linux for the provided target. The value of the environment variable should
-be the compiler prefix to be used.
+Setting the `CI_CROSS_TARGETS` environment variable enables cross-compiling
+from Linux to the provided targets architectures.
+The value of the environment variable must  contain the EPICS architecture
+and - depending on the target - may contain additional information like
+the compiler prefix to be used or the version of the target OS.
 
-For example, to cross-compile for linux-arm with hard floating points
+Multiple cross-targets can be added to the `CI_CROSS_TARGETS` variable
+by separating them with a colon (`:`) character.
 
-- ensure you have the `g++-arm-linux-gnueabihf` package installed, if your CI
-  is on Ubuntu or Debian
-- set the environment variable `LINUX_CROSS_arm=arm-linux-gnueabihf`
+For example, possible values are:
+
+- linux-aarch64
+- linux-arm@arm-linux-gnueabi
+- linux-arm@arm-linux-gnueabihf
+- linux-ppc
+- linux-ppc64
+- win32-x86-mingw
+- windows-x64-mingw
+- RTEMS-pc386-qemu@4.9
+- RTEMS-pc386-qemu@4.10
+- RTEMS-pc686-qemu@5
 
 ## Debugging
 
