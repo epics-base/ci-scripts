@@ -174,6 +174,7 @@ installed_7z = False
 
 def clear_lists():
     global is_base314, has_test_results, silent_dep_builds, is_make3
+    global _modified_files, do_recompile, building_base
     del seen_setups[:]
     del modules_to_compile[:]
     del extra_makeargs[:]
@@ -821,12 +822,15 @@ def handle_old_cross_variables():
     if "RTEMS" in os.environ:
         if 'RTEMS_TARGET' in os.environ:
             rtems_target = os.environ['RTEMS_TARGET']
-        elif os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
-                                         'CONFIG.Common.RTEMS-pc386-qemu')):
-            # Base 3.15 doesn't have -qemu target architecture
-            rtems_target = 'RTEMS-pc386-qemu'
         else:
-            rtems_target = 'RTEMS-pc386'
+            if os.environ['RTEMS'] == '5':
+                rtems_target = 'RTEMS-pc686-qemu'
+            else:
+                rtems_target = 'RTEMS-pc386'
+                if os.path.exists(os.path.join(places['EPICS_BASE'], 'configure', 'os',
+                                         'CONFIG.Common.RTEMS-pc386-qemu')):
+                    # Base 3.15 doesn't have -qemu target architecture
+                    rtems_target = 'RTEMS-pc386-qemu'
 
         new_cross_target = ":" + rtems_target + "@" + os.environ["RTEMS"]
         os.environ["CI_CROSS_TARGETS"] += new_cross_target

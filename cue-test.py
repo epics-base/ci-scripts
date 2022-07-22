@@ -13,6 +13,7 @@ import re
 import subprocess as sp
 import unittest
 import logging
+import fnmatch
 from argparse import Namespace
 
 builddir = os.getcwd()
@@ -882,6 +883,77 @@ LINE2=NO''')
         hook = os.path.join(builddir, 'test.7z')
         cue.extract_archive(hook, cwd=self.location)
         self.assertTrue(os.path.exists(self.new_file), "archive extract didn't add new file")
+
+@unittest.skipIf(ci_os != 'linux', 'CrossCompatibilityHandling tests only apply to linux')
+class TestCrossCompatibilityHandling(unittest.TestCase):
+    args = Namespace(paths=[])
+
+    def setUp(self):
+        cue.clear_lists()
+        os.environ.pop('CI_CROSS_TARGETS', None)
+        os.environ.pop('RTEMS_TARGET', None)
+        os.environ.pop('RTEMS', None)
+        os.environ.pop('WINE', None)
+        os.environ['MODULES'] = ''
+        cue.detect_context()
+        # Make cue.prepare() reconfigure base
+        for root, dirs, files in os.walk(cue.ci['cachedir']):
+            if 'checked_out' in files:
+                if fnmatch.fnmatch(root, '*/base-*'):
+                    os.remove(os.path.join(root, 'checked_out'))
+
+    def runtest_rtems(self, arch, ver):
+        cue.prepare(self.args)
+        self.assertTrue('CI_CROSS_TARGETS' in os.environ, "CI_CROSS_TARGETS has not been set")
+        self.assertTrue(os.environ['CI_CROSS_TARGETS'].startswith(':' + arch),
+                        "CI_CROSS_TARGETS is {0} (expected: :{1}...)"
+                         .format(os.environ['CI_CROSS_TARGETS'], arch))
+        self.assertTrue(os.environ['CI_CROSS_TARGETS'].endswith('@' + ver),
+                        "CI_CROSS_TARGETS is {0} (expected: ...@{1})"
+                         .format(os.environ['CI_CROSS_TARGETS'], ver))
+
+    def test_RTEMS49_no_target(self):
+        os.environ['RTEMS'] = '4.9'
+        self.runtest_rtems('RTEMS-pc386', '4.9')
+
+    def test_RTEMS49_with_target(self):
+        os.environ['RTEMS'] = '4.9'
+        os.environ['RTEMS_TARGET'] = 'RTEMS-pc386'
+        self.runtest_rtems('RTEMS-pc386', '4.9')
+
+    def test_RTEMS410_no_target(self):
+        os.environ['RTEMS'] = '4.10'
+        self.runtest_rtems('RTEMS-pc386', '4.10')
+
+    def test_RTEMS410_with_target(self):
+        os.environ['RTEMS'] = '4.10'
+        os.environ['RTEMS_TARGET'] = 'RTEMS-pc386'
+        self.runtest_rtems('RTEMS-pc386', '4.10')
+
+    def test_RTEMS5_no_target(self):
+        os.environ['RTEMS'] = '5'
+        self.runtest_rtems('RTEMS-pc686', '5')
+
+    def test_RTEMS5_with_target(self):
+        os.environ['RTEMS'] = '5'
+        os.environ['RTEMS_TARGET'] = 'RTEMS-pc686'
+        self.runtest_rtems('RTEMS-pc686', '5')
+
+    def test_WINE32(self):
+        os.environ['WINE'] = '32'
+        cue.prepare(self.args)
+        self.assertTrue('CI_CROSS_TARGETS' in os.environ, "CI_CROSS_TARGETS has not been set")
+        self.assertEqual(os.environ['CI_CROSS_TARGETS'], ':win32-x86-mingw',
+                        "CI_CROSS_TARGETS is {0} (expected: :win32-x86-mingw)"
+                         .format(os.environ['CI_CROSS_TARGETS']))
+
+    def test_WINE64(self):
+        os.environ['WINE'] = '64'
+        cue.prepare(self.args)
+        self.assertTrue('CI_CROSS_TARGETS' in os.environ, "CI_CROSS_TARGETS has not been set")
+        self.assertEqual(os.environ['CI_CROSS_TARGETS'], ':windows-x64-mingw',
+                        "CI_CROSS_TARGETS is {0} (expected: :windows-x64-mingw)"
+                         .format(os.environ['CI_CROSS_TARGETS']))
 
 
 if __name__ == "__main__":
