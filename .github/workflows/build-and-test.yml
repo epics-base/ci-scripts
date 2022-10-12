@@ -21,7 +21,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, windows-2022, windows-2019, macos-12, macos-11]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Show initial environment
       run: python cue-test.py env
     - name: Run unit tests
@@ -40,7 +40,7 @@ jobs:
         cmp: [gcc, clang]
         configuration: [default, static, debug, static-debug]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Prepare and compile dependencies
       run: python cue.py prepare
     - name: Build main module (example app)
@@ -63,7 +63,7 @@ jobs:
         cmp: [clang]
         configuration: [default, debug]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Prepare and compile dependencies
       run: python cue.py prepare
     - name: Build main module (example app)
@@ -93,7 +93,7 @@ jobs:
             cmp: vs2022
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Prepare and compile dependencies
       run: python cue.py prepare
     - name: Build main module (example app)
@@ -128,7 +128,7 @@ jobs:
         - RTEMS-pc386-qemu@4.10
         - RTEMS-pc686-qemu@5
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Prepare and compile dependencies
       run: python cue.py prepare
     - name: Build main module (example app)

@@ -160,7 +160,7 @@ jobs:
             name: "Win2022 MSC-22, static"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
     - name: Automatic core dumper analysis
@@ -216,7 +216,7 @@ jobs:
         - RTEMS-pc386-qemu@4.10
         - RTEMS-pc686-qemu@5
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Prepare and compile dependencies
       run: python cue.py prepare
     - name: Build main module
