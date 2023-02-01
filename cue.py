@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 
-import sys, os, stat, shutil
+import sys, os, stat, shlex, shutil
 import fileinput
 import logging
 import re
@@ -778,7 +778,7 @@ def setup_for_build(args):
     for tag in ['EXTRA', 'EXTRA1', 'EXTRA2', 'EXTRA3', 'EXTRA4', 'EXTRA5']:
         val = os.environ.get(tag, "")
         if len(val)>0:
-            extra_makeargs.append(val)
+            extra_makeargs.extend(shlex.split(val))
 
 
 def fix_etc_hosts():
