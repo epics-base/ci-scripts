@@ -8,6 +8,7 @@ import sys, os, stat, shutil
 import fileinput
 import logging
 import re
+import time
 import threading
 from glob import glob
 import subprocess as sp
@@ -1212,7 +1213,15 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
 
     if ci['os'] == 'windows' and ci['choco']:
         fold_start('install.choco', 'Installing CHOCO packages')
-        sp.check_call(['choco', 'install'] + ci['choco'] + ['-y', '--limitoutput', '--no-progress'])
+        for i in range(0,3):
+            try:
+                sp.check_call(['choco', 'install'] + ci['choco'] + ['-y', '--limitoutput', '--no-progress'])
+            except Exception as e:
+                print(e)
+                print("Retrying choco install attempt {} after 30 seconds".format(i+1))
+                time.sleep(30)
+            else:
+                break
         fold_end('install.choco', 'Installing CHOCO packages')
 
     if ci['os'] == 'linux' and ci['apt']:
