@@ -189,6 +189,19 @@ Collect the results of your tests and print a summary.
 `exec`\
 Execute the remainder of the line using the default command shell.
 
+## Extra arguments to `make`
+
+You can add additional arguments to the make runs that the `cue.py` script
+starts. Put your additional arguments into environment variables named
+`EXTRA`, `EXTRA1`, ... `EXTRA5`.
+
+The variables may contain multiple arguments, separated by whitespace.
+Use regular shell script quoting (single/double quotes, backslash escapes)
+if you need spaces inside an extra argument.
+
+The YAML syntax needed to set environment variables depends on the CI
+service and platform. (See the full example configuration file.)
+
 ## Setup Files
 
 Your module might depend on EPICS Base and a few other support modules.
