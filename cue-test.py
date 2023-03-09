@@ -841,7 +841,7 @@ class TestSetupForBuild(unittest.TestCase):
     def test_ExtraMakeArgs(self):
         os.environ['EXTRA'] = 'bla'
         for ind in range(1,5):
-            os.environ['EXTRA{0}'.format(ind)] = 'bla {0}'.format(ind)
+            os.environ['EXTRA{0}'.format(ind)] = '"bla {0}"'.format(ind)
         cue.setup_for_build(self.args)
         self.assertTrue(cue.extra_makeargs[0] == 'bla', 'Extra make arg [0] not set')
         for ind in range(1,5):
