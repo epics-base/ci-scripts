@@ -763,17 +763,35 @@ def setup_for_build(args):
 
     # apparently %CD% is handled automagically
     os.environ['TOP'] = os.getcwd()
+    os.environ['MAKE'] = 'make'
+    os.environ['EPICS_BASE'] = places['EPICS_BASE']
 
-    addpaths = []
-    for path in args.paths:
+    changed_vars = set()
+
+    # NOTE: this doesn't keep the CLI order
+    args.extra_env_vars += ["PATH={}".format(path) for path in args.paths]
+    for extra_env_var in args.extra_env_vars:
         try:
-            addpaths.append(path.format(**os.environ))
+            key_value = extra_env_var.split('=')
+            key = key_value[0]
+            value = key_value[1]
+            expanded_value = value.format(**os.environ)
+
+            # Update the environment right now so later variables have access
+            if key in os.environ:
+                old_value = [os.environ[key]]
+            else:
+                old_value = []
+
+            os.environ[key] = os.pathsep.join(old_value + [expanded_value])
+            changed_vars.add(key)
         except KeyError:
             print('Environment')
             [print('  ', K, '=', repr(V)) for K, V in os.environ.items()]
             raise
 
-    os.environ['PATH'] = os.pathsep.join([os.environ['PATH']] + addpaths)
+    for key in changed_vars:
+        print("{0}{2} = {3}{0}".format(ANSI_CYAN, ANSI_RESET, key, os.environ[key]))
 
     # Add EXTRA make arguments
     for tag in ['EXTRA', 'EXTRA1', 'EXTRA2', 'EXTRA3', 'EXTRA4', 'EXTRA5']:
@@ -1327,8 +1345,6 @@ def test_results(args):
 def doExec(args):
     'exec user command with vcvars'
     setup_for_build(args)
-    os.environ['MAKE'] = 'make'
-    os.environ['EPICS_BASE'] = places['EPICS_BASE']
     fold_start('exec.command', 'Execute command {}'.format(args.cmd))
     sp.check_call(' '.join(args.cmd), shell=True)
     fold_end('exec.command', 'Execute command {}'.format(args.cmd))
@@ -1399,7 +1415,9 @@ def getargs():
     p.add_argument('--no-vcvars', dest='vcvars', default=True, action='store_false',
                    help='Assume vcvarsall.bat has already been run')
     p.add_argument('--add-path', dest='paths', default=[], action='append',
-                   help='Append directory to $PATH or %%PATH%%.  Expands {ENVVAR}')
+                   help='Append directory to $PATH or %%PATH%%. Expands {ENVVAR}. Equivalent to: "--add-env PATH=<PATHS>"')
+    p.add_argument('--add-env', dest='extra_env_vars', default=[], action='append',
+                   help='Append directory to the specified $ENVVAR or %%ENVVAR%%. Expands {OTHER_ENVVAR}. Example: "--add-env \'LD_LIBRARY_PATH={EPICS_BASE}/lib/{EPICS_HOST_ARCH}\'"')
     p.add_argument('-T', '--timeout', type=timespec, metavar='DLY',
                    help='Terminate make after delay.  DLY interpreted as second, or may be qualified with "S", "M", or "H".  (default no timeout)')
     subp = p.add_subparsers()

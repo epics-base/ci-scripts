@@ -703,7 +703,7 @@ class TestAppveyorDetectContext(unittest.TestCase):
 
 
 class TestSetupForBuild(unittest.TestCase):
-    args = Namespace(paths=[])
+    args = Namespace(paths=[], extra_env_vars=[])
     if ci_os == 'windows':
         choco_installs = ['make']
         if ci_service != 'appveyor':
