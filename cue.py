@@ -791,7 +791,7 @@ def setup_for_build(args):
             raise
 
     for key in changed_vars:
-        print("{0}{2} = {3}{0}".format(ANSI_CYAN, ANSI_RESET, key, os.environ[key]))
+        print("{0}{2} = {3}{1}".format(ANSI_CYAN, ANSI_RESET, key, os.environ[key]))
 
     # Add EXTRA make arguments
     for tag in ['EXTRA', 'EXTRA1', 'EXTRA2', 'EXTRA3', 'EXTRA4', 'EXTRA5']:
