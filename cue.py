@@ -768,8 +768,6 @@ def setup_for_build(args):
 
     changed_vars = set()
 
-    # NOTE: this doesn't keep the CLI order
-    args.extra_env_vars += ["PATH={}".format(path) for path in args.paths]
     for extra_env_var in args.extra_env_vars:
         try:
             key_value = extra_env_var.split('=')
@@ -1414,7 +1412,7 @@ def getargs():
     p = ArgumentParser()
     p.add_argument('--no-vcvars', dest='vcvars', default=True, action='store_false',
                    help='Assume vcvarsall.bat has already been run')
-    p.add_argument('--add-path', dest='paths', default=[], action='append',
+    p.add_argument('--add-path', dest='extra_env_vars', type=lambda x: "PATH={}".format(x), default=[], action='append',
                    help='Append directory to $PATH or %%PATH%%. Expands {ENVVAR}. Equivalent to: "--add-env PATH=<PATHS>"')
     p.add_argument('--add-env', dest='extra_env_vars', default=[], action='append',
                    help='Append directory to the specified $ENVVAR or %%ENVVAR%%. Expands {OTHER_ENVVAR}. Example: "--add-env \'LD_LIBRARY_PATH={EPICS_BASE}/lib/{EPICS_HOST_ARCH}\'"')

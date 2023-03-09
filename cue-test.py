@@ -703,7 +703,7 @@ class TestAppveyorDetectContext(unittest.TestCase):
 
 
 class TestSetupForBuild(unittest.TestCase):
-    args = Namespace(paths=[], extra_env_vars=[])
+    args = Namespace(extra_env_vars=[])
     if ci_os == 'windows':
         choco_installs = ['make']
         if ci_service != 'appveyor':
@@ -722,7 +722,7 @@ class TestSetupForBuild(unittest.TestCase):
 
     def test_AddPathsOption(self):
         os.environ['FOOBAR'] = 'BAR'
-        args = Namespace(paths=['/my/{FOOBAR}/dir', '/my/foobar'], extra_env_vars=[])
+        args = Namespace(extra_env_vars=['PATH=/my/{FOOBAR}/dir', 'PATH=/my/foobar'])
         cue.setup_for_build(args)
         self.assertTrue(re.search('/my/BAR/dir', os.environ['PATH']), 'Expanded path not in PATH')
         self.assertTrue(re.search('/foobar', os.environ['PATH']), 'Plain path not in PATH')
@@ -888,7 +888,7 @@ LINE2=NO''')
 
 @unittest.skipIf(ci_os != 'linux', 'CrossCompatibilityHandling tests only apply to linux')
 class TestCrossCompatibilityHandling(unittest.TestCase):
-    args = Namespace(paths=[], extra_env_vars=[])
+    args = Namespace(extra_env_vars=[])
 
     def setUp(self):
         cue.clear_lists()
