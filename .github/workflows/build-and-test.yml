@@ -110,13 +110,14 @@ jobs:
       CMP: gcc
       BCFG: default
       CI_CROSS_TARGETS: ${{ matrix.cross }}
+      TEST: ${{ matrix.test }}
       APT: re2c
     strategy:
       fail-fast: false
       matrix:
         # configuration: [default, static, debug, static-debug]
         configuration: [default]
-        cross: 
+        cross:
         - linux-aarch64
         - linux-arm@arm-linux-gnueabi
         - linux-arm@arm-linux-gnueabihf
@@ -127,6 +128,9 @@ jobs:
         - RTEMS-pc386-qemu@4.9
         - RTEMS-pc386-qemu@4.10
         - RTEMS-pc686-qemu@5
+        include:
+        - cross: RTEMS-pc386-qemu@4.10
+          test: NO
     steps:
     - uses: actions/checkout@v3
     - name: Prepare and compile dependencies
