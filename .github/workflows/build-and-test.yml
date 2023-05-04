@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, windows-2022, windows-2019, macos-12, macos-11]
+        os: [ubuntu-22.04, ubuntu-20.04, windows-2022, windows-2019, macos-12, macos-11]
     steps:
     - uses: actions/checkout@v3
     - name: Show initial environment
@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04]
+        os: [ubuntu-22.04, ubuntu-20.04]
         cmp: [gcc, clang]
         configuration: [default, static, debug, static-debug]
     steps:
@@ -105,7 +105,7 @@ jobs:
 
   build-cross:
     name: cross ${{ matrix.cross }} / ${{ matrix.cmp }} / ${{ matrix.configuration }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       CMP: gcc
       BCFG: default
