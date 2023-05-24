@@ -1209,6 +1209,15 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
             with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG_SITE'), 'a') as f:
                 f.write(extra_config)
 
+        # enable color in error and warning messages if the (cross) compiler supports it
+        with open(os.path.join(places['EPICS_BASE'], 'configure', 'CONFIG'), 'a') as f:
+            f.write('''
+ifdef T_A
+  COLOR_FLAG_$(T_A) := $(shell $(CPP) -fdiagnostics-color -E - </dev/null >/dev/null 2>/dev/null && echo -fdiagnostics-color)
+  $(info Checking if $(CPP) supports -fdiagnostics-color: $(if $(COLOR_FLAG_$(T_A)),yes,no))
+  USR_CPPFLAGS += $(COLOR_FLAG_$(T_A))
+endif''')
+
         fold_end('set.up.epics_build', 'Configuring EPICS build system')
 
     if ci['os'] == 'windows' and ci['choco']:
