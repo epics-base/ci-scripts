@@ -1214,7 +1214,6 @@ PERL = C:/Strawberry/perl/bin/perl -CSD'''
             f.write('''
 ifdef T_A
   COLOR_FLAG_$(T_A) := $(shell $(CPP) -fdiagnostics-color -E - </dev/null >/dev/null 2>/dev/null && echo -fdiagnostics-color)
-  $(info Checking if $(CPP) supports -fdiagnostics-color: $(if $(COLOR_FLAG_$(T_A)),yes,no))
   USR_CPPFLAGS += $(COLOR_FLAG_$(T_A))
 endif''')
 
