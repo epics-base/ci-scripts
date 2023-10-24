@@ -13,6 +13,7 @@ import threading
 from glob import glob
 import subprocess as sp
 import distutils.util
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,11 @@ def log_modified():
             with open(fname, 'r') as F:
                 sys.stdout.write(F.read())
             sys.stdout.write(os.linesep)
+
+def whereis(cmd):
+    if hasattr(shutil, 'which'): # >= py3.3
+        loc = shutil.which(cmd)
+        print('{0}Found exec {1} at {2!r} {3}'.format(ANSI_CYAN, cmd, loc, ANSI_RESET))
 
 def prepare_env():
     '''HACK
@@ -1246,23 +1252,28 @@ endif''')
     setup_for_build(args)
 
     print('{0}EPICS_HOST_ARCH = {1}{2}'.format(ANSI_CYAN, os.environ['EPICS_HOST_ARCH'], ANSI_RESET))
+    whereis('make')
     print('{0}$ make --version{1}'.format(ANSI_CYAN, ANSI_RESET))
     sys.stdout.flush()
     call_make(['--version'], parallel=0)
+    whereis('perl')
     print('{0}$ perl --version{1}'.format(ANSI_CYAN, ANSI_RESET))
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
 
     if re.match(r'^vs', ci['compiler']):
+        whereis('cl')
         print('{0}$ cl{1}'.format(ANSI_CYAN, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call(['cl'])
     else:
         cc = ci['compiler']
+        whereis(cc)
         print('{0}$ {1} --version{2}'.format(ANSI_CYAN, cc, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call([cc, '--version'])
         if cxx:
+            whereis(cxx)
             print('{0}$ {1} --version{2}'.format(ANSI_CYAN, cxx, ANSI_RESET))
             sys.stdout.flush()
             sp.check_call([cxx, '--version'])
