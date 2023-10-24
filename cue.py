@@ -452,9 +452,7 @@ def call_make(args=None, **kws):
         makeargs = []
     else:
         makeargs = ['-j{0}'.format(parallel)]
-        if not is_make3 and ci['os'] != 'windows':
-            # not available until make 3
-            # buggy on windows https://github.com/epics-base/ci-scripts/issues/84
+        if not is_make3:
             makeargs += ['-Otarget']
     if silent:
         makeargs += ['-s']
