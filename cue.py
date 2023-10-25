@@ -693,8 +693,10 @@ def setup_for_build(args):
     if ci['os'] == 'windows':
         if os.path.exists(r'C:\Strawberry\perl\bin'):
             # Put strawberry perl in front of the PATH (so that Git Perl is further behind)
+            # Put Chocolatey\bin ahead to select correct make.exe
             logger.debug('Adding Strawberry Perl in front of the PATH')
-            os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\c\bin',
+            os.environ['PATH'] = os.pathsep.join([r'C:\ProgramData\Chocolatey\bin',
+                                                  r'C:\Strawberry\c\bin',
                                                   r'C:\Strawberry\perl\site\bin',
                                                   r'C:\Strawberry\perl\bin',
                                                   os.environ['PATH']])
