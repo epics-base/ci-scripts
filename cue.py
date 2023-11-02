@@ -12,7 +12,7 @@ import time
 import threading
 from glob import glob
 import subprocess as sp
-import distutils.util
+import sysconfig
 import shutil
 
 logger = logging.getLogger(__name__)
@@ -320,7 +320,7 @@ def host_info():
     print('PYTHONPATH')
     for dname in sys.path:
         print(' ', dname)
-    print('platform =', distutils.util.get_platform())
+    print('platform =', sysconfig.get_platform())
 
     if ci['os'] == 'windows':
         print('{0}Available Visual Studio versions{1}'.format(ANSI_CYAN, ANSI_RESET))
