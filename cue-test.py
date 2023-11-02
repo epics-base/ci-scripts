@@ -8,7 +8,6 @@
 from __future__ import print_function
 
 import sys, os, shutil, fileinput
-import distutils.util
 import re
 import subprocess as sp
 import unittest
