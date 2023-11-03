@@ -23,9 +23,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Show initial environment
-      run: python cue-test.py env
+      run: python3 cue-test.py env
     - name: Run unit tests
-      run: python cue-test.py
+      run: python3 cue-test.py
 
   build-linux:
     name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
