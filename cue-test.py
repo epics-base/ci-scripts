@@ -80,10 +80,10 @@ class TestSourceSet(unittest.TestCase):
 
     def test_EmptySetupDirsPath(self):
         del os.environ['SETUP_PATH']
-        self.assertRaisesRegexp(NameError, '\(SETUP_PATH\) is empty', cue.source_set, 'test01')
+        self.assertRaisesRegex(NameError, '\(SETUP_PATH\) is empty', cue.source_set, 'test01')
 
     def test_InvalidSetupName(self):
-        self.assertRaisesRegexp(NameError, 'does not exist in SETUP_PATH', cue.source_set, 'xxdoesnotexistxx')
+        self.assertRaisesRegex(NameError, 'does not exist in SETUP_PATH', cue.source_set, 'xxdoesnotexistxx')
 
     def test_ValidSetupName(self):
         capturedOutput = getStringIO()
@@ -120,7 +120,7 @@ class TestSourceSet(unittest.TestCase):
         sys.stdout = capturedOutput
         cue.source_set('test03')
         sys.stdout = sys.__stdout__
-        self.assertRegexpMatches(capturedOutput.getvalue(), 'Ignoring already included setup file')
+        self.assertRegex(capturedOutput.getvalue(), 'Ignoring already included setup file')
 
 
 class TestUpdateReleaseLocal(unittest.TestCase):
@@ -529,7 +529,7 @@ class TestTravisDetectContext(unittest.TestCase):
         sys.stdout = capturedOutput
         cue.detect_context()
         sys.stdout = sys.__stdout__
-        self.assertRegexpMatches(capturedOutput.getvalue(), "Variable 'STATIC' not supported anymore")
+        self.assertRegex(capturedOutput.getvalue(), "Variable 'STATIC' not supported anymore")
 
     def test_MisspelledBcfgGetsWarning(self):
         os.environ['BCFG'] = 'static-dubug'
@@ -537,7 +537,7 @@ class TestTravisDetectContext(unittest.TestCase):
         sys.stdout = capturedOutput
         cue.detect_context()
         sys.stdout = sys.__stdout__
-        self.assertRegexpMatches(capturedOutput.getvalue(), "Unrecognized build configuration setting")
+        self.assertRegex(capturedOutput.getvalue(), "Unrecognized build configuration setting")
 
 
 @unittest.skipIf(ci_service != 'appveyor', 'Run appveyor tests only on appveyor')
@@ -690,7 +690,7 @@ class TestAppveyorDetectContext(unittest.TestCase):
         sys.stdout = capturedOutput
         cue.detect_context()
         sys.stdout = sys.__stdout__
-        self.assertRegexpMatches(capturedOutput.getvalue(), "Variable 'STATIC' not supported anymore")
+        self.assertRegex(capturedOutput.getvalue(), "Variable 'STATIC' not supported anymore")
 
     def test_MisspelledConfigurationGetsWarning(self):
         os.environ['CONFIGURATION'] = 'static-dubug'
@@ -698,7 +698,7 @@ class TestAppveyorDetectContext(unittest.TestCase):
         sys.stdout = capturedOutput
         cue.detect_context()
         sys.stdout = sys.__stdout__
-        self.assertRegexpMatches(capturedOutput.getvalue(), "Unrecognized build configuration setting")
+        self.assertRegex(capturedOutput.getvalue(), "Unrecognized build configuration setting")
 
 
 class TestSetupForBuild(unittest.TestCase):
