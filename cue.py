@@ -13,6 +13,7 @@ import threading
 from glob import glob
 import subprocess as sp
 import sysconfig
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,11 @@ def log_modified():
             with open(fname, 'r') as F:
                 sys.stdout.write(F.read())
             sys.stdout.write(os.linesep)
+
+def whereis(cmd):
+    if hasattr(shutil, 'which'): # >= py3.3
+        loc = shutil.which(cmd)
+        print('{0}Found exec {1} at {2!r} {3}'.format(ANSI_CYAN, cmd, loc, ANSI_RESET))
 
 def prepare_env():
     '''HACK
@@ -452,9 +458,7 @@ def call_make(args=None, **kws):
         makeargs = []
     else:
         makeargs = ['-j{0}'.format(parallel)]
-        if not is_make3 and ci['os'] != 'windows':
-            # not available until make 3
-            # buggy on windows https://github.com/epics-base/ci-scripts/issues/84
+        if not is_make3:
             makeargs += ['-Otarget']
     if silent:
         makeargs += ['-s']
@@ -689,8 +693,10 @@ def setup_for_build(args):
     if ci['os'] == 'windows':
         if os.path.exists(r'C:\Strawberry\perl\bin'):
             # Put strawberry perl in front of the PATH (so that Git Perl is further behind)
+            # Put Chocolatey\bin ahead to select correct make.exe
             logger.debug('Adding Strawberry Perl in front of the PATH')
-            os.environ['PATH'] = os.pathsep.join([r'C:\Strawberry\c\bin',
+            os.environ['PATH'] = os.pathsep.join([r'C:\ProgramData\Chocolatey\bin',
+                                                  r'C:\Strawberry\c\bin',
                                                   r'C:\Strawberry\perl\site\bin',
                                                   r'C:\Strawberry\perl\bin',
                                                   os.environ['PATH']])
@@ -758,14 +764,6 @@ def setup_for_build(args):
                     if re.match('^test-results:', line):
                         has_test_results = True
 
-    # Check make version
-    if re.match(r'^GNU Make 3', sp.check_output(['make', '-v']).decode('ascii')):
-        is_make3 = True
-    logger.debug('Check if make is a 3.x series: %s', is_make3)
-
-    # apparently %CD% is handled automagically
-    os.environ['TOP'] = os.getcwd()
-
     addpaths = []
     for path in args.paths:
         try:
@@ -776,6 +774,18 @@ def setup_for_build(args):
             raise
 
     os.environ['PATH'] = os.pathsep.join([os.environ['PATH']] + addpaths)
+
+    logger.debug('Final PATH')
+    for loc in os.environ['PATH'].split(os.pathsep):
+        logger.debug('  %r', loc)
+
+    # Check make version
+    if re.match(r'^GNU Make 3', sp.check_output(['make', '-v']).decode('ascii')):
+        is_make3 = True
+    logger.debug('Check if make is a 3.x series: %s', is_make3)
+
+    # apparently %CD% is handled automagically
+    os.environ['TOP'] = os.getcwd()
 
     # Add EXTRA make arguments
     for tag in ['EXTRA', 'EXTRA1', 'EXTRA2', 'EXTRA3', 'EXTRA4', 'EXTRA5']:
@@ -1248,23 +1258,28 @@ endif''')
     setup_for_build(args)
 
     print('{0}EPICS_HOST_ARCH = {1}{2}'.format(ANSI_CYAN, os.environ['EPICS_HOST_ARCH'], ANSI_RESET))
+    whereis('make')
     print('{0}$ make --version{1}'.format(ANSI_CYAN, ANSI_RESET))
     sys.stdout.flush()
     call_make(['--version'], parallel=0)
+    whereis('perl')
     print('{0}$ perl --version{1}'.format(ANSI_CYAN, ANSI_RESET))
     sys.stdout.flush()
     sp.check_call(['perl', '--version'])
 
     if re.match(r'^vs', ci['compiler']):
+        whereis('cl')
         print('{0}$ cl{1}'.format(ANSI_CYAN, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call(['cl'])
     else:
         cc = ci['compiler']
+        whereis(cc)
         print('{0}$ {1} --version{2}'.format(ANSI_CYAN, cc, ANSI_RESET))
         sys.stdout.flush()
         sp.check_call([cc, '--version'])
         if cxx:
+            whereis(cxx)
             print('{0}$ {1} --version{2}'.format(ANSI_CYAN, cxx, ANSI_RESET))
             sys.stdout.flush()
             sp.check_call([cxx, '--version'])
