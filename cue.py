@@ -764,6 +764,9 @@ def setup_for_build(args):
                     if re.match('^test-results:', line):
                         has_test_results = True
 
+    # apparently %CD% is handled automagically, so use getcwd() instead
+    os.environ['TOP'] = os.getcwd()
+
     addpaths = []
     for path in args.paths:
         try:
@@ -775,6 +778,8 @@ def setup_for_build(args):
 
     os.environ['PATH'] = os.pathsep.join([os.environ['PATH']] + addpaths)
 
+    # os.environ completely updated at this point
+
     logger.debug('Final PATH')
     for loc in os.environ['PATH'].split(os.pathsep):
         logger.debug('  %r', loc)
@@ -783,9 +788,6 @@ def setup_for_build(args):
     if re.match(r'^GNU Make 3', sp.check_output(['make', '-v']).decode('ascii')):
         is_make3 = True
     logger.debug('Check if make is a 3.x series: %s', is_make3)
-
-    # apparently %CD% is handled automagically
-    os.environ['TOP'] = os.getcwd()
 
     # Add EXTRA make arguments
     for tag in ['EXTRA', 'EXTRA1', 'EXTRA2', 'EXTRA3', 'EXTRA4', 'EXTRA5']:
