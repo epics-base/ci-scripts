@@ -1237,7 +1237,7 @@ endif''')
         fold_start('install.choco', 'Installing CHOCO packages')
         for i in range(0,3):
             try:
-                sp.check_call(['choco', 'install'] + ci['choco'] + ['-y', '--limitoutput', '--no-progress'])
+                sp.check_call(['choco', 'install'] + ci['choco'] + ['-y', '--limitoutput', '--no-progress', '-u', '""', '-p', '""'])
             except Exception as e:
                 print(e)
                 print("Retrying choco install attempt {} after 30 seconds".format(i+1))

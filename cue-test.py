@@ -707,7 +707,7 @@ class TestSetupForBuild(unittest.TestCase):
         choco_installs = ['make']
         if ci_service != 'appveyor':
             choco_installs.append('strawberryperl')
-        sp.check_call(['choco', 'install', '-ry'] + choco_installs)
+        sp.check_call(['choco', 'install', '-ry'] + choco_installs + ['-y', '--limitoutput', '--no-progress', '-u', '""', '-p', '""'])
 
     def setUp(self):
         cue.building_base = True
