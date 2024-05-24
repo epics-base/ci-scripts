@@ -58,6 +58,11 @@ def detect_context():
     buildconfig = 'default'
     ci['cachedir'] = os.path.join(homedir, '.cache')
 
+    if 'LOCAL' in os.environ:
+        ci['service'] = 'local'
+        if 'CMP' in os.environ:
+            ci['compiler'] = os.environ['CMP']
+
     if 'TRAVIS' in os.environ:
         ci['service'] = 'travis'
         ci['os'] = os.environ['TRAVIS_OS_NAME']
