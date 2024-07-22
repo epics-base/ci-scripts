@@ -136,7 +136,10 @@ def detect_context():
         ci['cachedir'] = os.environ['CACHEDIR']
 
     if 'CHOCO' in os.environ:
-        ci['choco'].extend(os.environ['CHOCO'].split())
+        if os.environ['CHOCO'] == 'NO':
+            ci['choco'] = []
+        else:
+            ci['choco'].extend(os.environ['CHOCO'].split())
 
     if 'APT' in os.environ:
         ci['apt'].extend(os.environ['APT'].split())
