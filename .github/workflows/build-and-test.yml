@@ -1,6 +1,6 @@
 name: ci-scripts build/test
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 env:
   SETUP_PATH: .:.ci
@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, windows-2022, windows-2019, macos-12, macos-11]
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04, windows-latest, windows-2022, windows-2019, macos-12]
     steps:
     - uses: actions/checkout@v3
     - name: Show initial environment
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-11]
+        os: [macos-12]
         cmp: [clang]
         configuration: [default, debug]
     steps:
@@ -141,3 +141,54 @@ jobs:
       run: python cue.py -T 15M test
     - name: Collect and show test results
       run: python cue.py test-results
+
+  build-docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    env:
+      CMP: gcc
+      BCFG: default
+      CI_CROSS_TARGETS: ${{ matrix.cross }}
+      TEST: ${{ matrix.test }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run...
+      run: |
+        env > env.list
+        cat <<EOF > runit.sh
+        #!/bin/sh
+        set -e -x
+        cd /io
+        id
+
+        sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo
+        sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo
+        sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
+        yum -y install epel-release
+        yum -y install \
+          curl make gcc curl-devel expat-devel gettext-devel openssl-devel zlib-devel perl-ExtUtils-MakeMaker \
+          python3 gdb make perl gcc-c++ glibc-devel readline-devel ncurses-devel perl-devel libevent-devel \
+          sudo re2c
+        [ -e /usr/bin/python ] || ln -sf /usr/bin/python3 /usr/bin/python
+
+        # fake out cue.py
+        ln -s /bin/true /usr/bin/apt-get
+
+        # quiet warnings spam from perl
+        export LANG=C
+
+        python --version
+        python cue.py prepare
+        python cue.py build
+        python cue.py -T 15M test
+        python cue.py test-results
+        EOF
+        chmod +x runit.sh
+        docker run --rm --quiet \
+         --pull=always \
+         --env-file env.list \
+         -v `pwd`:/io \
+         centos:7 \
+         /io/runit.sh
