@@ -41,9 +41,9 @@ skip_commits:
 
 install:
 # fetch submodules (like ci-scripts)
-  - cmd: git submodule update --init --recursive
+  - git submodule update --init --recursive
 # for the sequencer
-  - cinst re2c
+  - choco install re2c
 
 #---------------------------------#
 #   build matrix configuration    #

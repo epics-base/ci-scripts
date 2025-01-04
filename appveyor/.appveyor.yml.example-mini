@@ -18,7 +18,7 @@ skip_commits:
     - '.travis.yml'
 
 install:
-  - cmd: git submodule update --init --recursive
+  - git submodule update --init --recursive
 
 image: Visual Studio 2022
 
