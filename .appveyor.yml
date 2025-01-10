@@ -70,6 +70,7 @@ environment:
   SET: test01
   BASE_RECURSIVE: NO
   VV: 1
+  PARALLEL_MAKE: 1
 
   matrix:
   - CMP: vs2022
