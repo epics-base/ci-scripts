@@ -431,9 +431,11 @@ def update_release_local(var, location):
 def set_setup_from_env(dep):
     for postf in ['', '_DIRNAME', '_REPONAME', '_REPOOWNER', '_REPOURL',
                   '_VARNAME', '_RECURSIVE', '_DEPTH', '_HOOK']:
-        if dep + postf in os.environ:
-            setup[dep + postf] = os.environ[dep + postf]
-            logger.debug('ENV assignment: %s = %s', dep + postf, setup[dep + postf])
+        env = dep + postf
+        val = os.environ.get(env)
+        if val:
+            setup[env] = val
+            logger.debug('ENV assignment: %s = %s', env, setup[env])
 
 
 def call_git(args, **kws):
@@ -863,9 +865,8 @@ def handle_old_cross_variables():
         os.environ["CI_CROSS_TARGETS"] = ""
 
     if "RTEMS" in os.environ:
-        if 'RTEMS_TARGET' in os.environ:
-            rtems_target = os.environ['RTEMS_TARGET']
-        else:
+        rtems_target = os.environ.get('RTEMS_TARGET')
+        if not rtems_target:
             if os.environ['RTEMS'] == '5':
                 rtems_target = 'RTEMS-pc686-qemu'
             else:
@@ -889,8 +890,10 @@ def handle_old_cross_variables():
     if "WINE" in os.environ:
         if os.environ['WINE'] == '32':
             new_cross_target = ":win32-x86-mingw"
-        else:
+        elif os.environ['WINE'] == '64':
             new_cross_target = ":windows-x64-mingw"
+        else:
+            raise RuntimeError("Invalid $WINE, must be 32/64")
         os.environ["CI_CROSS_TARGETS"] += new_cross_target
 
         print(
