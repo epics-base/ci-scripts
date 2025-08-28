@@ -863,7 +863,8 @@ class TestHooks(unittest.TestCase):
             pass
         with open(self.bla_file, 'w') as f:
             f.write('''LINE1=YES
-LINE2=NO''')
+LINE2=NO
+''')
 
     def test_patchfile(self):
         hook = os.path.join(builddir, 'test.patch')
