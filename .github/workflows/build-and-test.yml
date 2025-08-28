@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, windows-2022, windows-2019, macos-12, macos-11]
+        os: [ubuntu-24.04, ubuntu-22.04, windows-2025, windows-2022, macos-15, macos-14, macos-13]
     steps:
     - uses: actions/checkout@v3
     - name: Show initial environment
@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04]
+        os: [ubuntu-24.04, ubuntu-22.04]
         cmp: [gcc, clang]
         configuration: [default, static, debug, static-debug]
     steps:
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-11]
+        os: [macos-15, macos-14, macos-13]
         cmp: [clang]
         configuration: [default, debug]
     steps:
@@ -82,15 +82,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, windows-2019]
-        cmp: [gcc, vs2022, vs2019]
+        os: [windows-2025, windows-2022]
+        cmp: [gcc, vs2022]
         configuration: [default, static, debug, static-debug]
-        exclude:
-          - os: windows-2022
-            cmp: vs2019
-
-          - os: windows-2019
-            cmp: vs2022
 
     steps:
     - uses: actions/checkout@v3
