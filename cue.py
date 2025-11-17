@@ -15,6 +15,12 @@ import subprocess as sp
 import sysconfig
 import shutil
 
+try:
+    from os import cpu_count
+except ImportError:
+    def cpu_count():
+        pass # undetermined
+
 logger = logging.getLogger(__name__)
 
 # Keep track of all files we write/append for later logging
@@ -151,7 +157,7 @@ def detect_context():
     if 'TEST' in os.environ and os.environ['TEST'].lower() == 'no':
         ci['test'] = False
 
-    ci['parallel_make'] = 2
+    ci['parallel_make'] = cpu_count() or 2
     if 'PARALLEL_MAKE' in os.environ:
         ci['parallel_make'] = int(os.environ['PARALLEL_MAKE'])
 
