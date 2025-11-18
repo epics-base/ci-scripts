@@ -269,12 +269,12 @@ class TestAddDependencyOptions(unittest.TestCase):
         cue.detect_context()
         if os.path.exists(cue.ci['cachedir']):
             shutil.rmtree(cue.ci['cachedir'], onerror=cue.remove_readonly)
-        self.location = os.path.join(cue.ci['cachedir'], 'mcoreutils-master')
+        self.location = os.path.join(cue.ci['cachedir'], 'mcoreutils-main')
         self.testfile = os.path.join(self.location, '.ci', 'LICENSE')
-        os.path.join(cue.ci['cachedir'], 'mcoreutils-master')
+        os.path.join(cue.ci['cachedir'], 'mcoreutils-main')
         cue.source_set('defaults')
         cue.complete_setup('MCoreUtils')
-        cue.setup['MCoreUtils'] = 'master'
+        cue.setup['MCoreUtils'] = 'main'
 
     def test_Default(self):
         cue.add_dependency('MCoreUtils')
