@@ -618,6 +618,13 @@ def add_dependency(dep):
                         sys.stdout.flush()
                         sp.check_call(['patch', '-p1', '-i', os.path.join(ci['scriptsdir'], 'add-msi-to-314.patch')],
                                       cwd=place)
+
+                        # Post 3.14 we have checks for readline.h
+                        print('Patching COMMANDLINE_LIBRARY to EPICS')
+                        sys.stdout.flush()
+                        sp.check_call(['patch', '-p1', '-i', os.path.join(ci['scriptsdir'], 'dont_use_readline_314.patch')],
+                                      cwd=place)
+
         else:
             # force including RELEASE.local for non-base modules by overwriting their configure/RELEASE
             release = os.path.join(place, "configure", "RELEASE")

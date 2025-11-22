@@ -1,0 +1,13 @@
+diff --git a/configure/os/CONFIG_SITE.Common.linux-x86 b/configure/os/CONFIG_SITE.Common.linux-x86
+index 6c3a8308a..9c90967ec 100644
+--- a/configure/os/CONFIG_SITE.Common.linux-x86
++++ b/configure/os/CONFIG_SITE.Common.linux-x86
+@@ -22,7 +22,7 @@
+ # comment them all out to build without readline support.
+ 
+ # No other libraries needed (recent Fedora, Ubuntu etc.):
+-COMMANDLINE_LIBRARY = READLINE
++#COMMANDLINE_LIBRARY = READLINE
+ 
+ # Needs -lncurses (RHEL 5 etc.):
+ #COMMANDLINE_LIBRARY = READLINE_NCURSES
