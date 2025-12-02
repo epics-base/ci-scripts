@@ -28,17 +28,43 @@ jobs:
       run: python3 cue-test.py
 
   build-linux:
-    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    name: B-${{ matrix.base }} ${{ matrix.cmp }} ${{ matrix.configuration }} @ ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
+      BASE: ${{ matrix.base }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, ubuntu-22.04]
         cmp: [gcc, clang]
         configuration: [default, static, debug, static-debug]
+        base: ["7.0"]
+        include:
+          - os: ubuntu-24.04
+            cmp: gcc
+            configuration: default
+            base: "3.15"
+            name: "B-3.15 Ub-24 gcc-13"
+
+          - os: ubuntu-24.04
+            cmp: gcc
+            configuration: static
+            base: "3.15"
+            name: "B-3.15 Ub-24 gcc-13, static"
+
+          - os: ubuntu-24.04
+            cmp: gcc
+            configuration: default
+            base: "3.14"
+            name: "B-3.14 Ub-24 gcc-13"
+
+          - os: ubuntu-24.04
+            cmp: gcc
+            configuration: static
+            base: "3.14"
+            name: "B-3.14 Ub-24 gcc-13, static"
     steps:
     - uses: actions/checkout@v4
     - name: Prepare and compile dependencies
@@ -51,17 +77,32 @@ jobs:
       run: python cue.py test-results
 
   build-macos:
-    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    name: B-${{ matrix.base }} ${{ matrix.cmp }} ${{ matrix.configuration }} @ ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
+      BASE: ${{ matrix.base }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos-15, macos-14]
         cmp: [clang]
         configuration: [default, debug]
+        base: ["7.0"]
+        include:
+          - os: macos-15
+            cmp: clang
+            configuration: default
+            base: "3.15"
+            name: "B-3.15 Mac-15"
+
+# Base 3.14 does not support MacOS-aarch64
+#          - os: macos-15
+#            cmp: clang
+#            configuration: default
+#            base: "3.14"
+#            name: "B-3.14 Mac-15"
     steps:
     - uses: actions/checkout@v4
     - name: Prepare and compile dependencies
@@ -74,18 +115,31 @@ jobs:
       run: python cue.py test-results
 
   build-windows:
-    name: ${{ matrix.cmp }} / ${{ matrix.configuration }} / ${{ matrix.os }}
+    name: B-${{ matrix.base }} ${{ matrix.cmp }} ${{ matrix.configuration }} @ ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     env:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
+      BASE: ${{ matrix.base }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-2025, windows-2022]
         cmp: [gcc, vs2022]
         configuration: [default, static, debug, static-debug]
+        base: [ "7.0" ]
+        include:
+          - os: windows-2025
+            cmp: vs2022
+            configuration: static
+            base: "3.15"
+            name: "B-3.15 Win-25 MSC-22 static"
 
+          - os: windows-2025
+            cmp: vs2022
+            configuration: static
+            base: "3.14"
+            name: "B-3.14 Win-25 MSC-22 static"
     steps:
     - uses: actions/checkout@v4
     - name: Prepare and compile dependencies
