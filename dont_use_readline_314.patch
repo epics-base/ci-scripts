@@ -1,7 +1,18 @@
-diff --git a/configure/os/CONFIG_SITE.Common.linux-x86 b/configure/os/CONFIG_SITE.Common.linux-x86
-index 6c3a8308a..9c90967ec 100644
---- a/configure/os/CONFIG_SITE.Common.linux-x86
-+++ b/configure/os/CONFIG_SITE.Common.linux-x86
+diff -urN a/configure/os/CONFIG_SITE.Common.linux-x86 b/configure/os/CONFIG_SITE.Common.linux-x86
+--- a/configure/os/CONFIG_SITE.Common.linux-x86	2023-02-08 18:55:20.000000000 +0100
++++ b/configure/os/CONFIG_SITE.Common.linux-x86	2025-12-02 10:56:20.064200334 +0100
+@@ -22,7 +22,7 @@
+ # comment them all out to build without readline support.
+ 
+ # No other libraries needed (recent Fedora, Ubuntu etc.):
+-COMMANDLINE_LIBRARY = READLINE
++#COMMANDLINE_LIBRARY = READLINE
+ 
+ # Needs -lncurses (RHEL 5 etc.):
+ #COMMANDLINE_LIBRARY = READLINE_NCURSES
+diff -urN a/configure/os/CONFIG_SITE.Common.linux-x86_64 b/configure/os/CONFIG_SITE.Common.linux-x86_64
+--- a/configure/os/CONFIG_SITE.Common.linux-x86_64	2023-02-08 18:55:20.000000000 +0100
++++ b/configure/os/CONFIG_SITE.Common.linux-x86_64	2025-12-02 10:56:28.328188418 +0100
 @@ -22,7 +22,7 @@
  # comment them all out to build without readline support.
  
