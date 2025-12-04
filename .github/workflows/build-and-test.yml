@@ -42,29 +42,29 @@ jobs:
         configuration: [default, static, debug, static-debug]
         base: ["7.0"]
         include:
-          - os: ubuntu-24.04
+          - name: "B-3.15 Ub-24 gcc-13"
+            os: ubuntu-24.04
             cmp: gcc
             configuration: default
             base: "3.15"
-            name: "B-3.15 Ub-24 gcc-13"
 
-          - os: ubuntu-24.04
+          - name: "B-3.15 Ub-24 gcc-13, static"
+            os: ubuntu-24.04
             cmp: gcc
             configuration: static
             base: "3.15"
-            name: "B-3.15 Ub-24 gcc-13, static"
 
-          - os: ubuntu-24.04
+          - name: "B-3.14 Ub-24 gcc-13"
+            os: ubuntu-24.04
             cmp: gcc
             configuration: default
             base: "3.14"
-            name: "B-3.14 Ub-24 gcc-13"
 
-          - os: ubuntu-24.04
+          - name: "B-3.14 Ub-24 gcc-13, static"
+            os: ubuntu-24.04
             cmp: gcc
             configuration: static
             base: "3.14"
-            name: "B-3.14 Ub-24 gcc-13, static"
     steps:
     - uses: actions/checkout@v4
     - name: Prepare and compile dependencies
@@ -91,18 +91,18 @@ jobs:
         configuration: [default, debug]
         base: ["7.0"]
         include:
-          - os: macos-15
+          - name: "B-3.15 Mac-15"
+            os: macos-15
             cmp: clang
             configuration: default
             base: "3.15"
-            name: "B-3.15 Mac-15"
 
 # Base 3.14 does not support MacOS-aarch64
-#          - os: macos-15
+#          - name: "B-3.14 Mac-15"
+#            os: macos-15
 #            cmp: clang
 #            configuration: default
 #            base: "3.14"
-#            name: "B-3.14 Mac-15"
     steps:
     - uses: actions/checkout@v4
     - name: Prepare and compile dependencies
@@ -129,17 +129,17 @@ jobs:
         configuration: [default, static, debug, static-debug]
         base: [ "7.0" ]
         include:
-          - os: windows-2025
+          - name: "B-3.15 Win-25 MSC-22 static"
+            os: windows-2025
             cmp: vs2022
             configuration: static
             base: "3.15"
-            name: "B-3.15 Win-25 MSC-22 static"
 
-          - os: windows-2025
+          - name: "B-3.14 Win-25 MSC-22 static"
+            os: windows-2025
             cmp: vs2022
             configuration: static
             base: "3.14"
-            name: "B-3.14 Win-25 MSC-22 static"
     steps:
     - uses: actions/checkout@v4
     - name: Prepare and compile dependencies
