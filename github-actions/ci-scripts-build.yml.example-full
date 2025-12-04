@@ -31,9 +31,7 @@ jobs:
     env:
       CMP: ${{ matrix.cmp }}
       BCFG: ${{ matrix.configuration }}
-      WINE: ${{ matrix.wine }}
-      RTEMS: ${{ matrix.rtems }}
-      RTEMS_TARGET: ${{ matrix.rtems_target }}
+      CI_CROSS_TARGETS: ${{ matrix.cross }}
       EXTRA: ${{ matrix.extra }}
       TEST: ${{ matrix.test }}
     strategy:
@@ -41,73 +39,75 @@ jobs:
       matrix:
         # Job names also name artifacts, character limitations apply
         include:
-          - os: ubuntu-24.04
-            cmp: gcc
-            configuration: default
-            wine: "64"
-            name: "Ub-24 gcc + MinGW"
-
-          - os: ubuntu-24.04
-            cmp: gcc
-            configuration: static
-            wine: "64"
-            name: "Ub-24 gcc + MinGW, static"
-
-          - os: ubuntu-24.04
-            cmp: gcc
-            configuration: static
-            extra: "CMD_CXXFLAGS=-std=c++11"
-            name: "Ub-24 gcc C++11, static"
-
-          - os: ubuntu-24.04
+          - name: "Ub-24 clang C++11"
+            os: ubuntu-24.04
             cmp: clang
             configuration: default
             extra: "CMD_CXXFLAGS=-std=c++11"
-            name: "Ub-24 clang C++11"
 
-          - os: ubuntu-22.04
+          - name: "Ub-24 gcc C++11, static"
+            os: ubuntu-24.04
+            cmp: gcc
+            configuration: static
+            extra: "CMD_CXXFLAGS=-std=c++11"
+
+          - name: "MacOS clang"
+            os: macos-latest
+            cmp: clang
+            configuration: default
+
+          # Cross builds (cmp=gcc only)
+
+          - name: "Ub-24 gcc + MinGW"
+            os: ubuntu-24.04
+            cmp: gcc
+            configuration: default
+
+          - name: "Ub-24 gcc + MinGW, static"
+            os: ubuntu-24.04
+            cmp: gcc
+            configuration: static
+
+          - name: "Ub-22 gcc + RT-5.1 pc686"
+            os: ubuntu-22.04
             cmp: gcc
             configuration: default
             cross: "RTEMS-pc686-qemu@5"
-            name: "Ub-22 gcc + RT-5.1 pc686"
 
-          - os: ubuntu-22.04
+          - name: "Ub-22 gcc + RT-5.1 beatnik"
+            os: ubuntu-22.04
             cmp: gcc
             configuration: default
             cross: "RTEMS-beatnik@5"
             test: NO
-            name: "Ub-22 gcc + RT-5.1 beatnik"
 
-          - os: macos-latest
-            cmp: clang
-            configuration: default
-            name: "MacOS clang"
-
-          - os: windows-2022
+          - name: "Ub gcc + linux-aarch64"
+            os: ubuntu-latest
             cmp: gcc
             configuration: default
-            name: "Win2022 MinGW"
-
-          - os: windows-2022
-            cmp: gcc
-            configuration: static
-            name: "Win2022 MinGW, static"
-
-          - os: windows-2022
-            cmp: vs2022
-            configuration: default
-            name: "Win2022 MSC-22"
-
-          - os: windows-2022
-            cmp: vs2022
-            configuration: static
-            name: "Win2022 MSC-22, static"
-
-          - os: ubuntu-latest
-            cmp: gcc
-            configuration: default
-            name: "Cross linux-aarch64"
             cross: linux-aarch64
+
+          # Windows builds
+
+          - name: "Win-22 MSC-22"
+            os: windows-2022
+            cmp: vs2022
+            configuration: default
+
+          - name: "Win-22 MSC-22, static"
+            os: windows-2022
+            cmp: vs2022
+            configuration: static
+
+          - name: "Win-22 MinGW"
+            os: windows-2022
+            cmp: gcc
+            configuration: default
+
+          - name: "Win-22 MinGW, static"
+            os: windows-2022
+            cmp: gcc
+            configuration: static
 
     steps:
     - uses: actions/checkout@v4

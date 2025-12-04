@@ -31,36 +31,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-      include:
-        - os: ubuntu-24.04
-          cmp: gcc
-          configuration: default
-          base: "3.15"
-          name: "3.15 Ub-24 gcc"
+        include:
+          - name: "3.15 Ub-24 gcc"
+            os: ubuntu-24.04
+            cmp: gcc
+            configuration: default
+            base: "3.15"
 
-        - os: ubuntu-24.04
-          cmp: gcc
-          configuration: default
-          base: "7.0"
-          name: "7.0 Ub-24 gcc"
+          - name: "7.0 Ub-24 gcc"
+            os: ubuntu-24.04
+            cmp: gcc
+            configuration: default
+            base: "7.0"
 
-        - os: ubuntu-24.04
-          cmp: gcc
-          configuration: static
-          base: "3.15"
-          name: "3.15 Ub-24 gcc static"
+          - name: "3.15 Ub-24 gcc static"
+            os: ubuntu-24.04
+            cmp: gcc
+            configuration: static
+            base: "3.15"
 
-        - os: ubuntu-24.04
-          cmp: gcc
-          configuration: debug
-          base: "3.15"
-          name: "3.15 Ub-24 gcc debug"
+          - name: "3.15 Ub-24 gcc debug"
+            os: ubuntu-24.04
+            cmp: gcc
+            configuration: debug
+            base: "3.15"
 
-        - os: ubuntu-24.04
-          cmp: clang
-          configuration: default
-          base: "3.15"
-          name: "3.15 Ub-24 clang"
+          - name: "3.15 Ub-24 clang"
+            os: ubuntu-24.04
+            cmp: clang
+            configuration: default
+            base: "3.15"
 
     steps:
     - uses: actions/checkout@v4
