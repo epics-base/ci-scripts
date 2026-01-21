@@ -150,6 +150,9 @@ def detect_context():
     if 'APT' in os.environ:
         ci['apt'].extend(os.environ['APT'].split())
 
+    if 'APT_ARCH' in os.environ:
+        ci['apt_arch'].extend(os.environ['APT_ARCH'].split())
+
     if 'BREW' in os.environ:
         ci['homebrew'].extend(os.environ['BREW'].split())
 
@@ -216,6 +219,7 @@ def clear_lists():
     ci['cachedir'] = ''
     ci['choco'] = ['make']
     ci['apt'] = []
+    ci['apt_arch'] = []
     ci['homebrew'] = []
     ci['sudo'] = ['sudo']
 
@@ -1082,6 +1086,18 @@ def prepare_linux_cross(epics_arch, gnu_arch):
                 )
             )
 
+    apt_arch = {
+        'i686-linux-gnu':'i386',
+        'x86_64-linux-gnu':'amd64',
+        'aarch64-linux-gnu':'arm64',
+        'arm-linux-gnueabi':'armel',
+        'arm-linux-gnueabihf':'armhf',
+        #'powerpc-linux-gnu':'', # Debian no longer built for this target
+        'powerpc64le-linux-gnu':'ppc64el',
+    }.get(gnu_arch)
+    if apt_arch:
+        ci["apt_arch"] += [apt_arch]
+
     print(
         "Setting up Linux cross-compiling arch {0} with GNU arch {1}".format(
             epics_arch, gnu_arch
@@ -1280,6 +1296,11 @@ endif''')
             else:
                 break
         fold_end('install.choco', 'Installing CHOCO packages')
+
+    if ci['os'] == 'linux' and ci['apt_arch']:
+        for apt_arch in ci['apt_arch']:
+            print('{0}Add apt cross architecture {1}{2}'.format(ANSI_CYAN, apt_arch, ANSI_RESET))
+            sp.check_call(ci['sudo'] + ['dpkg', '--add-architecture', apt_arch])
 
     if ci['os'] == 'linux' and ci['apt']:
         fold_start('install.apt', 'Installing APT packages')
