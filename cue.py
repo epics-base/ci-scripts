@@ -64,6 +64,7 @@ def detect_context():
     buildconfig = 'default'
     ci['cachedir'] = os.path.join(homedir, '.cache')
 
+    # CI picker
     if 'TRAVIS' in os.environ:
         ci['service'] = 'travis'
         ci['os'] = os.environ['TRAVIS_OS_NAME']
@@ -75,8 +76,7 @@ def detect_context():
             ci['compiler'] = 'vs2017'
         if 'BCFG' in os.environ:
             buildconfig = os.environ['BCFG'].lower()
-
-    if 'GITLAB_CI' in os.environ:
+    elif 'GITLAB_CI' in os.environ:
         ci['service'] = 'gitlab'
         ci['os'] = 'linux'
         ci['platform'] = 'x64'
@@ -86,8 +86,7 @@ def detect_context():
             ci['compiler'] = os.environ['CMP']
         if 'BCFG' in os.environ:
             buildconfig = os.environ['BCFG'].lower()
-
-    if 'APPVEYOR' in os.environ:
+    elif 'APPVEYOR' in os.environ:
         ci['service'] = 'appveyor'
         if re.match(r'^Visual', os.environ['APPVEYOR_BUILD_WORKER_IMAGE']):
             ci['os'] = 'windows'
@@ -99,8 +98,7 @@ def detect_context():
         if 'CMP' in os.environ:
             ci['compiler'] = os.environ['CMP']
         buildconfig = os.environ['CONFIGURATION'].lower()
-
-    if 'GITHUB_ACTIONS' in os.environ:
+    elif 'GITHUB_ACTIONS' in os.environ:
         ci['service'] = 'github-actions'
         if os.environ['RUNNER_OS'] == 'macOS':
             ci['os'] = 'osx'
@@ -112,6 +110,10 @@ def detect_context():
         ci['choco'] += ['strawberryperl']
         if 'BCFG' in os.environ:
             buildconfig = os.environ['BCFG'].lower()
+    else:
+        ci['service'] = 'local'
+        if 'CMP' in os.environ:
+            ci['compiler'] = os.environ['CMP']
 
     if re.search('static', buildconfig):
         ci['static'] = True
