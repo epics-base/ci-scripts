@@ -449,10 +449,15 @@ class TestVCVars(unittest.TestCase):
             os.environ['TRAVIS_COMPILER'] = 'vs2017'
         else:
             os.environ['CONFIGURATION'] = 'default'
-            if ci_service == 'github-actions' and os.environ['IMAGEOS'] == 'win16':
-                os.environ['CMP'] = 'vs2017'
-            elif ci_service == 'github-actions' and os.environ['IMAGEOS'] == 'win19':
-                os.environ['CMP'] = 'vs2019'
+            if ci_service == 'github-actions':
+                if os.environ['IMAGEOS'] == 'win16':
+                    os.environ['CMP'] = 'vs2017'
+                elif os.environ['IMAGEOS'] == 'win19':
+                    os.environ['CMP'] = 'vs2019'
+                elif os.environ['IMAGEOS'] == 'win25-vs2026':
+                    os.environ['CMP'] = 'vs2026'
+                else:
+                    os.environ['CMP'] = 'vs2022'
             else:
                 os.environ['CMP'] = 'vs2022'
         cue.detect_context()
