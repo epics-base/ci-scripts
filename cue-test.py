@@ -342,6 +342,106 @@ class TestDefaultModuleURLs(unittest.TestCase):
             self.assertEqual(repo_access(mod), 0, 'Defaults for {0} do not point to a valid git repository at {1}'
                              .format(mod, cue.setup[mod + '_REPOURL']))
 
+class TestVSCompilerResolution(unittest.TestCase):
+    def setUp(self):
+        cue.clear_lists()
+        # Save original state of variables we will mock
+        self.orig_ci = dict(cue.ci)
+        self.orig_vcvars_found = dict(cue.vcvars_found)
+        self.orig_get_vs_installations_via_vswhere = cue.get_vs_installations_via_vswhere
+
+    def tearDown(self):
+        # Restore original state
+        cue.ci.clear()
+        cue.ci.update(self.orig_ci)
+        cue.vcvars_found.clear()
+        cue.vcvars_found.update(self.orig_vcvars_found)
+        cue.get_vs_installations_via_vswhere = self.orig_get_vs_installations_via_vswhere
+
+    def test_vswhere_single_installation(self):
+        cue.ci['os'] = 'windows'
+        cue.ci['compiler'] = 'vs'
+
+        mock_installs = [{
+            'path': r'C:\Program Files\Microsoft Visual Studio\2022\Community',
+            'vcvarsall': r'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat',
+            'version': '17.4.33103.184',
+            'name': 'Visual Studio Community 2022'
+        }]
+        cue.get_vs_installations_via_vswhere = lambda: mock_installs
+
+        cue.resolve_vs_compiler()
+
+        self.assertEqual(cue.ci['compiler'], 'vs2022')
+        self.assertEqual(cue.vcvars_found['vs2022'], mock_installs[0]['vcvarsall'])
+
+    def test_vswhere_multiple_installations(self):
+        cue.ci['os'] = 'windows'
+        cue.ci['compiler'] = 'vs'
+
+        mock_installs = [
+            {
+                'path': r'C:\Program Files\Microsoft Visual Studio\2022\Community',
+                'vcvarsall': r'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat',
+                'version': '17.4.33103.184',
+                'name': 'Visual Studio Community 2022'
+            },
+            {
+                'path': r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community',
+                'vcvarsall': r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat',
+                'version': '16.5.30011.22',
+                'name': 'Visual Studio Community 2019'
+            }
+        ]
+        cue.get_vs_installations_via_vswhere = lambda: mock_installs
+
+        with self.assertRaisesRegex(ValueError, "Multiple Visual Studio installations found"):
+            cue.resolve_vs_compiler()
+
+    def test_vswhere_no_installations(self):
+        cue.ci['os'] = 'windows'
+        cue.ci['compiler'] = 'vs'
+
+        cue.get_vs_installations_via_vswhere = lambda: []
+
+        with self.assertRaisesRegex(ValueError, "No Visual Studio installations found"):
+            cue.resolve_vs_compiler()
+
+    def test_fallback_single_installation(self):
+        cue.ci['os'] = 'windows'
+        cue.ci['compiler'] = 'vs'
+
+        cue.get_vs_installations_via_vswhere = lambda: None
+        cue.vcvars_found = {'vs2019': r'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat'}
+
+        cue.resolve_vs_compiler()
+
+        self.assertEqual(cue.ci['compiler'], 'vs2019')
+
+    def test_fallback_multiple_installations(self):
+        cue.ci['os'] = 'windows'
+        cue.ci['compiler'] = 'vs'
+
+        cue.get_vs_installations_via_vswhere = lambda: None
+        cue.vcvars_found = {
+            'vs2019': r'C:\vcvars19.bat',
+            'vs2022': r'C:\vcvars22.bat'
+        }
+
+        with self.assertRaisesRegex(ValueError, "Multiple Visual Studio installations found"):
+            cue.resolve_vs_compiler()
+
+    def test_fallback_no_installations(self):
+        cue.ci['os'] = 'windows'
+        cue.ci['compiler'] = 'vs'
+
+        cue.get_vs_installations_via_vswhere = lambda: None
+        cue.vcvars_found = {}
+
+        with self.assertRaisesRegex(ValueError, "No Visual Studio installations found"):
+            cue.resolve_vs_compiler()
+
+
 @unittest.skipIf(ci_os != 'windows', 'VCVars test only applies to windows')
 class TestVCVars(unittest.TestCase):
     def test_vcvars(self):

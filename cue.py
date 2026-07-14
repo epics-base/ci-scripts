@@ -70,7 +70,7 @@ def detect_context():
         ci['platform'] = 'x64'
         ci['compiler'] = os.environ['TRAVIS_COMPILER']
         ci['choco'] += ['strawberryperl']
-        if re.match(r'^vs', ci['compiler']):
+        if re.match(r'^vs', ci['compiler']) and ci['compiler'] != 'vs':
             # Only Visual Studio 2017 available
             ci['compiler'] = 'vs2017'
         if 'BCFG' in os.environ:
@@ -165,11 +165,12 @@ def detect_context():
     if 'CLEAN_DEPS' in os.environ and os.environ['CLEAN_DEPS'].lower() == 'no':
         ci['clean_deps'] = False
 
+    resolve_vs_compiler()
+
     logger.debug('Detected a build hosted on %s, using %s on %s (%s) configured as %s '
                  + '(test: %s, clean_deps: %s)',
                  ci['service'], ci['compiler'], ci['os'], ci['platform'], ci['configuration'],
                  ci['test'], ci['clean_deps'])
-
 
 curdir = os.getcwd()
 
@@ -307,6 +308,148 @@ for key in vcvars_table:
     for dir in vcvars_table[key]:
         if os.path.exists(dir):
             vcvars_found[key] = dir
+
+
+def find_vswhere():
+    if hasattr(shutil, 'which'):
+        loc = shutil.which('vswhere')
+        if loc:
+            return loc
+    for path in [
+        r'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe',
+        r'C:\Program Files\Microsoft Visual Studio\Installer\vswhere.exe'
+    ]:
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def query_vswhere():
+    import json
+    vswhere_path = find_vswhere()
+    if not vswhere_path:
+        return None
+    try:
+        cmd = [vswhere_path, '-legacy', '-prerelease', '-format', 'json', '-products', '*']
+        logger.debug("Running vswhere: %s", ' '.join(cmd))
+        output = sp.check_output(cmd).decode('utf-8', errors='ignore')
+        return json.loads(output)
+    except Exception as e:
+        logger.debug("vswhere execution or parsing failed: %s", e)
+        try:
+            cmd = [vswhere_path, '-legacy', '-prerelease', '-format', 'json']
+            output = sp.check_output(cmd).decode('utf-8', errors='ignore')
+            return json.loads(output)
+        except Exception as e2:
+            logger.debug("vswhere fallback failed: %s", e2)
+            return None
+
+
+def find_vcvarsall_in_install(install_path):
+    paths = [
+        os.path.join(install_path, r'VC\Auxiliary\Build\vcvarsall.bat'),
+        os.path.join(install_path, r'VC\vcvarsall.bat')
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def get_vs_installations_via_vswhere():
+    instances = query_vswhere()
+    if instances is None:
+        return None
+
+    valid_installs = []
+    for inst in instances:
+        path = inst.get('installationPath')
+        if not path:
+            continue
+        vcvars_path = find_vcvarsall_in_install(path)
+        if vcvars_path:
+            version_str = inst.get('installationVersion', '')
+            name = inst.get('displayName', inst.get('installationName', 'Visual Studio'))
+            valid_installs.append({
+                'path': path,
+                'vcvarsall': vcvars_path,
+                'version': version_str,
+                'name': name
+            })
+    return valid_installs
+
+
+def resolve_vs_compiler():
+    if ci['os'] != 'windows' or ci['compiler'] != 'vs':
+        return
+
+    installs = get_vs_installations_via_vswhere()
+    if installs is not None:
+        if len(installs) == 1:
+            inst = installs[0]
+            major_version_str = inst['version'].split('.')[0]
+            try:
+                major_version = int(major_version_str)
+            except ValueError:
+                major_version = 0
+
+            VS_VERSION_MAP = {
+                15: 'vs2017',
+                16: 'vs2019',
+                17: 'vs2022',
+                18: 'vs2026',
+                14: 'vs2015',
+                12: 'vs2013',
+                11: 'vs2012',
+                10: 'vs2010',
+                9: 'vs2008'
+            }
+            vs_key = VS_VERSION_MAP.get(major_version, 'vs' + major_version_str)
+
+            ci['compiler'] = vs_key
+            vcvars_found[vs_key] = inst['vcvarsall']
+            print("Selected installed Visual Studio compiler: {0} ({1}) at {2}".format(vs_key, inst['name'], inst['vcvarsall']))
+            sys.stdout.flush()
+        elif len(installs) > 1:
+            print("Multiple Visual Studio installations found:")
+            for inst in installs:
+                major_version_str = inst['version'].split('.')[0]
+                try:
+                    major = int(major_version_str)
+                except ValueError:
+                    major = 0
+                VS_VERSION_MAP = {
+                    15: 'vs2017',
+                    16: 'vs2019',
+                    17: 'vs2022',
+                    18: 'vs2026',
+                    14: 'vs2015',
+                    12: 'vs2013',
+                    11: 'vs2012',
+                    10: 'vs2010',
+                    9: 'vs2008'
+                }
+                vs_key = VS_VERSION_MAP.get(major, 'vs' + major_version_str)
+                print("  {0}: {1} at {2}".format(vs_key, inst['name'], inst['path']))
+            sys.stdout.flush()
+            raise ValueError("Multiple Visual Studio installations found. Please specify one of the available options.")
+        else:
+            raise ValueError("No Visual Studio installations found on this system.")
+    else:
+        valid_keys = list(vcvars_found.keys())
+        if len(valid_keys) == 1:
+            vs_key = valid_keys[0]
+            ci['compiler'] = vs_key
+            print("Selected installed Visual Studio compiler (via fallback list): {0} at {1}".format(vs_key, vcvars_found[vs_key]))
+            sys.stdout.flush()
+        elif len(valid_keys) > 1:
+            print("Multiple Visual Studio installations found in fallback list:")
+            for k in valid_keys:
+                print("  {0}: {1}".format(k, vcvars_found[k]))
+            sys.stdout.flush()
+            raise ValueError("Multiple Visual Studio installations found. Please specify one of the available options.")
+        else:
+            raise ValueError("No Visual Studio installations found in fallback list.")
 
 
 def modlist():
