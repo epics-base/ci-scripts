@@ -822,6 +822,7 @@ class TestSetupForBuild(unittest.TestCase):
 
     def tearDown(self):
         os.environ.pop('EPICS_HOST_ARCH', None)
+        os.environ.pop('MAKEFLAGS', None)
         cue.clear_lists()
 
     def test_AddPathsOption(self):
@@ -899,6 +900,29 @@ class TestSetupForBuild(unittest.TestCase):
         self.assertTrue(re.search('strawberry', os.environ['PATH'], flags=re.IGNORECASE),
                         'Strawberry Perl location not in PATH (found  PATH = {0})'
                         .format(os.environ['PATH']))
+
+    @unittest.skipIf(ci_os != 'windows' or ci_service == 'appveyor',
+                     'Make SHELL test only applies to windows (not AppVeyor)')
+    def test_MakeShellCmdForMinGW(self):
+        cue.ci['compiler'] = 'gcc'
+        os.environ['MAKEFLAGS'] = 'k'
+        cue.setup_for_build(self.args)
+        self.assertEqual(os.environ['MAKEFLAGS'], 'k SHELL=cmd',
+                         'SHELL=cmd not added to MAKEFLAGS (found MAKEFLAGS = {0})'
+                         .format(os.environ['MAKEFLAGS']))
+        cue.setup_for_build(self.args)
+        self.assertEqual(os.environ['MAKEFLAGS'], 'k SHELL=cmd',
+                         'SHELL=cmd added to MAKEFLAGS twice (found MAKEFLAGS = {0})'
+                         .format(os.environ['MAKEFLAGS']))
+        os.environ['MAKEFLAGS'] = 'SHELL=sh'
+        cue.setup_for_build(self.args)
+        self.assertEqual(os.environ['MAKEFLAGS'], 'SHELL=sh',
+                         'User setting of SHELL in MAKEFLAGS overridden')
+        os.environ.pop('MAKEFLAGS', None)
+        cue.ci['compiler'] = 'vs2019'
+        cue.setup_for_build(self.args)
+        self.assertFalse('MAKEFLAGS' in os.environ,
+                         'MAKEFLAGS set for Visual Studio compiler')
 
     def setBase314(self, yesno):
         cfg_base_version = os.path.join('configure', 'CONFIG_BASE_VERSION')
