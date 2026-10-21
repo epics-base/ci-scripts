@@ -192,7 +192,8 @@ Execute the remainder of the line using the default command shell.
 ## Extra arguments to `make`
 
 You can add additional arguments to the make runs that the `cue.py` script
-starts. Put your additional arguments into environment variables named
+starts for building and testing your main module (`build` and `test`
+actions). Put your additional arguments into environment variables named
 `EXTRA`, `EXTRA1`, ... `EXTRA5`.
 
 The variables may contain multiple arguments, separated by whitespace.

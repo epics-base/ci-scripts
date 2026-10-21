@@ -1515,9 +1515,9 @@ def test(args):
         setup_for_build(args)
         fold_start('test.module', 'Run the main module tests')
         if has_test_results:
-            call_make(['tapfiles'])
+            call_make(['tapfiles'], use_extra=True)
         else:
-            call_make(['runtests'])
+            call_make(['runtests'], use_extra=True)
         fold_end('test.module', 'Run the main module tests')
     else:
         print("{0}Action 'test' skipped as per configuration{1}"
