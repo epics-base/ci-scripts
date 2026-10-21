@@ -864,6 +864,14 @@ def setup_for_build(args):
                                                   r'C:\Strawberry\perl\bin',
                                                   os.environ['PATH']])
 
+        if ci['service'] != 'appveyor' and ci['compiler'] == 'gcc':
+            # Git's sh.exe wrapper prepends Git's own MinGW runtime DLLs to PATH,
+            # which are incompatible with the Strawberry Perl compiler.
+            makeflags = os.environ.get('MAKEFLAGS', '')
+            if 'SHELL=' not in makeflags:
+                logger.debug('Setting SHELL=cmd in MAKEFLAGS')
+                os.environ['MAKEFLAGS'] = ' '.join(filter(None, [makeflags, 'SHELL=cmd']))
+
         if ci['service'] == 'appveyor' and ci['compiler'] == 'gcc':
             logger.debug('Adding AppVeyor MSYS2/MinGW installation to PATH and INCLUDE')
             if 'INCLUDE' not in os.environ:
