@@ -977,6 +977,31 @@ class TestSetupForBuild(unittest.TestCase):
                             'Extra make arg [{0}] not set (expected "bla {0}", found "{1}")'
                             .format(ind, cue.extra_makeargs[ind]))
 
+    def test_ExtraMakeArgsUsedForTest(self):
+        for tag in ['EXTRA', 'EXTRA1', 'EXTRA2', 'EXTRA3', 'EXTRA4', 'EXTRA5']:
+            os.environ.pop(tag, None)
+        os.environ['EXTRA'] = 'bla'
+        os.environ['EXTRA1'] = '"bla 1"'
+        make_calls = []
+        orig_call_make = cue.call_make
+        cue.call_make = lambda args=None, **kws: make_calls.append((args, kws))
+        try:
+            for has_test_results in [False, True]:
+                self.setTestResultsTarget('test-results' if has_test_results else 'not-test-results')
+                del make_calls[:]
+                del cue.extra_makeargs[:]
+                cue.test(self.args)
+                self.assertEqual(len(make_calls), 1, 'Expected one make call, found {0}'.format(len(make_calls)))
+                args, kws = make_calls[0]
+                self.assertTrue(kws.get('use_extra', False),
+                                'Extra make args not used for make {0}'.format(args))
+                self.assertEqual(cue.extra_makeargs, ['bla', 'bla 1'],
+                                 'Extra make args not set (found {0})'.format(cue.extra_makeargs))
+        finally:
+            cue.call_make = orig_call_make
+            os.environ.pop('EXTRA', None)
+            os.environ.pop('EXTRA1', None)
+
 
 class TestHooks(unittest.TestCase):
     location = os.path.join(cue.ci['cachedir'], 'hook_test')
